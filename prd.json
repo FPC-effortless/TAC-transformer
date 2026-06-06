@@ -1,0 +1,2296 @@
+{
+  "product": "TAC-Transformer Prototype",
+  "goal": "Build a runnable, testable identity-field layer prototype beside attention.",
+  "tickets": [
+    {
+      "id": "TAC-001",
+      "title": "Deterministic identity-field core",
+      "status": "completed",
+      "acceptance": [
+        "Computes baseline attention over token embeddings.",
+        "Computes a coherence matrix and beta-modulated attention.",
+        "Routes executable program embeddings under an energy budget.",
+        "Compresses memory traces and exposes a sleep consolidation pass.",
+        "Has automated tests for coherence modulation, routing, and sleep consolidation."
+      ]
+    },
+    {
+      "id": "TAC-002",
+      "title": "Interactive TAC lab UI",
+      "status": "completed",
+      "acceptance": [
+        "Lets a user run example sequences through the prototype.",
+        "Shows baseline attention, identity-modulated attention, selected programs, memory compression, and energy use.",
+        "Builds and lints with the existing Vite toolchain."
+      ]
+    },
+    {
+      "id": "TAC-003",
+      "title": "Trainable PyTorch TAC architecture",
+      "status": "completed",
+      "acceptance": [
+        "Provides a real torch.nn.Module transformer language model with an Identity Field Layer beside attention.",
+        "Maintains persistent identity state across forward calls.",
+        "Adds coherence-biased attention using beta-scaled identity coherence.",
+        "Routes executable program embeddings under an energy budget.",
+        "Exposes auxiliary losses for coherence, program reuse, and energy.",
+        "Has automated tests for shapes, attention modulation, state persistence, routing, and backpropagation."
+      ]
+    },
+    {
+      "id": "TAC-004",
+      "title": "Kaggle trainability and parameter reporting",
+      "status": "completed",
+      "acceptance": [
+        "Reports total, trainable, and identity-field parameter counts.",
+        "Provides a Kaggle-ready training script that auto-selects CUDA when available.",
+        "Trains the PyTorch TAC model end-to-end on a synthetic executable-pattern task.",
+        "Saves a checkpoint to /kaggle/working on Kaggle and runs/ locally.",
+        "Has automated tests for parameter counting and trainer execution."
+      ]
+    },
+    {
+      "id": "TAC-010",
+      "title": "Architecture effectiveness benchmark harness",
+      "status": "completed",
+      "acceptance": [
+        "Evaluates TAC against a vanilla baseline with the same data and seed.",
+        "Reports carry-vs-reset and shuffled-state probes for persistent identity memory.",
+        "Reports routing and compute-adjacent metrics such as used energy, active programs, routing entropy, tokens per second, and parameter counts.",
+        "Produces a JSON-serializable scorecard with an explicit effectiveness decision.",
+        "Has automated tests for the scorecard contract and state-intervention probes."
+      ]
+    },
+    {
+      "id": "TAC-011",
+      "title": "Opt-in modern transformer backbone switches",
+      "status": "completed",
+      "acceptance": [
+        "Adds config switches for RMSNorm and SwiGLU without changing legacy defaults.",
+        "Keeps existing parameter-count tests stable for the default architecture.",
+        "Supports TAC and vanilla models with the same modern backbone options.",
+        "Reports modern config fields in benchmark scorecards.",
+        "Has automated tests for forward pass, parameter differences, and invalid option validation."
+      ]
+    },
+    {
+      "id": "TAC-012",
+      "title": "Opt-in RoPE positional encoding",
+      "status": "completed",
+      "acceptance": [
+        "Adds a config switch for learned positional embeddings versus RoPE without changing legacy defaults.",
+        "Applies RoPE to attention query/key tensors for both TAC and vanilla models.",
+        "Removes learned position-embedding parameters when RoPE is selected.",
+        "Exposes the position option through training and benchmark CLIs.",
+        "Has automated tests for forward pass, causal prefix behavior, parameter differences, and invalid option validation."
+      ]
+    },
+    {
+      "id": "TAC-013",
+      "title": "Opt-in grouped-query attention",
+      "status": "completed",
+      "acceptance": [
+        "Adds a config switch for shared key/value heads without changing legacy defaults.",
+        "Supports grouped-query attention in both TAC and vanilla models.",
+        "Reduces attention parameters when key/value heads are fewer than query heads.",
+        "Exposes the key/value head option through training and benchmark CLIs.",
+        "Has automated tests for forward pass, causal prefix behavior, parameter-count estimator accuracy, and invalid option validation."
+      ]
+    },
+    {
+      "id": "TAC-014",
+      "title": "Opt-in routed program experts",
+      "status": "completed",
+      "acceptance": [
+        "Adds a config switch for legacy embedding programs versus routed program experts without changing legacy defaults.",
+        "Turns selected identity programs into trainable per-program compute when expert mode is enabled.",
+        "Keeps TAC and vanilla benchmark contracts stable, with vanilla remaining identity-free.",
+        "Exposes the program-compute option through training and benchmark CLIs.",
+        "Has automated tests for forward pass, parameter differences, expert backpropagation, parameter-count estimator accuracy, and invalid option validation."
+      ]
+    },
+    {
+      "id": "TAC-015",
+      "title": "Opt-in learned identity memory gates",
+      "status": "completed",
+      "acceptance": [
+        "Adds a config switch for fixed-decay versus learned gated identity state updates without changing legacy defaults.",
+        "Uses learned input-conditioned gates for stability and program-memory updates when gated mode is enabled.",
+        "Keeps causal prefix behavior intact.",
+        "Exposes the state-update option through training and benchmark CLIs.",
+        "Has automated tests for forward pass, gate gradients, state carry behavior, parameter-count estimator accuracy, and invalid option validation."
+      ]
+    },
+    {
+      "id": "TAC-016",
+      "title": "Chunked memory recall benchmark",
+      "status": "completed",
+      "acceptance": [
+        "Adds a synthetic chunked recall task where query chunks require key/value information from earlier context chunks.",
+        "Trains and evaluates carry, reset, and shuffled-state variants on the same chunk pairs.",
+        "Reports value-token recall accuracy separately from normal next-token loss.",
+        "Exposes a CLI for running the chunked memory benchmark.",
+        "Has automated tests for batch shape, hidden target placement, carry/reset scorecard contract, and JSON serializability."
+      ]
+    },
+    {
+      "id": "TAC-017",
+      "title": "Weighted chunked value-token objective",
+      "status": "completed",
+      "acceptance": [
+        "Adds a configurable value-token loss weight for chunked memory training without changing the default objective.",
+        "Reports value-token loss separately in chunked training metrics.",
+        "Passes the value-loss weight through the chunked benchmark CLI.",
+        "Keeps benchmark JSON serializable and comparable across seeds.",
+        "Has automated tests proving weighted value loss changes the training objective and is reported."
+      ]
+    },
+    {
+      "id": "TAC-018",
+      "title": "No-leak chunked recall target",
+      "status": "completed",
+      "acceptance": [
+        "Removes the recalled value token from query inputs before the scored target position.",
+        "Uses a dedicated recall marker before the value target.",
+        "Keeps context chunks carrying the key/value pair.",
+        "Preserves chunked benchmark JSON schema.",
+        "Has automated tests proving the query input does not leak the answer token before the target label."
+      ]
+    },
+    {
+      "id": "TAC-019",
+      "title": "Direct supervised identity memory readout",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in memory readout from identity program memory using the query key.",
+        "Allows chunked memory training to add a direct value-token memory-read loss.",
+        "Keeps legacy defaults unchanged.",
+        "Reports memory-read loss and accuracy in chunked training metrics.",
+        "Has automated tests for memory-read logits, gradient flow into identity memory updates, and benchmark JSON serializability."
+      ]
+    },
+    {
+      "id": "TAC-020",
+      "title": "Inject supervised memory readout into query logits",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in path that blends memory-read logits into the query value-token logits.",
+        "Uses the injected logits for value-token loss and value accuracy when enabled.",
+        "Keeps legacy chunked benchmark behavior unchanged by default.",
+        "Exposes the memory-injection weight through the chunked benchmark CLI.",
+        "Has automated tests proving injected logits affect value predictions and benchmark metrics."
+      ]
+    },
+    {
+      "id": "TAC-021",
+      "title": "Model-native residual memory adapter",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in learned residual adapter from memory-read vector to query hidden state.",
+        "Uses adapted hidden state before the language-model head instead of task-specific logit addition.",
+        "Keeps logit injection available as an ablation but disabled by default.",
+        "Exposes the adapter through the chunked benchmark CLI.",
+        "Has automated tests proving adapter logits affect value predictions and receive gradients."
+      ]
+    },
+    {
+      "id": "TAC-022",
+      "title": "Gated residual memory adapter sweep",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in gated residual memory adapter with more capacity than the linear residual adapter.",
+        "Uses the same memory_adapted_logits interface so benchmark code can compare adapter variants.",
+        "Exposes the gated adapter through the chunked benchmark CLI.",
+        "Runs a short multi-seed/weight sweep against the residual adapter and direct logit injection references.",
+        "Has automated tests proving the gated adapter receives gradients and parameter counts are accurate."
+      ]
+    },
+    {
+      "id": "TAC-023",
+      "title": "Identity-compressed attention",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in compressed-memory attention path derived from carried TAC program_memory.",
+        "Concatenates compressed identity memory K/V slots with normal causal token attention without changing legacy defaults.",
+        "Exposes identity-compressed attention through benchmark CLIs.",
+        "Benchmarks the path against the current best gated residual adapter reference.",
+        "Has automated tests proving carried program_memory extends attention slots and affects logits."
+      ]
+    },
+    {
+      "id": "TAC-024",
+      "title": "Titans-inspired novelty-gated memory writes",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in trainable novelty gate for program_memory writes.",
+        "Combines candidate program memory and previous program memory to modulate the write gate.",
+        "Exposes the memory-write option through training and benchmark CLIs.",
+        "Benchmarks novelty-gated writes against the current best clean memory configuration.",
+        "Has automated tests proving the novelty gate receives gradients and parameter counts are accurate."
+      ]
+    },
+    {
+      "id": "TAC-025",
+      "title": "Full automated research sweep",
+      "status": "completed",
+      "acceptance": [
+        "Runs a multi-candidate benchmark matrix across the implemented ideas from research.md.",
+        "Uses multiple seeds per candidate instead of stopping after one trial.",
+        "Compares clean TAC-native paths against direct-injection and baseline references.",
+        "Writes aggregate and per-seed results into a benchmark artifact directory.",
+        "Reports which research.md ideas are not yet implemented and therefore not directly tested."
+      ]
+    },
+    {
+      "id": "TAC-026",
+      "title": "Data and energy efficiency benchmark",
+      "status": "completed",
+      "acceptance": [
+        "Adds a budget-curve benchmark comparing TAC against a transformer baseline.",
+        "Reports data efficiency as value accuracy per training-token budget.",
+        "Reports compute proxies including train/eval tokens per second, parameter ratio, active programs, and TAC routing energy.",
+        "Exposes the efficiency benchmark through a CLI.",
+        "Runs the current best TAC configuration across multiple budgets and seeds."
+      ]
+    },
+    {
+      "id": "TAC-027",
+      "title": "Sparse expert dispatch check",
+      "status": "completed",
+      "acceptance": [
+        "Adds a sparse_linear_expert path that dispatches only routed expert/token pairs.",
+        "Keeps sparse expert outputs numerically aligned with dense routed expert outputs.",
+        "Reports active expert parameter fraction in benchmark metrics.",
+        "Runs a sparse efficiency check against dense expert mode.",
+        "Documents whether sparse routing improves observed throughput."
+      ]
+    },
+    {
+      "id": "TAC-028",
+      "title": "Batched sparse expert dispatch experiment",
+      "status": "completed",
+      "acceptance": [
+        "Replaces per-program sparse expert dispatch with batched selected-expert gathering.",
+        "Verifies batched sparse dispatch matches dense routed expert outputs.",
+        "Runs the same sparse efficiency check against loop sparse and dense expert references.",
+        "Documents whether batched sparse dispatch improves observed throughput.",
+        "Identifies whether future energy gains require fused sparse kernels."
+      ]
+    },
+    {
+      "id": "TAC-029",
+      "title": "Identity sink program experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds configurable always-visible identity sink programs without changing the default architecture.",
+        "Keeps sink programs outside the adaptive energy budget while reporting their count in metrics.",
+        "Exposes sink programs through training, effectiveness, chunked memory, and efficiency CLIs.",
+        "Runs a multi-seed benchmark against the current best clean TAC configuration.",
+        "Documents whether sink programs improve data efficiency or energy/computation proxies."
+      ]
+    },
+    {
+      "id": "TAC-030",
+      "title": "Hierarchical identity memory experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in hierarchical memory mode without changing the default flat identity state.",
+        "Carries recent, stable, and archival program-memory tiers across chunks.",
+        "Uses hierarchical memory for program-context reads and direct memory readout when enabled.",
+        "Exposes the memory tier option through training and benchmark CLIs.",
+        "Runs a multi-seed benchmark against the current best clean TAC configuration."
+      ]
+    },
+    {
+      "id": "TAC-031",
+      "title": "Expert Choice, BASE, and Hash routing experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds opt-in routing modes for expert-choice, BASE-style balanced, and hash routing without changing the default energy router.",
+        "Keeps adaptive routing within the TAC energy budget.",
+        "Reports routing mode and load-balance metrics in auxiliary outputs.",
+        "Exposes the routing option through training and benchmark CLIs.",
+        "Runs a multi-seed benchmark against the current best clean TAC configuration."
+      ]
+    },
+    {
+      "id": "TAC-032",
+      "title": "Product-Key sparse memory experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in Product-Key-style sparse memory lookup without changing default TAC behavior.",
+        "Uses top-k sparse lookup values as part of the identity program context.",
+        "Reports sparse memory lookup metrics and validates parameter counts.",
+        "Exposes memory lookup options through training and benchmark CLIs.",
+        "Runs a multi-seed benchmark against the leading routed TAC configuration."
+      ]
+    },
+    {
+      "id": "TAC-033",
+      "title": "Dual-stream residual experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in dual-stream residual mode without changing the default residual path.",
+        "Separately gates content attention updates and identity program updates.",
+        "Reports residual stream metrics and validates parameter counts.",
+        "Exposes residual stream options through training and benchmark CLIs.",
+        "Runs a multi-seed benchmark against the leading routed TAC configuration."
+      ]
+    },
+    {
+      "id": "TAC-034",
+      "title": "Multi-token prediction objective experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds opt-in future-token prediction heads without changing the default single-head LM behavior.",
+        "Reports and trains a multi-token auxiliary loss when configured.",
+        "Supports TAC and vanilla baselines with the same prediction-head options.",
+        "Exposes prediction-head options through training and benchmark CLIs.",
+        "Runs a multi-seed benchmark against the leading routed TAC configuration."
+      ]
+    },
+    {
+      "id": "TAC-035",
+      "title": "Promote best TAC architecture preset",
+      "status": "completed",
+      "acceptance": [
+        "Adds a public preset for the winning hash-routed TAC architecture.",
+        "Keeps legacy TACConfig defaults unchanged for existing comparisons.",
+        "Provides a one-command benchmark entrypoint for the best architecture.",
+        "Documents the preset and why non-winning research mechanisms remain ablations.",
+        "Has automated tests proving the preset matches the winning architecture and still builds a valid model."
+      ]
+    },
+    {
+      "id": "TAC-036",
+      "title": "Defensible best-architecture explanation",
+      "status": "completed",
+      "acceptance": [
+        "Documents the chunked recall task and random baseline context.",
+        "Defines carry, reset, shuffled, baseline, used-energy, and throughput metrics.",
+        "Includes seed count, per-seed variability, and current statistical limitations.",
+        "Explains the normalized dot-product program matching and hash routing mechanism.",
+        "Summarizes the final matrix and states which comparisons are not yet proven."
+      ]
+    },
+    {
+      "id": "TAC-037",
+      "title": "Best-architecture explanation review fixes",
+      "status": "completed",
+      "acceptance": [
+        "Surfaces train-throughput cost near the summary.",
+        "Explains why the dense hash preset is the default over sparse hash despite tied accuracy.",
+        "Explains the all-features baseline discrepancy as per-candidate parameter matching.",
+        "Defines the Effective matrix column.",
+        "Clarifies the hash-routing row_id.",
+        "Calls out that the approximate lower bound of the TAC-baseline gap remains positive."
+      ]
+    },
+    {
+      "id": "TAC-038",
+      "title": "Agentic objective experiment harness",
+      "status": "completed",
+      "acceptance": [
+        "Adds a no-leak agentic action-control task where correct action selection depends on carried TAC memory.",
+        "Adds optional world-model, reward-model, and reflection auxiliary heads over the best TAC backbone.",
+        "Compares TAC carry/reset/shuffled state against a parameter-matched vanilla transformer baseline.",
+        "Provides a CLI for policy-only, world, world-reward, and reflection variants.",
+        "Runs a multi-seed benchmark to decide whether the agentic objectives are worth adding."
+      ]
+    },
+    {
+      "id": "TAC-039",
+      "title": "Full layered agent architecture ablations",
+      "status": "completed",
+      "acceptance": [
+        "Adds testable switches for hybrid recurrent state, modular cognition experts, multi-store memory, planner/value head, and critic-weighted orchestration.",
+        "Keeps each layer optional so it can be compared against policy and memory-policy references.",
+        "Exposes the new variants through the agentic benchmark CLI.",
+        "Runs multi-seed ablations including an all-agentic stack.",
+        "Reports which layers are worth adding for small-lab commercial viability."
+      ]
+    },
+    {
+      "id": "TAC-040",
+      "title": "Memory-action validation experiments",
+      "status": "completed",
+      "acceptance": [
+        "Adds a direct contrastive loss where carried memory must beat shuffled memory for the correct action.",
+        "Reports longer budget curves for policy, memory_policy, and memory_contrastive variants.",
+        "Tests easier two-action and harder eight-action tool spaces.",
+        "Includes a small recurrent baseline on the same agentic control task.",
+        "Decides whether memory-action use is real enough to promote or still decorative."
+      ]
+    },
+    {
+      "id": "TAC-041",
+      "title": "Agentic architecture research recommendation",
+      "status": "completed",
+      "acceptance": [
+        "Surveys current agentic research across tool use, planning, memory, reflection, orchestration, and agent benchmarks.",
+        "Separates which mechanisms belong inside TAC from which should live in the external agent runtime.",
+        "Uses prior TAC experiment results to decide which agentic adapters are not yet worth promoting.",
+        "Recommends a small-lab commercially viable agent platform stack around the TAC core.",
+        "Records source links and next implementation steps in research.md and a dedicated architecture note."
+      ]
+    },
+    {
+      "id": "TAC-042",
+      "title": "Hybrid sequence mixer architecture experiment",
+      "status": "completed",
+      "acceptance": [
+        "Researches Jamba and BlackMamba-style hybrid sequence modeling as alternatives to pure attention.",
+        "Adds optional attention, state-only, hybrid, and alternating sequence mixer modes to TAC and vanilla baselines.",
+        "Adds BlackMamba-style sparse-state and sparse-hybrid ablations by combining state mixers with sparse program experts.",
+        "Runs multi-seed chunked memory benchmarks for the new variants.",
+        "Documents whether any hybrid mixer should replace the current best TAC core."
+      ]
+    },
+    {
+      "id": "TAC-043",
+      "title": "Recurrent sequence mixer architecture experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds Mamba-inspired selective-state, RWKV-inspired time-mix, and xLSTM-inspired recurrent sequence mixers.",
+        "Keeps each mixer optional through sequence_mixer_type without changing the current best TAC default.",
+        "Validates gradient flow and exact parameter-count accounting for each recurrent mixer.",
+        "Runs a multi-seed chunked memory benchmark against the current best attention TAC reference.",
+        "Documents whether any recurrent mixer is worth promoting into the default architecture."
+      ]
+    },
+    {
+      "id": "TAC-044",
+      "title": "Kaggle best TAC agentic training entrypoint",
+      "status": "completed",
+      "acceptance": [
+        "Adds a Kaggle-ready trainer for the current best TAC architecture and prepared agentic JSONL traces.",
+        "Supports Kaggle time-budget stopping before the 9-hour limit with frequent resumable checkpoints.",
+        "Uses mixed precision on CUDA when available and safe fp32 behavior on CPU.",
+        "Writes run manifest, metrics, last checkpoint, best checkpoint, and final summary artifacts.",
+        "Documents exact Kaggle run, smoke-test, resume, and upload-bundle commands."
+      ]
+    },
+    {
+      "id": "TAC-045",
+      "title": "Agentic training data difficulty audit",
+      "status": "completed",
+      "acceptance": [
+        "Inspects the prepared 1B corpus manifest, generated-data source, and representative train/eval samples.",
+        "Quantifies duplicate and normalized-template uniqueness in generated records.",
+        "Checks eval size, prompt diversity, and exact train/eval overlap in a train sample.",
+        "Explains why Kaggle next-token loss collapses quickly.",
+        "Documents whether the corpus is suitable for serious agentic training and what must be fixed."
+      ]
+    },
+    {
+      "id": "TAC-046",
+      "title": "HRM and engram Phase 1A orthogonality experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds opt-in program-memory orthogonality loss with memory_separation_weight.",
+        "Reports program-memory cosine interference during train and eval.",
+        "Exposes the setting in benchmark CLIs.",
+        "Runs a 3-seed weight sweep against the current hash_current_best baseline.",
+        "Decides whether separation should advance to the next HRM/engram integration phase."
+      ]
+    },
+    {
+      "id": "TAC-047",
+      "title": "HRM and engram Phase 1B reconsolidation experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds opt-in memory_reconsolidate with linear and MLP gate choices.",
+        "Updates retrieved program memory through a trainable read-conditioned gate.",
+        "Reports memory_reconsolidation_gate during train and eval.",
+        "Exposes reconsolidation settings in benchmark CLIs.",
+        "Runs a 3-seed linear-vs-MLP sweep against the current best baseline."
+      ]
+    },
+    {
+      "id": "TAC-048",
+      "title": "HRM and engram Phase 1C CREB allocation experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds opt-in memory_allocation_type=creb with alpha, beta, and gamma controls.",
+        "Tracks program age across carried identity state.",
+        "Reports dead-program rate, allocation age, and allocation load balance.",
+        "Exposes CREB allocation settings in benchmark CLIs.",
+        "Runs a 3-seed allocation sweep against the current best baseline."
+      ]
+    },
+    {
+      "id": "TAC-049",
+      "title": "Hard agentic corpus builder",
+      "status": "completed",
+      "acceptance": [
+        "Adds exact dedupe and normalized-template capping for prepared JSONL records.",
+        "Adds hard generated agentic traces for tool choice, repair, memory counterfactuals, stale-memory rejection, verification planning, and argument schema repair.",
+        "Builds a deduplicated hard train/eval corpus from the base prepared corpus plus hard traces.",
+        "Audits exact uniqueness, template uniqueness, record counts, token estimates, and domain balance.",
+        "Packages the final train/eval/manifest files for Kaggle upload."
+      ]
+    },
+    {
+      "id": "TAC-050",
+      "title": "Harder chunked-memory validation for CREB TAC",
+      "status": "completed",
+      "acceptance": [
+        "Adds explicit harder chunked-memory task variants to the batcher.",
+        "Wires task variants into the benchmark CLIs and result artifacts.",
+        "Tests value hiding and target placement across harder variants.",
+        "Runs current best, CREB k=1, and CREB k=3 across harder variants.",
+        "Updates the architecture recommendation based on harder-task validation."
+      ]
+    },
+    {
+      "id": "TAC-051",
+      "title": "Harder validation matrix for all implemented research mechanisms",
+      "status": "completed",
+      "acceptance": [
+        "Extracts the implemented research mechanisms from research.md into a benchmark variant matrix.",
+        "Runs all variants across longer, multi-key, delayed-query, noisy-key, and multi-hop chunked-memory tasks.",
+        "Uses three seeds per variant/task and writes resumable per-seed artifacts.",
+        "Aggregates overall rankings and per-task winners.",
+        "Updates research.md and the architecture recommendation based on the full harder validation."
+      ]
+    },
+    {
+      "id": "TAC-052",
+      "title": "CREB load-balancing validation",
+      "status": "completed",
+      "acceptance": [
+        "Adds a carried program_write_frequency state for CREB memory allocation.",
+        "Adds creb_delta and creb_frequency_decay controls to penalize repeatedly writing the same programs.",
+        "Preserves the new state through carry and shuffled-state intervention paths.",
+        "Runs CREB load-penalty variants against current_best and base_routing on the harder task suite.",
+        "Documents whether the load penalty fixes CREB dead-program rate enough to promote the architecture."
+      ]
+    },
+    {
+      "id": "TAC-053",
+      "title": "Promote BASE-routed TAC preset",
+      "status": "completed",
+      "acceptance": [
+        "Updates best_tac_config to use BASE-style balanced routing after harder-task validation.",
+        "Updates preset expectation tests and Kaggle training config tests.",
+        "Preserves hash routing as an explicit ablation.",
+        "Updates public docs to explain that hash won the original single-key slice but BASE won harder validation.",
+        "Runs the full local verification suite after promotion."
+      ]
+    },
+    {
+      "id": "TAC-054",
+      "title": "Sparse ensemble routing validation against BASE",
+      "status": "completed",
+      "acceptance": [
+        "Adds routing_type=sparse_ensemble with configurable routing_top_k.",
+        "Keeps k=1 equivalent to BASE routing and adds matched programs for k>1.",
+        "Exposes sparse ensemble routing through benchmark CLIs and the harder research matrix.",
+        "Runs sparse ensemble k=2/k=3/k=4 against BASE and hash controls on multi-key and noisy-key tasks.",
+        "Documents whether sparse ensemble routing should replace BASE as the harder-task default."
+      ]
+    },
+    {
+      "id": "TAC-055",
+      "title": "Pattern completion validation",
+      "status": "completed",
+      "acceptance": [
+        "Adds a carried engram pattern/value store to identity state.",
+        "Adds memory_read_type=pattern_completion and pattern_store_size controls.",
+        "Retrieves query memory by similarity to stored route patterns.",
+        "Runs pattern completion against BASE and sparse ensemble controls on multi-key and noisy-key tasks.",
+        "Documents whether route-pattern completion should be promoted."
+      ]
+    },
+    {
+      "id": "TAC-056",
+      "title": "Content-addressed cue/value memory validation",
+      "status": "completed",
+      "acceptance": [
+        "Adds memory_read_type=content_addressed and content_store_size controls.",
+        "Carries hidden cue/value tuples through IdentityState.",
+        "Retrieves query memory by similarity between query hidden state and stored cue hidden states.",
+        "Runs focused noisy-key validation against BASE routing, sparse ensemble, and route-pattern completion controls.",
+        "Documents whether content-addressed memory should become a noisy-key or general default candidate."
+      ]
+    },
+    {
+      "id": "TAC-057",
+      "title": "Content-addressed full harder-matrix promotion",
+      "status": "completed",
+      "acceptance": [
+        "Runs content_addressed_k1 and content_addressed_k2 against BASE routing on all five harder chunked-memory tasks.",
+        "Compares accuracy, carry-reset delta, carry-shuffled delta, effective runs, and TPS under the same harness.",
+        "Promotes the best validated direct-memory architecture into best_tac_config.",
+        "Keeps legacy benchmark variants pinned to program_memory reads so future ablations remain correctly labeled.",
+        "Documents the remaining multi-hop failure boundary and next architectural target."
+      ]
+    },
+    {
+      "id": "TAC-058",
+      "title": "Content-addressed inference cost profile",
+      "status": "completed",
+      "acceptance": [
+        "Adds an inference-only profiler for prefill, carried-query, and one-token decode paths.",
+        "Compares matched vanilla, BASE program memory, content_addressed_k1, and content_addressed_k2.",
+        "Sweeps sequence length and content store size.",
+        "Reports throughput ratios against BASE and vanilla.",
+        "Documents whether inference cost blocks the Kaggle/default architecture promotion."
+      ]
+    },
+    {
+      "id": "TAC-059",
+      "title": "Kaggle content-addressed training readiness",
+      "status": "completed",
+      "acceptance": [
+        "Verifies the Kaggle agentic trainer uses the promoted content_addressed_k1 preset.",
+        "Profiles persistent identity-state and content-store memory at Kaggle scale settings.",
+        "Logs content_addressed_hit during training and evaluation.",
+        "Keeps random JSONL evaluation windows reset by default unless carry-state is explicitly requested.",
+        "Updates Kaggle run documentation with the current architecture and memory profile command."
+      ]
+    },
+    {
+      "id": "TAC-060",
+      "title": "Iterative content retrieval multi-hop validation",
+      "status": "completed",
+      "acceptance": [
+        "Adds configurable content_read_steps for two-step content-addressed lookup.",
+        "Adds harder-matrix variants for iterative content retrieval.",
+        "Runs focused multi-hop validation against BASE and single-pass content-addressed controls.",
+        "Runs the full harder matrix to check direct-recall regression.",
+        "Documents whether iterative retrieval should replace the default or remain a multi-hop research branch."
+      ]
+    },
+    {
+      "id": "TAC-061",
+      "title": "Confidence-gated iterative retrieval validation",
+      "status": "completed",
+      "acceptance": [
+        "Adds content_read_gate_type=confidence for two-step content-addressed lookup.",
+        "Computes token-level content lookup confidence from cue similarity.",
+        "Adds harder-matrix variants for confidence-gated k1 and k2 retrieval.",
+        "Runs focused multi-hop validation against BASE, single-pass content, and learned iterative retrieval.",
+        "Documents whether cosine confidence is a sufficient halt/continue signal."
+      ]
+    },
+    {
+      "id": "TAC-062",
+      "title": "Synthesis-gated iterative retrieval validation",
+      "status": "completed",
+      "acceptance": [
+        "Adds content_read_gate_type=synthesis with query, first read, second read, difference, and product features.",
+        "Reports content_synthesis_gate as a benchmark metric.",
+        "Adds harder-matrix variants for synthesis k1 and k2 retrieval.",
+        "Runs focused multi-hop validation against BASE, single-pass content, and learned iterative retrieval.",
+        "Documents whether synthesis-gated retrieval passes the Phase 1A multi-hop go/no-go."
+      ]
+    },
+    {
+      "id": "TAC-063",
+      "title": "Automated full research funnel and synthesis promotion",
+      "status": "completed",
+      "acceptance": [
+        "Runs every implemented harder-matrix variant in an automated stage-1 screen.",
+        "Selects leading candidates and controls from the screen for full 3-seed confirmation.",
+        "Runs the selected candidates across all five harder tasks at 120 training steps.",
+        "Promotes the best aggregate default into best_tac_config.",
+        "Documents aggregate winner, task-specific specialists, and remaining multi-hop boundary."
+      ]
+    },
+    {
+      "id": "TAC-072",
+      "title": "Attention and IdentityState fusion experiment",
+      "status": "completed",
+      "acceptance": [
+        "Adds opt-in local attention windowing without changing the promoted default.",
+        "Adds an opt-in identity-gated sparse attention path from token program assignments.",
+        "Adds an opt-in identity-first K/V projection path.",
+        "Compares local attention, compressed identity memory, sparse identity attention, and identity-first attention in the existing harder benchmark harness.",
+        "Documents hypotheses, observed failures, attempted fixes, and the recommended next architecture."
+      ]
+    },
+    {
+      "id": "TAC-073",
+      "title": "Rigorous full-matrix attention and IdentityState fusion validation",
+      "status": "completed",
+      "acceptance": [
+        "Runs all attention/IdentityState fusion variants across the full five-task harder chunked-memory matrix.",
+        "Uses three seeds per variant at the standard 120-step budget.",
+        "Compares mean carry, effectiveness count, carry-reset delta, carry-shuffled delta, baseline gap, and throughput.",
+        "Documents whether compressed memory, sparse identity attention, local attention, or identity-first attention should be promoted.",
+        "Keeps best_tac_config unchanged unless the full matrix justifies promotion."
+      ]
+    },
+    {
+      "id": "TAC-074",
+      "title": "Identity-first Kaggle Run 3 preflight and memory inspection tools",
+      "status": "completed",
+      "acceptance": [
+        "Confirms best_tac_config uses identity-first attention with anti-collapse losses enabled.",
+        "Exposes a clearly named program_ortho metric for monitoring program differentiation.",
+        "Adds a checkpoint memory inspection tool that prints program activity and decoded content-store cue/value projections for a prompt.",
+        "Adds a checkpoint harder-matrix evaluator for carry/reset/shuffled synthetic probes after Kaggle runs finish.",
+        "Runs a local smoke preflight that trains the identity-first anti-collapse config, logs diagnostics, and writes checkpoints."
+      ]
+    },
+    {
+      "id": "TAC-075",
+      "title": "Functional specialization analysis on existing checkpoints",
+      "status": "completed",
+      "acceptance": [
+        "Adds a checkpoint analysis tool that records per-input top-k program attribution by trace category.",
+        "Computes mutual information between dominant program ID and trace category.",
+        "Runs program knockout ablations and reports overall and category-specific loss deltas.",
+        "Runs the analysis on the strongest local checkpoint available and writes artifacts.",
+        "Documents that the decisive analysis should be rerun on the downloaded Kaggle best.pt checkpoint."
+      ]
+    },
+    {
+      "id": "TAC-076",
+      "title": "Fuse Run 3 training with specialization analysis gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds explicit Run 3 specialization-analysis CLI flags to the Kaggle trainer.",
+        "Runs program-specialization analysis automatically against best.pt at the end of training when enabled.",
+        "Writes specialization JSON and attribution CSV into the output directory and includes paths in final_summary.json.",
+        "Updates Kaggle runbook/bundle instructions so Run 3 produces both checkpoint and functional-specialization evidence.",
+        "Runs a fused local smoke preflight to verify checkpointing plus specialization artifacts."
+      ]
+    },
+    {
+      "id": "TAC-077",
+      "title": "Launch fused Run 3 on Kaggle",
+      "status": "completed",
+      "acceptance": [
+        "Prepare a Kaggle kernel package that carries the current trainer code directly.",
+        "Attach the hard-agentic corpus dataset and launch identity-first Run 3 with the fused specialization gate enabled.",
+        "Download or report the Kaggle run output artifacts once the kernel finishes."
+      ],
+      "kaggle_kernel": "jeffwilliamsr/tac-identity-first-run-3-fused",
+      "status_url": "https://www.kaggle.com/code/jeffwilliamsr/tac-identity-first-run-3-fused",
+      "machine_shape": "NvidiaTeslaT4",
+      "latest_version": 4,
+      "launch_note": "Version 4 was pushed with --accelerator NvidiaTeslaT4 and a startup guard requiring two T4 GPUs before training.",
+      "result_artifacts": "runs/kaggle_results/tac_identity_first_run3_fused/best_tac_agentic_identity_first_run3",
+      "result_summary": "Completed 9999/20000 steps before time stop; best eval loss 0.16450582724064589 at step 6000; specialization MI 0.0 with all sampled records routed to program 31."
+    },
+    {
+      "id": "TAC-078",
+      "title": "Distillation dataset family builder",
+      "status": "completed",
+      "acceptance": [
+        "Adds a deterministic local generator for coding Evol-Instruct, OSS-Instruct, agentic trajectories, execution repair, knowledge synthesis, preference pairs, and curriculum metadata.",
+        "Writes schema-rich raw JSONL, per-stream prepared JSONL, combined train/eval prepared JSONL, DPO preference-pair files, and a manifest.",
+        "Includes Pass@k-derived difficulty metadata and trainable-view flags for SFT, KD, DPO, RL execution, and curriculum sampling.",
+        "Builds an initial all-stream dataset under runs/distillation_datasets.",
+        "Has focused automated tests for stream coverage and generated artifact contracts."
+      ]
+    },
+    {
+      "id": "TAC-079",
+      "title": "Run 3 routing-collapse diagnostics",
+      "status": "in_progress",
+      "acceptance": [
+        "Adds a checkpoint diagnostic that distinguishes selected-program argmax artifacts from full routing/activation distributions.",
+        "Reports whether BASE routing makes single-record final-token attribution collapse to a deterministic position-derived program.",
+        "Computes raw activation entropy, selected-score entropy, program-count histograms, and program-category MI on both selected and raw activation argmaxes.",
+        "Supports forced-program inference and targeted program knockout against labeled records.",
+        "Runs the diagnostic and the five-task harder checkpoint matrix against the downloaded Run 3 best.pt artifact."
+      ]
+    },
+    {
+      "id": "TAC-088",
+      "title": "USEF-derived authority and curriculum reporting",
+      "status": "completed",
+      "acceptance": [
+        "Adds a package-level authority report that treats verified memory and verified execution as first-class measurable authority modes.",
+        "Counts false trusted authority separately from wrong proposals or rejected guesses.",
+        "Flags trusted cross-domain authority leakage when a source domain is accepted in a different target domain.",
+        "Adds verifier cases that compare expected and observed outputs and emit authority events.",
+        "Writes schema-versioned curriculum manifests, verifier cases, and authority-event JSONL artifacts.",
+        "Has focused automated tests for authority metrics, contamination detection, verifier scoring, and durable artifact contracts."
+      ]
+    },
+    {
+      "id": "TAC-089",
+      "title": "Authority-gated TAC routing architecture",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in authority_gated routing_type without changing promoted defaults.",
+        "Derives authority features from program activation and persistent stability state.",
+        "Predicts program route scores, five authority modes, verifier-required decisions, and halt probability.",
+        "Routes top-k programs under the existing energy budget and sink-program constraints.",
+        "Exposes authority logits, probabilities, selected authority IDs, verifier-required flags, halt probability, and benchmark metrics through TAC auxiliary outputs.",
+        "Counts authority-gated router parameters in estimate_tac_parameter_count.",
+        "Allows authority_gated selection from local Kaggle benchmark and training entrypoints.",
+        "Adds straight-through training signal so authority-gated program scores can learn from normal language-model loss while preserving hard top-k forward routing.",
+        "Adds optional supervised authority-mode, verifier-required, and halt losses for verifier-grounded curriculum targets.",
+        "Includes authority_gated in the harder research and program-specialization benchmark matrices.",
+        "Has automated tests for forward contract, authority output shapes, energy budget preservation, trainable authority routing, supervised authority losses, benchmark matrix coverage, and parameter estimation."
+      ]
+    },
+    {
+      "id": "TAC-090",
+      "title": "Run 5 capability sanity gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds a local capability sanity matrix comparing vanilla, base TAC, and low-weight semantic TAC on the same byte-level corpus.",
+        "Reports initial/final eval loss, perplexity, accuracy, throughput, loss improvement, category-route loss, and a pass/blocked/inconclusive Run 5 gate.",
+        "Provides a reusable experiment CLI that writes JSON and Markdown artifacts under runs/benchmarks.",
+        "Keeps best_tac_config unchanged until the capability gate passes with meaningful settings.",
+        "Adds a named Run 5 capability preset with low-weight semantic routing and identity-field parameter share at or below 50%.",
+        "Allows the Kaggle/local trainer to select the Run 5 candidate with --preset run5_capability.",
+        "Has automated tests for artifact generation, blocked semantic-objective regression detection, Run 5 preset fields, identity-share gate, and trainer preset selection."
+      ]
+    },
+    {
+      "id": "TAC-091",
+      "title": "Run 5 pathfinder sweep and corrected candidate",
+      "status": "completed",
+      "acceptance": [
+        "Builds a Run 5 pathfinder grid across program counts, semantic objective weights, base routing, semantic routing, authority-gated routing, and vanilla proxies.",
+        "Reports selected-route MI, activation MI, route entropy, active programs, identity-share, loss, accuracy, perplexity, throughput, and a ranked recommendation.",
+        "Rejects candidates that exceed the 50% identity-field parameter-share gate.",
+        "Fixes and tests the pathfinder runner so candidate-specific n_programs settings are actually used.",
+        "Documents the invalid first pathfinder artifact and the corrected fixed artifact separately.",
+        "Updates the Run 5 training preset to the corrected pathfinder recommendation: p12 base_semantic with category_route_weight 0.1.",
+        "Applies run5_capability training defaults through the trainer preset, including MI objective and 2000 warmup steps.",
+        "Has automated tests for variant-grid coverage, candidate program-count propagation, MI calculation, ranking rejection logic, preset training kwargs, and trainer preset defaults."
+      ]
+    },
+    {
+      "id": "TAC-092",
+      "title": "Run 5 real-scale capability validation",
+      "status": "completed",
+      "acceptance": [
+        "Runs a local smoke of kaggle/train_best_tac_agentic.py --preset run5_capability and verifies p12 base_semantic, category_route_weight 0.1, MI objective, warmup defaults, and specialization checkpoint wiring.",
+        "Adds a regression test proving the Kaggle code bundle imports tac_transformer successfully after zip extraction.",
+        "Includes authority.py, capability.py, capability sanity docs, and Run 5 pathfinder docs/scripts in the Kaggle code bundle.",
+        "Uploads a private Run 5 code dataset built from the corrected bundle.",
+        "Launches the p12/w0.1 Run 5 Kaggle kernel on the dual-T4 path with periodic specialization checkpoints at 2k/5k/10k/20k and final specialization analysis.",
+        "Creates an automated heartbeat monitor for status audits, completion artifact pull, ERROR repair, and resume handling.",
+        "On completion, inspects final_summary.json, metrics.jsonl, specialization checkpoints, and final specialization artifacts to decide whether Run 5 restores capability and produces functional specialization."
+      ],
+      "kaggle_kernel": "mathewlincoln/tac-run-5-capability-p12-w0-1-20k",
+      "status_url": "https://www.kaggle.com/code/mathewlincoln/tac-run-5-capability-p12-w0-1-20k",
+      "code_dataset": "mathewlincoln/tac-run5-capability-code-2026-06-02",
+      "data_dataset": "mathewlincoln/tac-run4-semantic-mi-data-2026-06-01",
+      "launch_note": "Version 1 pushed on 2026-06-02 after local preset smoke, extracted bundle import regression, wrapper compile, JSON validation, and private code dataset readiness check.",
+      "monitor_automation": "monitor-tac-run-5",
+      "completion_status": "KernelWorkerStatus.COMPLETE",
+      "result_artifacts": "runs/kaggle_results/tac_run5_capability_20k_latest",
+      "verdict": "completed_failed_capability_gate",
+      "result_summary": {
+        "completed_steps": 9586,
+        "target_steps": 20000,
+        "stopped_for_time": true,
+        "best_eval_loss": 6.328312933444977,
+        "uniform_vocab512_ce": 6.238324625039508,
+        "latest_next_token_loss": 6.36531416575114,
+        "latest_program_memory_cosine": 0.9118390281995138,
+        "latest_gradient_norm": 0.0,
+        "latest_grad_scaler_scale": 0.0,
+        "identity_parameter_share": 0.47906522996597584,
+        "specialization_checkpoint_steps": [
+          2000,
+          5000
+        ],
+        "specialization_mi_bits": 0.41154661727406927,
+        "specialization_normalized_mi": 0.23005711655058203,
+        "specialization_program_entropy_bits": 1.788888878747568,
+        "specialization_dominant_program": "program_3_57_of_96_records",
+        "final_specialization_skipped_reason": "stopped_for_time"
+      },
+      "follow_up_gate": "Run 5B optimizer/precision sanity repair before objective or architecture promotion: validate nonzero gradients, avoid fp16 scaler collapse, sanity-check a vanilla baseline on the same trainer path, and require capability recovery before interpreting final specialization and knockout artifacts."
+    },
+    {
+      "id": "TAC-093",
+      "title": "TAC-aware optimizer across training use cases",
+      "status": "completed",
+      "acceptance": [
+        "Adds a public TAC optimizer factory that returns checkpoint-compatible torch.optim.AdamW.",
+        "Groups trainable parameters exactly once into core, identity, router, memory, and head categories with decay/no-decay subgroups.",
+        "Supports per-category learning-rate multipliers while keeping conservative 1.0 defaults for comparability.",
+        "Preserves TAC learning-rate multipliers in the Kaggle warmup/cosine scheduler.",
+        "Falls back cleanly for vanilla transformer and recurrent baseline models.",
+        "Replaces raw AdamW construction across local training, chunked memory, capability/pathfinder research, agentic training, Kaggle training, profiling, and timing experiments.",
+        "Exports the optimizer API from tac_transformer and includes it in the Kaggle code bundle.",
+        "Documents the grouping contract and integration coverage.",
+        "Has automated tests for parameter coverage, no duplicate groups, LR multipliers, no-decay behavior, vanilla fallback, training-step usability, scheduler preservation, and bundle extraction import."
+      ]
+    },
+    {
+      "id": "TAC-094",
+      "title": "Deferred TAC objective and efficiency research priorities",
+      "status": "completed",
+      "acceptance": [
+        "Records that Run 4 does not prove next-token prediction is fundamentally incompatible with TAC.",
+        "Frames TAC as learning computational organization rather than only statistical prediction.",
+        "Adds a working hypothesis table separating capacity share, routing objective strength, NTP mismatch, and other causes.",
+        "Defines escalation criteria for when alternative objectives should become a primary research track.",
+        "Documents deferred objective tracks: latent-state prediction, predictive coding, program contrastive learning, route-and-reconstruct, and computation prediction.",
+        "Documents a neuroscience-inspired efficiency roadmap covering incremental state evolution, sparse activation, hierarchical update schedules, event-driven retrieval, prediction-error updates, and macro-program formation.",
+        "Keeps Run 5 as the active capability test and marks the new tracks as deferred priorities rather than immediate architecture conclusions."
+      ]
+    },
+    {
+      "id": "TAC-095",
+      "title": "Local TAC objective and efficiency research matrix",
+      "status": "completed",
+      "acceptance": [
+        "Adds tested local research utilities for latent-state, predictive-coding, useful program-contrastive, route-reconstruction, and computation-prediction losses.",
+        "Adds macro-program repetition/compression analysis for routed program sequences.",
+        "Adds a benchmark script that trains objective variants on the hard agentic corpus without touching the active Kaggle run.",
+        "Runs a multi-seed local objective matrix comparing NTP, Run 5 MI regularization, and deferred alternative objectives.",
+        "Runs local efficiency probes for full updates, serving no-aux mode, disabled content updates, periodic content updates, and event-error updates.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks and records a capability/specialization/efficiency verdict in research.md.",
+        "Keeps any conclusions local and provisional until Kaggle Run 5 completes."
+      ]
+    },
+    {
+      "id": "TAC-096",
+      "title": "Content-memory update-frequency isolation research",
+      "status": "completed",
+      "acceptance": [
+        "Adds a local benchmark harness that separates context-phase content writes from query/decode-phase content upkeep.",
+        "Includes tested schedule helpers for full updates, query-skip updates, no updates, and periodic segmented-context updates.",
+        "Runs a multi-task, multi-seed local matrix across chunked recall tasks without touching the active Kaggle Run 5 kernel.",
+        "Reports carry/reset/shuffled value accuracy, content-addressed hit, content gate/reconsolidation metrics, throughput, and update fractions by schedule.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks.",
+        "Updates research.md, progress.txt, and prd.json with a provisional recommendation for the next content-memory architecture experiment."
+      ]
+    },
+    {
+      "id": "TAC-097",
+      "title": "Prediction-error content-write threshold sweep",
+      "status": "completed",
+      "acceptance": [
+        "Extends the content-update benchmark with event-error context schedules across multiple prediction-loss thresholds.",
+        "Adds tested helper logic for first-segment seeding and previous-loss threshold updates.",
+        "Runs a multi-task, multi-seed local threshold matrix across chunked recall tasks without touching the active Kaggle Run 5 kernel.",
+        "Reports the A1 gate explicitly: write reduction, context-loss degradation, carry degradation, content hit, and throughput.",
+        "Documents the invalid one-token-segment artifact separately from the corrected two-token-segment artifact.",
+        "Records an implementation-ready decision: keep query_skip, block segmented event-error writes, and redesign A1 as an in-forward content_write_mask/write_policy experiment."
+      ]
+    },
+    {
+      "id": "TAC-098",
+      "title": "In-forward prediction-error content-write mask",
+      "status": "completed",
+      "acceptance": [
+        "Adds a public content_write_mask path through TACTransformerLM, TACTransformerBlock, and IdentityField without changing default behavior.",
+        "Masks content-store cue/value writes inside a full prefill forward instead of segmenting context.",
+        "Adds benchmark schedules for full-context prediction-error masks across multiple thresholds.",
+        "Runs a multi-task, multi-seed local masked-threshold matrix across chunked recall tasks.",
+        "Reports the A1 gate against the corrected implementation surface: write reduction, context-loss degradation, carry degradation, content hit, and throughput.",
+        "Records the decision that raw CE thresholding is not the balanced solution, while content_write_mask remains the right API for future learned or retrieval-aware write gates.",
+        "Has automated tests for masked content writes, invalid mask shapes, prediction-error mask generation, and masked full-context benchmark scheduling."
+      ]
+    },
+    {
+      "id": "TAC-099",
+      "title": "Retrieval-aware content-write mask research",
+      "status": "completed",
+      "acceptance": [
+        "Adds retrieval-aware full-context write-mask schedules for top 25%, 50%, and 75% cue/value pair writes.",
+        "Implements a tested retrieval_aware_content_write_mask that combines cue loss, value loss, and hidden-state novelty while preserving the first pair.",
+        "Runs a multi-task, multi-seed local matrix across chunked recall tasks without touching the active Kaggle Run 5 kernel.",
+        "Reports the A1 gate for retrieval-aware sparse writes: write reduction, context-loss degradation, carry degradation, carried-state advantage, content hit, and throughput.",
+        "Tightens the aggregate sparse-write decision gate so degenerate full-update carry cannot pass as a useful sparse-write solution.",
+        "Records the decision that retrieval-aware fixed top-k scoring improves the tradeoff over raw CE thresholding but still does not meet the balanced A1 gate.",
+        "Defines the next implementation-ready candidate as a learned or calibrated write gate trained against carried-state preservation, cue/value usefulness, and multi-key overwrite risk."
+      ]
+    },
+    {
+      "id": "TAC-100",
+      "title": "Structural boundary sparse-write oracle",
+      "status": "completed",
+      "acceptance": [
+        "Adds a structural_pair_top_4 schedule on the corrected full-prefill content_write_mask path.",
+        "Implements and tests structural_pair_content_write_mask for early odd-position cue/value boundary writes.",
+        "Runs a multi-task, multi-seed local matrix comparing full update, query_skip, dense CE masking, retrieval-aware masking, and structural boundary masking.",
+        "Reports the sparse context-write gate against A1 criteria: write reduction, context-loss degradation, carry degradation, carried-state advantage, content hit, and throughput.",
+        "Demonstrates the first local A1 pass: structural_pair_top_4 writes about 12.9% of pairs, preserves context loss, and improves carry over full update.",
+        "Records the decision that the production architecture should learn cue/value boundary and overwrite-risk gating rather than use the task-oracle mask directly."
+      ]
+    },
+    {
+      "id": "TAC-101",
+      "title": "Calibrated boundary write-gate probe",
+      "status": "completed",
+      "acceptance": [
+        "Adds a calibrated_boundary_top_4 schedule on the corrected full-prefill content_write_mask path.",
+        "Implements a tiny trained BoundaryWriteGate with feature extraction, supervised calibration against structural sparse-write targets, and top-k mask generation.",
+        "Adds focused tests for boundary-gate features, calibration recovery, and schedule evaluation.",
+        "Runs a multi-task, multi-seed local matrix comparing full update, query_skip, structural oracle, and calibrated boundary gating.",
+        "Reports that calibrated_boundary_top_4 passes aggregate sparsity with 12.9% writes and positive mean carry delta, but regresses multi-key carry.",
+        "Records the decision that the production A1 gate must add hidden-state/retrieval and overwrite-risk features plus task-level no-regression gates before promotion."
+      ]
+    },
+    {
+      "id": "TAC-102",
+      "title": "Ranking-trained boundary write gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds a ranked_boundary_top_4 schedule on the corrected full-prefill content_write_mask path.",
+        "Implements train_ranked_boundary_write_gate with a top-k margin ranking objective plus BCE stabilizer against structural sparse-write targets.",
+        "Adds focused tests for ranked boundary recovery and ranked schedule evaluation.",
+        "Runs a multi-task, multi-seed local matrix comparing full update, query_skip, structural oracle, BCE-calibrated boundary gating, and ranking-trained boundary gating.",
+        "Reports that ranked_boundary_top_4 is the strongest learned local A1 candidate so far: 12.9% writes, positive aggregate carry delta, and multi-key no-regression versus full update.",
+        "Records the decision to promote ranking-trained boundary gating as the next opt-in implementation candidate, while requiring hidden-state/retrieval/overwrite features and multi-hop capability gates before production promotion."
+      ]
+    },
+    {
+      "id": "TAC-103",
+      "title": "Hybrid ranked sparse-write gate probe",
+      "status": "completed",
+      "acceptance": [
+        "Adds a hybrid_ranked_boundary_top_4 schedule on the corrected full-prefill content_write_mask path.",
+        "Implements hybrid boundary features combining position/parity/tokens with token-loss, next-token-loss, hidden-novelty, cue-recurrence, and value-recurrence probe signals.",
+        "Implements train_hybrid_ranked_boundary_write_gate with the TAC-102 top-k margin ranking objective over the richer features.",
+        "Adds focused tests for hybrid feature extraction, trained recovery, and schedule evaluation.",
+        "Runs a multi-task, multi-seed local matrix comparing full update, query_skip, structural oracle, TAC-102 ranked boundary, and hybrid ranked boundary gating.",
+        "Reports that hybrid_ranked_boundary_top_4 is the strongest aggregate learned A1 candidate so far: 12.9% writes, context-loss ratio 1.0021, carry 0.2625, and +0.0847 carry delta versus full update.",
+        "Records the decision that hybrid ranked boundary gating is the next opt-in prototype, but production promotion remains blocked by multi-hop no-regression and noisy-key stability requirements."
+      ]
+    },
+    {
+      "id": "TAC-104",
+      "title": "Sparse write-budget sweep",
+      "status": "completed",
+      "acceptance": [
+        "Adds structural, ranked-boundary, and hybrid-ranked top-6/top-8 schedules on the corrected content_write_mask path.",
+        "Identifies and fixes schedule-order dependence in learned gate training by adding deterministic schedule-specific RNG seeding.",
+        "Adds a focused regression test proving ranked-boundary schedule results are independent of prior learned-gate training.",
+        "Runs a multi-task, multi-seed local matrix comparing top-4/top-6/top-8 sparse write budgets across structural, ranked, and hybrid gates.",
+        "Reports that larger write budgets increase content-hit but reduce aggregate carry and introduce multi-key interference.",
+        "Records the decision to keep top-4 hybrid/ranked boundary gating as the A1 sparse-write prototype and reject top-6/top-8 as production candidates until a separate multi-hop retrieval-chain mechanism exists."
+      ]
+    },
+    {
+      "id": "TAC-105",
+      "title": "Two-step retrieval-chain probe",
+      "status": "completed",
+      "acceptance": [
+        "Adds query_skip_chain_k2, ranked_boundary_top_4_chain_k2, and hybrid_ranked_boundary_top_4_chain_k2 benchmark schedules.",
+        "Implements memory_chain_steps propagation through schedule evaluation and query readout.",
+        "Implements chained_memory_readout that feeds the first memory prediction back as the second-hop key.",
+        "Adds focused tests for deterministic two-step memory readout and sparse hybrid chain schedule evaluation.",
+        "Runs a multi-task, multi-seed local matrix comparing normal query readout and chain-k2 readout on full-context and sparse top-4 write schedules.",
+        "Reports that chain-k2 improves the multi-hop slice but sharply regresses single-key, multi-key, delayed-query, and aggregate carry.",
+        "Records the decision to reject always-on chain-k2 as a default policy and promote a learned halt/continue verifier gate as the next multi-hop mechanism."
+      ]
+    },
+    {
+      "id": "TAC-106",
+      "title": "Cue-presence conditional chain gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds hybrid_ranked_boundary_top_4_cond_chain_k2 as a sparse-write conditional retrieval-chain schedule.",
+        "Propagates exact context content_write_mask data into query evaluation for verifier-style chain decisions.",
+        "Implements memory_chain_policy=predicted_written_cue and predicted_token_is_written_cue to continue only when the first memory prediction is also a written cue.",
+        "Adds memory_chain_fraction diagnostics to query metrics.",
+        "Adds focused tests for direct-value halting, bridge-key continuation, and sparse conditional-chain schedule evaluation.",
+        "Runs a multi-task, multi-seed matrix comparing normal top-4 readout, always-on chain-k2, and cue-presence conditional chain-k2.",
+        "Reports that cue-presence conditional chaining repairs most of the always-on direct-recall collapse but still regresses multi-key and fails to improve multi-hop.",
+        "Records the decision to reject cue-presence conditional chaining as final and require a learned verifier/halt head with bridge-needed labels next."
+      ]
+    },
+    {
+      "id": "TAC-107",
+      "title": "Oracle target-path chain positive control",
+      "status": "completed",
+      "acceptance": [
+        "Adds hybrid_ranked_boundary_top_4_oracle_chain_k2 as a sparse-write two-step retrieval-chain positive-control schedule.",
+        "Implements memory_chain_policy=oracle_written_target using predicted_token_reaches_written_target over written cue/value pairs and query value targets.",
+        "Adds focused tests for oracle target-path detection, direct-value halting, bridge-path continuation, and sparse oracle-chain schedule evaluation.",
+        "Runs a multi-task, multi-seed local matrix comparing full_update, query_skip, plain hybrid top-4, always-on chain-k2, cue-presence conditional chain-k2, and oracle target-path chain-k2.",
+        "Reports that the oracle chain keeps context writes at 12.9%, disables query writes, improves aggregate carry over full update by +0.0972, repairs the TAC-106 multi-key blocker, and improves multi-hop over full update.",
+        "Records the decision that oracle_written_target is not deployable because it uses target labels, but validates TAC-108: a learned verifier/halt head should approximate the oracle decision without label access."
+      ]
+    },
+    {
+      "id": "TAC-108",
+      "title": "Learned verifier chain gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds hybrid_ranked_boundary_top_4_learned_chain_k2 as a supervised verifier-gated retrieval-chain schedule.",
+        "Implements ChainVerifierGate, train_chain_verifier_gate, chain_verifier_features, apply_chain_verifier_gate, and memory_chain_policy=learned_verifier.",
+        "Trains verifier labels from the TAC-107 oracle target-path criterion while restricting inference to label-free first-read/query/context features.",
+        "Adds focused tests for verifier feature extraction, gate application, learned query chaining, and sparse learned-chain schedule evaluation.",
+        "Runs a multi-task, multi-seed matrix comparing learned verifier chaining against full_update, query_skip, plain hybrid top-4, cue-presence conditional chaining, and oracle target-path chaining.",
+        "Reports that the learned verifier nearly matches oracle aggregate carry and beats plain hybrid top-4 aggregate carry while keeping 12.9% context writes and no query writes.",
+        "Records the blocker that the threshold-0 learned verifier over-continues on multi-hop and underperforms plain hybrid top-4 on that slice, requiring calibration or precision-weighted training before promotion."
+      ]
+    },
+    {
+      "id": "TAC-109",
+      "title": "Learned verifier threshold sweep",
+      "status": "completed",
+      "acceptance": [
+        "Adds learned verifier threshold schedules for thresholds 1.0, 2.0, and 3.0.",
+        "Propagates chain_gate_threshold into ChainVerifierGate and learned_verifier query selection.",
+        "Adds a focused sparse-schedule test for a thresholded learned verifier schedule.",
+        "Runs a multi-task, multi-seed matrix comparing thresholded learned verifiers against full_update, query_skip, plain hybrid top-4, oracle target-path chaining, and threshold-0 learned verifier chaining.",
+        "Reports that threshold 0.0 remains the best learned aggregate and thresholds 1.0 through 3.0 reduce aggregate carry.",
+        "Reports that no static threshold fixes the multi-hop blocker; higher thresholds reduce chain fraction but also filter useful bridge continuations.",
+        "Records the decision to reject static threshold calibration and move next to a counterfactual second-read validator."
+      ]
+    },
+    {
+      "id": "TAC-110",
+      "title": "Counterfactual second-read validator",
+      "status": "completed",
+      "acceptance": [
+        "Adds hybrid_ranked_boundary_top_4_counterfactual_chain_k2 as a sparse-write two-step retrieval-chain schedule.",
+        "Implements memory_chain_policy=counterfactual_confidence and counterfactual_second_read_is_better to accept a second read only when confidence, margin, and prediction-change gates pass.",
+        "Adds counterfactual_min_confidence_gain and counterfactual_min_margin_gain schedule fields and propagates them through query evaluation.",
+        "Adds focused tests for confidence-gain validation, counterfactual query chaining, sparse counterfactual schedule evaluation, and shared write-gate seed groups.",
+        "Fixes chain-policy comparison methodology by adding write_gate_seed_group so hybrid top-4 chain variants share the base trained sparse write gate.",
+        "Runs an initial counterfactual matrix and records it as superseded because a zero-chain policy still differed from the base schedule due to the write-gate seed confound.",
+        "Runs a corrected shared-gate multi-task, multi-seed matrix comparing full_update, query_skip, hybrid top-4, oracle chaining, learned chaining, thresholded learned chaining, and counterfactual chaining.",
+        "Reports that counterfactual confidence validation is safe but too conservative: it selects zero second reads and exactly matches plain hybrid top-4 carry at 0.3861.",
+        "Reports that the corrected oracle target-path chain remains a non-deployable diagnostic ceiling at 0.3944 aggregate carry and 0.0167 chain fraction, while learned verifier variants underperform plain hybrid top-4 on aggregate and multi-hop.",
+        "Records the decision to keep hybrid_ranked_boundary_top_4 as the best current deployable sparse-write baseline and move next to a deployable bridge-target verifier with richer inference-time evidence."
+      ]
+    },
+    {
+      "id": "TAC-111",
+      "title": "Bridge-target verifier",
+      "status": "completed",
+      "acceptance": [
+        "Adds hybrid_ranked_boundary_top_4_bridge_chain_k2 as a sparse-write bridge-verifier retrieval-chain schedule.",
+        "Implements memory_chain_policy=bridge_verifier and bridge_verifier_features with first-read and candidate second-read evidence.",
+        "Extends train_chain_verifier_gate so bridge-verifier schedules train a 16-feature gate against oracle target-path labels while using only label-free features at inference.",
+        "Adds focused tests for bridge feature exposure, query-time bridge verifier selection, and sparse bridge schedule evaluation.",
+        "Runs a corrected shared-gate multi-task, multi-seed matrix comparing full_update, query_skip, hybrid top-4, oracle chaining, learned chaining, counterfactual chaining, and bridge-verifier chaining.",
+        "Reports that bridge-verifier chaining improves delayed_query to 0.6250 and noisy_key to 0.0764, showing useful second-read signal.",
+        "Reports that bridge-verifier chaining is rejected as final because aggregate carry 0.3847 remains below hybrid top-4 0.3861, single_key and multi_key regress, and multi_hop drops to 0.0417 with over-continuation at 0.1111 chain fraction.",
+        "Records the decision to keep the bridge feature surface but require TAC-112 to add false-positive cost and direct-recall guards before any chain policy can replace plain hybrid top-4."
+      ]
+    },
+    {
+      "id": "TAC-112",
+      "title": "Precision-biased bridge gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds hybrid_ranked_boundary_top_4_bridge_precision_chain_k2 as a sparse-write precision-biased bridge-verifier schedule.",
+        "Adds chain_gate_positive_weight and chain_gate_negative_weight schedule fields and applies them in train_chain_verifier_gate's weighted BCE objective.",
+        "Adds a focused sparse-schedule test confirming the precision bridge schedule uses a negative verifier weight above 1.0.",
+        "Runs a corrected shared-gate multi-task, multi-seed matrix comparing full_update, query_skip, hybrid top-4, oracle chaining, counterfactual chaining, unweighted bridge chaining, and precision bridge chaining.",
+        "Reports that precision weighting reduces aggregate chain fraction from 0.0431 to 0.0042 but lowers aggregate carry from 0.3847 to 0.3819.",
+        "Reports that precision bridge remains below hybrid top-4 on aggregate, preserves single_key and multi_key regressions, loses noisy-key gains, and worsens multi_hop to 0.0347.",
+        "Records the decision to reject simple weighted BCE plus thresholding and move next to an explicit direct-answer veto or constrained two-stage chain policy."
+      ]
+    },
+    {
+      "id": "TAC-113",
+      "title": "Run 5B optimizer precision sanity repair",
+      "status": "completed",
+      "acceptance": [
+        "Adds run5b_capability_config and run5b_capability_training_kwargs as a Run 5-comparable preset that preserves p12 base_semantic routing while forcing fp32 by default.",
+        "Adds trainer support for --preset run5b_capability without changing explicit user precision overrides.",
+        "Adds optimizer-health telemetry that records gradient_norm, precision, grad_scaler_scale, min_gradient_norm, and pass/fail reasons in latest_metrics.",
+        "Adds a fail-on-unhealthy-optimization gate for Run 5B so zero-gradient or collapsed fp16 scaler runs fail early instead of producing ambiguous long-run artifacts.",
+        "Persists the optimizer-health gate settings in run_manifest.json.",
+        "Adds focused tests for Run 5B preset defaults, trainer config selection, and a two-step CPU smoke run with fp32, nonzero gradient telemetry, grad_scaler_scale=1.0, and passing optimizer health.",
+        "Records the decision that Run 5B is a local trainer repair, not architecture promotion evidence; the next external gate must complete a capability-plus-specialization run before TAC architecture conclusions are promoted."
+      ]
+    },
+    {
+      "id": "TAC-114",
+      "title": "Run 5B Kaggle capability launch",
+      "status": "blocked",
+      "acceptance": [
+        "Builds a fresh Run 5B code dataset from the repaired trainer and presets.",
+        "Creates runs/kaggle_run5b_code_2026_06_03 with dataset metadata for mathewlincoln/tac-run5b-capability-code-2026-06-03.",
+        "Creates runs/kaggle_run5b_capability_2026_06_03 with a Run 5B kernel wrapper and kernel metadata for mathewlincoln/tac-run-5b-capability-p12-fp32-20k.",
+        "Validates Run 5B dataset metadata, kernel metadata, wrapper py_compile, and presence of run5b_capability/optimization_health symbols in the staged code dataset.",
+        "Pushes the Run 5B code dataset to Kaggle and verifies its files are visible.",
+        "Attempts to push the Run 5B Kaggle GPU kernel.",
+        "Blocks on Kaggle weekly GPU quota with: Maximum weekly GPU quota of 30.00 hours reached.",
+        "Requires a retry after quota reset; promotion remains blocked until the external Run 5B capability-plus-specialization run completes and clears the nonzero-gradient, ln(512), and final specialization/knockout gates."
+      ]
+    },
+    {
+      "id": "TAC-115",
+      "title": "Bridge-veto chain policy and verifier-stream audit",
+      "status": "completed",
+      "acceptance": [
+        "Adds hybrid_ranked_boundary_top_4_bridge_veto_chain_k2 as a sparse-write bridge-verifier chain schedule with direct-answer veto.",
+        "Adds is_direct_written_answer so bridge continuation is blocked only when the first read is a direct written answer and not itself a written bridge cue.",
+        "Adds memory_chain_policy=bridge_verifier_direct_veto to the two-step chained readout path.",
+        "Adds focused tests for direct-answer veto semantics, query-time bridge-veto selection, sparse schedule evaluation, and aggregate memory_chain_fraction reporting.",
+        "Fixes a verifier-training methodology confound by preserving and restoring ChunkedRecallBatcher RNG state around all sparse-gate and chain-verifier training before evaluation.",
+        "Adds a regression test proving gate training does not advance the evaluation batcher stream.",
+        "Runs the initial bridge-veto matrix and marks it superseded because verifier training had advanced the shared batcher stream.",
+        "Runs a corrected state-preserved local matrix across 5 chunked-recall tasks, 3 seeds, and 8 schedules at 120 training steps.",
+        "Reports that bridge-veto, unweighted bridge, precision bridge, counterfactual, oracle, and plain hybrid top-4 all tie at 0.1861 aggregate carry once evaluated on the same stream.",
+        "Reports that bridge-veto and unweighted bridge still select continuations (0.0264 aggregate chain fraction) but produce no carry lift over plain hybrid top-4, while precision bridge selects none.",
+        "Records the decision to reject direct-answer veto as a balanced solution and to treat earlier learned/verifier chain comparisons as superseded unless rerun with batcher-state preservation."
+      ]
+    },
+    {
+      "id": "TAC-116",
+      "title": "Sparse graph-path read diagnostic",
+      "status": "completed",
+      "acceptance": [
+        "Adds hybrid_ranked_boundary_top_4_graph_path_k2 as a sparse-write graph/path readout schedule.",
+        "Adds memory_chain_policy=sparse_graph_path and sparse_graph_path_tokens to follow latest written cue/value edges for up to k hops.",
+        "Adds focused tests for direct graph lookup, two-hop graph lookup, latest-edge overwrite behavior, query-time graph-path readout, and sparse graph-path schedule evaluation.",
+        "Runs a corrected state-preserved local matrix across 5 chunked-recall tasks, 3 seeds, and 7 schedules at 120 training steps.",
+        "Reports that graph-path readout ties plain hybrid top-4 at 0.2448 aggregate carry despite a much higher aggregate chain fraction of 0.1969.",
+        "Reports that graph-path chains on 0.8958 of multi-hop examples but remains at 0.0208 multi-hop carry, below full_update at 0.0260.",
+        "Records the decision to reject deterministic graph-path readout as a balanced solution and to move next toward path-aligned/noise-robust sparse write-gate training."
+      ]
+    },
+    {
+      "id": "TAC-117",
+      "title": "Path-aligned sparse write gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds path_aligned_content_write_mask to supervise direct answer edges, multi-hop bridge edges, and value-ending noisy-key edges.",
+        "Adds train_path_aligned_hybrid_write_gate as a sibling hybrid sparse-write gate trained against path-aligned targets.",
+        "Adds path_aligned_hybrid_top_4 and path_aligned_hybrid_top_4_graph_path_k2 schedules.",
+        "Adds focused tests for path-target construction, learned path-edge recovery, and sparse path-aligned schedule evaluation.",
+        "Runs a corrected state-preserved local matrix across 5 chunked-recall tasks, 3 seeds, and 6 schedules at 120 training steps.",
+        "Reports that pure path alignment improves multi_hop carry to 0.0365 versus hybrid top-4 0.0208 and full_update 0.0260.",
+        "Reports that pure path alignment is rejected because aggregate carry drops to 0.1792 versus hybrid top-4 0.2448, with regressions on multi_key, delayed_query, and noisy_key.",
+        "Records the next direction as a mixed structural-plus-path write objective with explicit no-regression gates."
+      ]
+    },
+    {
+      "id": "TAC-118",
+      "title": "Mixed structural-plus-path sparse write gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds mixed_path_structural_content_write_mask as the union of structural boundary targets and path-aligned answer-edge targets.",
+        "Adds train_mixed_path_structural_hybrid_write_gate as a sibling hybrid sparse-write gate trained against the mixed target.",
+        "Adds mixed_path_structural_hybrid_top_4 and mixed_path_structural_hybrid_top_4_graph_path_k2 schedules.",
+        "Adds focused tests for mixed-target construction, learned path-edge preservation, and sparse mixed schedule evaluation.",
+        "Runs a corrected state-preserved local matrix across 5 chunked-recall tasks, 3 seeds, and 6 schedules at 120 training steps.",
+        "Reports that the mixed OR target is rejected because aggregate carry is 0.1771, below pure path 0.1792, full_update 0.1844, and hybrid top-4 0.2448.",
+        "Reports that the mixed target loses the TAC-117 multi-hop improvement, reaching 0.0104 multi-hop carry versus pure path 0.0365 and full_update 0.0260.",
+        "Records the next direction as a protected path-edge quota or two-head scorer that preserves the hybrid top-4 backbone instead of retraining one scorer on union targets."
+      ]
+    },
+    {
+      "id": "TAC-119",
+      "title": "Protected path-quota hybrid sparse write gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds ProtectedPathQuotaGate to combine a structural hybrid sparse-write gate with a separate path-aligned sparse-write gate.",
+        "Adds protected_path_quota_content_write_mask to reserve one top-4 write slot for a path-scored edge while preserving the remaining slots for hybrid structural scores.",
+        "Adds protected_path_quota_hybrid_top_4_q1 and protected_path_quota_hybrid_top_4_q1_graph_path_k2 schedules.",
+        "Adds focused tests for path-slot reservation and protected-quota sparse schedule evaluation.",
+        "Runs a corrected state-preserved local matrix across 5 chunked-recall tasks, 3 seeds, and 6 schedules at 120 training steps.",
+        "Reports that protected path-quota is the best path-integration variant so far on aggregate at 0.2323 carry versus pure path 0.1792 and mixed OR 0.1771.",
+        "Reports that protected path-quota is rejected as final because aggregate carry remains below hybrid top-4 0.2448, multi_key falls from 0.4167 to 0.3177, noisy_key remains below hybrid, and multi_hop drops to 0.0156.",
+        "Reports that protected graph-path readout chains on 0.2313 of aggregate examples and 0.9740 of multi_hop examples without carry lift.",
+        "Records the decision to keep hybrid_ranked_boundary_top_4 as the best supported local sparse-write prototype and stop treating fixed path quotas, union targets, or graph traversal as standalone A1 repairs."
+      ]
+    },
+    {
+      "id": "TAC-120",
+      "title": "A1 selector upper-bound audit",
+      "status": "completed",
+      "acceptance": [
+        "Uses the TAC-119 corrected matrix to compute a non-deployable oracle task selector over the current A1 fixed sparse-write variants.",
+        "Reports that the oracle selector chooses protected path-quota for single_key and delayed_query, hybrid top-4 for multi_key and noisy_key, and pure path-aligned top-4 for multi_hop.",
+        "Reports that the selector upper bound is 0.2604 aggregate carry versus hybrid_ranked_boundary_top_4 at 0.2448, only +0.0156 lift.",
+        "Records the decision to close the current local A1 variant loop because the remaining fixed-rule gains are small, fragmented, and non-deployable.",
+        "Promotes hybrid_ranked_boundary_top_4 as the best evidence-backed local sparse-write prototype while moving the broader research plan to A2 write-policy integration, A4 speed harnessing, and external Run 5B retry after Kaggle quota reset."
+      ]
+    },
+    {
+      "id": "TAC-121",
+      "title": "A2 write-policy integration prototype",
+      "status": "completed",
+      "acceptance": [
+        "Adds ContentWritePolicy as the public enum for content-memory write behavior.",
+        "Adds write_policy support to TACTransformerLM.forward while preserving the existing update_content_memory and content_write_mask compatibility path.",
+        "Adds ContentWritePolicy.MASKED_PREFILL_QUERY_SKIP so masked multi-token prefill writes compose with single-token decode/query write skipping.",
+        "Exports ContentWritePolicy from tac_transformer.",
+        "Adds write_policy metadata and masked_prefill_query_skip to EFFICIENCY_RESEARCH_VARIANTS.",
+        "Adds write_policy_from_settings to the research benchmark harness and threads the resolved policy into sequence and decode model calls.",
+        "Adds focused tests proving masked prefill through the policy matches explicit content_write_mask behavior, decode skips content-store mutation, invalid policies are rejected, and efficiency variants expose policy metadata.",
+        "Runs a 512-token prefill plus 64-token decode synthetic probe proving masked policy prefill matches the explicit sparse path, decode leaves content store and parameters untouched, and identity routing activations remain present.",
+        "Records the decision to accept A2 as a local integration prototype and move next to A4 stable speed benchmarking."
+      ]
+    },
+    {
+      "id": "TAC-122",
+      "title": "A4 local inference benchmark harness",
+      "status": "completed",
+      "acceptance": [
+        "Extends kaggle/benchmark_inference.py to report prefill_peak_memory_bytes, carried_query_peak_memory_bytes, and decode_peak_memory_bytes.",
+        "Uses torch.cuda.max_memory_allocated for CUDA peak memory and tracemalloc as a dependency-free CPU peak allocation proxy.",
+        "Threads ContentWritePolicy.QUERY_SKIP into the benchmark decode path so A4 decode timing uses the A2 write-policy surface.",
+        "Updates inference benchmark Markdown output to include mean and per-row prefill/decode peak memory.",
+        "Adds focused test coverage for CPU peak-memory reporting.",
+        "Runs a compact local CPU baseline comparing vanilla_matched, base_program_memory, content_addressed_k1, and current_best at seq_len 16 and 64.",
+        "Reports that current_best has the strongest tested TAC throughput profile with mean prefill vs vanilla 2.7550, carried-query vs vanilla 1.7583, and decode vs vanilla 0.7968.",
+        "Reports that decode still trails vanilla on average and therefore supports moving next to A3 identity-state/KV-cache work.",
+        "Records the decision that A4 is locally satisfied as a benchmark harness and baseline artifact, not as a final serving-performance claim."
+      ]
+    },
+    {
+      "id": "TAC-123",
+      "title": "A3 identity decode cache feasibility diagnostic",
+      "status": "completed",
+      "acceptance": [
+        "Adds experiments/benchmark_identity_decode_cache.py to profile identity-field decode cost and program assignment stability.",
+        "Instruments IdentityFieldLayer.forward during single-token decode with ContentWritePolicy.QUERY_SKIP.",
+        "Reports identity-field decode time fraction, theoretical identity-cache speedup ceiling, identity-field calls per iteration, and program switch fraction.",
+        "Adds focused tests for identity-cache speedup-ceiling and switch-rate summarization.",
+        "Runs a compact local CPU diagnostic at seq_len 64, decode_steps 64, batch_size 2, and 3 iterations.",
+        "Reports identity-field fraction 0.5802, speedup ceiling 2.3820x, and program switch fraction 0.8665.",
+        "Rejects a naive whole-identity-output cache because high program-switch rate means a reuse-until-switch guard would invalidate almost every step.",
+        "Records the next A3 implementation direction as an exact lower-level state-maintenance bypass that keeps token-dependent routing fresh while avoiding content-store maintenance under QUERY_SKIP."
+      ]
+    },
+    {
+      "id": "TAC-124",
+      "title": "A3 exact decode state-maintenance bypass",
+      "status": "completed",
+      "acceptance": [
+        "Adds ContentWritePolicy.DECODE_STATE_SKIP as an explicit serving/decode policy distinct from QUERY_SKIP.",
+        "Keeps dense state updates for multi-token prefill while skipping identity-state maintenance during single-token decode.",
+        "Skips program-memory writes, allocation, reconsolidation, memory-tier updates, age/frequency updates, engram updates, and content-store updates during decode_state_skip single-token decode.",
+        "Preserves incoming recurrent identity state exactly, including optional None fields, while still computing fresh token-dependent routing and program context for logits.",
+        "Adds focused tests proving first-token decode logits match QUERY_SKIP and returned recurrent state remains unchanged.",
+        "Updates the identity decode benchmark to compare query_skip and decode_state_skip policies side by side.",
+        "Runs a compact local CPU profile reporting query_skip at 317.89 tok/s and decode_state_skip at 417.77 tok/s with unchanged program switch fraction 0.8665.",
+        "Records the decision to accept decode_state_skip as the current exact A3 serving prototype while continuing to reject approximate whole-output identity caching without a stronger drift guard."
+      ]
+    },
+    {
+      "id": "TAC-125",
+      "title": "A4 decode-policy inference harness integration",
+      "status": "completed",
+      "acceptance": [
+        "Adds --decode-policies to kaggle/benchmark_inference.py so TAC decode write policies can be compared in the main inference harness.",
+        "Adds row-level decode_policy and profile labels, using variant:policy summary keys for TAC rows while keeping vanilla as the baseline profile.",
+        "Ensures decode_vs_base compares each TAC row against the BASE row with the same decode policy.",
+        "Updates Markdown output to include decode policy in row tables.",
+        "Adds focused tests for decode-policy parsing and profile labeling.",
+        "Runs a compact local CPU A4 matrix comparing vanilla_matched, base_program_memory, and current_best under query_skip and decode_state_skip.",
+        "Reports that current_best improves from mean decode_vs_vanilla 0.1606 under query_skip to 0.1980 under decode_state_skip, and from mean decode_vs_base 0.7522 to 1.0815.",
+        "Reports that base_program_memory regresses under decode_state_skip, so decode_state_skip remains an opt-in current-best serving candidate rather than a universal TAC default."
+      ]
+    },
+    {
+      "id": "TAC-126",
+      "title": "B2 route-and-reconstruct diagnostic",
+      "status": "completed",
+      "acceptance": [
+        "Adds experiments/benchmark_route_reconstruct_diagnostic.py as a standalone B2 diagnostic.",
+        "Trains a compact TAC plus route decoder with a light route-reconstruction objective on the prepared local corpus.",
+        "Computes counterfactual hidden reconstruction loss for the routed program and every alternative program.",
+        "Reports routed-is-best fraction, routed-minus-best loss, other-minus-routed loss, best-program margin, and route/program gradient norms.",
+        "Adds focused tests for counterfactual route reconstruction statistics and diagnostic verdict classification.",
+        "Runs a compact local CPU diagnostic and records the artifact in runs/benchmarks/route_reconstruct_diagnostic_local_2026_06_03.",
+        "Reports routed_is_best_fraction 0.0967, mean_routed_minus_best 0.0920, mean_other_minus_routed -0.0152, and max_route_grad_norm 0.006445.",
+        "Records the decision that B2 points to functional route misalignment rather than dead gradient flow, so B1 should test utility-aligned hard-negative and temperature-annealed routing losses."
+      ]
+    },
+    {
+      "id": "TAC-127",
+      "title": "B1 program contrastive refinement",
+      "status": "completed",
+      "acceptance": [
+        "Adds experiments/benchmark_program_contrastive_refinement.py with route_reconstruct_reference, hard_negative, task_conditioned, and annealed_utility variants.",
+        "Uses counterfactual reconstruction losses to derive utility-aligned best-program labels for hard-negative, task-conditioned, and temperature-annealed objectives.",
+        "Reports program-memory cosine, raw program-embedding cosine, routed-is-best fraction, and routed-minus-best reconstruction gap.",
+        "Adds focused tests for hard-negative loss behavior, annealed temperature, and B1 row summarization.",
+        "Runs a compact local CPU matrix and records the artifact in runs/benchmarks/program_contrastive_refinement_local_2026_06_03.",
+        "Reports that task_conditioned is the best routing-alignment variant, improving routed_is_best_fraction to 0.2754 and routed-minus-best gap to 0.0522.",
+        "Reports that all variants leave program_memory_cosine at 0.9167 and therefore miss the pasted B1 success criterion of below 0.85.",
+        "Records the decision to reject loss-only B1 promotion and move next to direct program-memory diversification while keeping task_conditioned as the best route-alignment auxiliary candidate."
+      ]
+    },
+    {
+      "id": "TAC-128",
+      "title": "Program-memory separation probe",
+      "status": "completed",
+      "acceptance": [
+        "Extends experiments/benchmark_program_contrastive_refinement.py with task_conditioned_memsep_0p1 and task_conditioned_memsep_1p0 variants.",
+        "Adds output.aux.losses['separation'] to the training objective for direct program-memory separation rows.",
+        "Keeps the B1 gate tied to program-memory cosine rather than raw program-embedding cosine.",
+        "Adds focused test coverage that the direct-memory-separation variants are present.",
+        "Runs an expanded compact local CPU matrix and records the artifact in runs/benchmarks/program_contrastive_memsep_local_2026_06_03.",
+        "Reports that task_conditioned_memsep_0p1 is the strongest route-utility candidate so far, with routed_is_best_fraction 0.4502 and routed-best gap 0.0400.",
+        "Reports that program_memory_cosine remains 0.9167 for every row, so direct loss-weight tuning still fails the below-0.85 B1 gate.",
+        "Records the decision that the next Track B step must instrument and alter the program-memory write/allocation path rather than adding more objective-only variants."
+      ]
+    },
+    {
+      "id": "TAC-129",
+      "title": "Program-memory write/allocation diagnostic",
+      "status": "completed",
+      "acceptance": [
+        "Adds experiments/benchmark_program_memory_write_diagnostic.py as a Track B diagnostic for program-memory write coverage and update collapse.",
+        "Compares stability_task_memsep, creb_k1_task_memsep, and creb_k2_task_memsep allocation/write variants under the best current task-conditioned memory-separation auxiliary.",
+        "Reports program-memory cosine, dead-program fraction, selected load entropy/gini, write-frequency entropy/gini, memory norm distribution, age distribution, and per-program selected/write/norm vectors.",
+        "Adds focused tests for entropy/gini summarization, dead-program classification, and refusing to recommend low-cosine rows that are only low because programs are dead.",
+        "Runs a compact local CPU matrix and records the artifact in runs/benchmarks/program_memory_write_diagnostic_local_2026_06_03.",
+        "Reports that stability_task_memsep writes broadly with write_frequency_entropy 1.0000 and dead_program_fraction 0.0000 but remains collapsed at program_memory_cosine 0.9167.",
+        "Reports that creb_k1_task_memsep and creb_k2_task_memsep reduce cosine only by leaving dead_program_fraction 0.6667 and 0.5417, so no row is recommended.",
+        "Records the decision that the next Track B prototype should make candidate_memory program-specific instead of adding more loss weight or sparse allocation alone."
+      ]
+    },
+    {
+      "id": "TAC-130",
+      "title": "Program-conditioned memory update prototype",
+      "status": "completed",
+      "acceptance": [
+        "Adds TACConfig.program_memory_update_type with shared default behavior and an opt-in program_conditioned update path.",
+        "Implements program-conditioned candidate_memory by combining pooled hidden state with each program embedding through a trainable update projection.",
+        "Preserves existing default behavior and parameter accounting for shared program-memory updates.",
+        "Updates estimate_tac_parameter_count for the opt-in program-conditioned update projection.",
+        "Adds focused tests for invalid program_memory_update_type rejection, per-program candidate diversity, gradient flow, and parameter accounting.",
+        "Extends experiments/benchmark_program_memory_write_diagnostic.py with program-conditioned stability and CREB top-k variants.",
+        "Tightens write-diagnostic viability so low-cosine rows are not recommended unless dead_program_fraction is below 0.2.",
+        "Runs a compact local write/allocation sweep and records the artifact in runs/benchmarks/program_conditioned_memory_budget_sweep_local_2026_06_03.",
+        "Reports that program_conditioned_creb_k6_task_memsep reaches program_memory_cosine 0.2064, dead_program_fraction 0.0833, and write_frequency_entropy 0.9294.",
+        "Extends experiments/benchmark_program_contrastive_refinement.py with program_conditioned_creb_k6_task_memsep.",
+        "Runs a compact local B1 balance head-to-head and records the artifact in runs/benchmarks/program_conditioned_b1_balance_local_2026_06_03.",
+        "Reports that program_conditioned_creb_k6_task_memsep passes the local B1 gate with program_memory_cosine 0.2057 and routed_is_best_fraction 0.3359.",
+        "Records the decision to promote program_conditioned_creb_k6_task_memsep as the current balanced local Track B prototype, pending longer local stability and Run 5B external validation."
+      ]
+    },
+    {
+      "id": "TAC-131",
+      "title": "Track C vanilla baseline pipeline and failure protocol",
+      "status": "completed",
+      "acceptance": [
+        "Adds kaggle/train_vanilla_baseline.py as a Kaggle-ready vanilla transformer trainer over the same prepared JSONL corpus pipeline.",
+        "Supports same_backbone mode to preserve TAC d_model, layers, heads, sequence length, vocab size, training token budget, and eval cadence.",
+        "Supports parameter_matched mode using parameter_matched_baseline_config to compare against a similarly sized vanilla model.",
+        "Writes run_manifest.json, metrics.jsonl, last.pt, best.pt, and final_summary.json for comparison with TAC training artifacts.",
+        "Adds focused tests that same_backbone preserves comparison shape and parameter_matched reduces the vanilla-vs-TAC parameter-count gap.",
+        "Adds docs/run5_failure_protocol.md with Gate 1 criteria, required vanilla comparisons, failure labels, decision protocol, and minimum artifacts to archive.",
+        "Includes kaggle/train_vanilla_baseline.py and docs/run5_failure_protocol.md in the Kaggle training bundle.",
+        "Runs the requested local 100-step vanilla smoke test on the prepared hard-agentic corpus and records the artifact in runs/benchmarks/vanilla_baseline_100step_smoke_local_2026_06_03.",
+        "Reports that the smoke completed 100/100 steps, wrote valid manifest/final summary JSON, wrote last.pt and best.pt, and reached best eval loss 5.3748.",
+        "Records the decision that Track C is locally satisfied and future Run 5/5B failure decisions require both same_backbone and parameter_matched vanilla comparisons before blaming TAC."
+      ]
+    },
+    {
+      "id": "TAC-136",
+      "title": "Evolutionary TAC candidate selector",
+      "status": "completed",
+      "acceptance": [
+        "Adds aggregate_evolutionary_search_results as a public capability API for ranking TAC mutations with capability, memory-health, route-utility, identity-share, vanilla-gap, and throughput gates.",
+        "Adds format_evolutionary_search_markdown for audit-ready mutation reports.",
+        "Adds experiments/select_evolutionary_tac_candidate.py to load existing benchmark artifacts and emit evolutionary_search.json plus RESULTS.md.",
+        "Adds focused tests proving high-capability candidates are rejected when identity share or program-memory health violates gates.",
+        "Documents the workflow in docs/evolutionary_tac_search.md.",
+        "Runs a smoke selection over runs/benchmarks/run5_pathfinder_local_2026_06_02_fixed/run5_pathfinder_matrix.json and records a blocked promotion because all TAC candidates exceed the strict vanilla-loss gap."
+      ]
+    },
+    {
+      "id": "TAC-137",
+      "title": "Program-conditioned evolutionary mutation smoke",
+      "status": "completed",
+      "acceptance": [
+        "Adds include_memory_mutations to the Run 5 pathfinder variant builder and CLI.",
+        "Adds the tac_program_conditioned_creb_k6_w<weight>_p<programs> mutation family with program-conditioned memory updates, CREB top-k allocation, memory separation, and an evidence alias for Track B diagnostics.",
+        "Extends capability config construction so pathfinder variants can carry program_memory_update_type, memory_allocation_type, memory_allocation_k, and memory_separation_weight into TACConfig.",
+        "Extends evolutionary artifact selection so rows can be merged by evidence_alias and sparse diagnostic rows can contribute memory-health and route-utility evidence.",
+        "Runs a compact pathfinder smoke comparing vanilla_10m_proxy, tac_semantic_w0p1_p12, and tac_program_conditioned_creb_k6_w0p1_p12.",
+        "Runs a combined evolutionary selector over the pathfinder smoke plus program-memory write/allocation and B1 route-utility artifacts.",
+        "Records the decision to promote program_conditioned_creb_k6_task_memsep only to longer validation, not as a final architecture win."
+      ]
+    },
+    {
+      "id": "TAC-138",
+      "title": "Program-conditioned mutation vanilla-gated validation",
+      "status": "completed",
+      "acceptance": [
+        "Adds train_best_tac_agentic CLI flags for program_memory_update_type, memory_allocation_type, memory_allocation_k, and memory_separation_weight.",
+        "Adds focused tests proving the trainer flags reach TACConfig.",
+        "Runs a three-seed local pathfinder validation for vanilla_10m_proxy, tac_semantic_w0p1_p12, and tac_program_conditioned_creb_k6_w0p1_p12.",
+        "Runs the combined evolutionary selector over the multi-seed pathfinder artifact plus memory-health and B1 route-utility artifacts.",
+        "Runs local same-backbone and parameter-matched vanilla baselines on the prepared hard-agentic corpus for 300 steps.",
+        "Runs a matching 300-step program-conditioned CREB top-6 TAC smoke on the same prepared hard-agentic corpus.",
+        "Records that TAC remains memory-healthy but capability-blocked: best eval loss 5.9358 versus same-backbone vanilla 3.4440 and parameter-matched vanilla 2.9288."
+      ]
+    },
+    {
+      "id": "TAC-139",
+      "title": "Auxiliary pressure capability ablation",
+      "status": "completed",
+      "acceptance": [
+        "Adds train_best_tac_agentic CLI flags for aux_loss_scale and aux_loss_warmup_steps.",
+        "Adds aux_loss_multiplier coverage proving warmup scales weighted auxiliary losses from zero to the target multiplier.",
+        "Threads the auxiliary multiplier into the TAC trainer's weighted auxiliary loss, weighted auxiliary metrics, latest metrics, and run manifest.",
+        "Runs a 300-step program-conditioned CREB top-6 TAC smoke on the prepared hard-agentic corpus with aux_loss_scale=0.0.",
+        "Records that disabling auxiliary pressure does not recover capability: aux-off best eval loss 5.9332 and accuracy 0.0391 versus aux-on best eval loss 5.9358 and accuracy 0.0378.",
+        "Records the decision to move next to identity-path or staged-activation ablations instead of more auxiliary-loss tuning."
+      ]
+    },
+    {
+      "id": "TAC-140",
+      "title": "Run3/Run4 routing-pressure phase diagram",
+      "status": "completed",
+      "acceptance": [
+        "Adds build_routing_pressure_phase_variants to construct a controlled Run3 BASE control plus Run4-style base_semantic MI-weight grid.",
+        "Adds aggregate_routing_pressure_phase_results so capability survival and program-memory health gate selected-route MI before recommendation.",
+        "Adds run_routing_pressure_phase_matrix and experiments/benchmark_routing_pressure_phase.py to write routing_pressure_phase_matrix.json and RESULTS.md artifacts.",
+        "Exports the routing-pressure phase APIs and includes the CLI in the Kaggle training bundle.",
+        "Adds focused tests proving the grid preserves the Run3/Run4 controlled variables and rejects high-MI label-routing collapse.",
+        "Runs local CPU smoke and longer one-seed phase diagrams over MI weights 0.0, 0.01, 0.05, 0.1, and 0.5.",
+        "Records that the local proxy validates the artifact path but blocks all rows because the BASE control also has collapsed program memory, so the true threshold requires a Run3-scale external run with healthy precision checks."
+      ]
+    },
+    {
+      "id": "TAC-141",
+      "title": "Warmup-fair Run 5B capability recovery",
+      "status": "completed",
+      "acceptance": [
+        "Adds TACConfig.program_residual_scale and coherence_attention_scale as public ablation controls for routed program residuals and identity coherence attention bias.",
+        "Exposes program_residual_scale, coherence_attention_scale, and warmup_ratio through kaggle/train_best_tac_agentic.py.",
+        "Records learning_rate, warmup_steps, warmup_ratio, effective_warmup_fraction, and min_lr_ratio in Run 5B training manifests.",
+        "Runs identity-path ablations showing that residual-off and fully disconnected identity paths still fail under the inherited 2000-step warmup on a 300-step local diagnostic.",
+        "Runs matched short-warmup controls showing identity-disconnected TAC recovers to eval loss 3.5903 and full program-conditioned CREB top-6 TAC recovers to eval loss 3.4619 with memory cosine 0.1973.",
+        "Records the decision that the local 300-step capability collapse was primarily a warmup schedule artifact, while program-conditioned CREB top-6 remains the current memory-healthy TAC candidate.",
+        "Downloads the completed same-backbone Kaggle vanilla baseline with best eval loss 0.1092 and latest eval accuracy 0.9530.",
+        "Stages jeffkolo/tac-run5b-program-conditioned-creb-k6-20k with program-conditioned memory updates, CREB top-6 allocation, and memory separation weight 0.1 for external validation after the parameter-matched vanilla baseline completes."
+      ]
+    },
+    {
+      "id": "TAC-142",
+      "title": "External Run 5B program-conditioned TAC validation",
+      "status": "completed",
+      "acceptance": [
+        "Downloads and records the completed parameter-matched Kaggle vanilla baseline.",
+        "Confirms the same-backbone vanilla target best eval loss 0.1092 and latest eval accuracy 0.9530.",
+        "Confirms the parameter-matched vanilla target best eval loss 0.1048 and latest eval accuracy 0.9549.",
+        "Launches jeffkolo/tac-run5b-program-conditioned-creb-k6-20k with program_conditioned memory updates, CREB top-6 allocation, and memory separation weight 0.1.",
+        "Adds aggregate_external_run5b_validation plus experiments/evaluate_external_run5b_validation.py to produce external_validation.json and RESULTS.md from the final artifacts.",
+        "Downloads TAC final artifacts after the kernel stops for time at 11021/20000 steps and records that the step-10000 checkpoint exactly matches the 183.6M-token vanilla baseline budget.",
+        "Compares TAC next-token capability, optimizer health, memory cosine, selected-route specialization, and knockout evidence against the vanilla gates.",
+        "Fixes the validator to parse standalone analyze_program_specialization.py reports for MI, ablation deltas, and knockout selectivity from the same checkpoint.",
+        "Records a fair-token promote decision for the step-10000 checkpoint: eval loss 0.1672, accuracy 0.9414, program-memory cosine 0.0031, selected-route MI 0.2821 bits, max knockout loss delta 0.3401, and max knockout selectivity span 0.1868."
+      ]
+    },
+    {
+      "id": "TAC-143",
+      "title": "TAC-Control-v1 next-stage research automation",
+      "status": "completed",
+      "acceptance": [
+        "Adds tac_transformer.research_plan with a TAC-Control-v1 Phase A freeze audit, Phase B seed replication plan, Phase D benchmark protocol, and Markdown formatter.",
+        "Adds train_best_tac_agentic CLI controls for memory_read_type, content_read_steps, and content_read_gate_type so generated Phase B seed commands are executable.",
+        "Includes the new research-plan module, CLI, and contract docs in the Kaggle agentic training bundle so tac_transformer imports after extraction.",
+        "Freezes the Run 5B step-10000 reference config with identity_first attention, content_addressed memory reads, program_conditioned memory updates, CREB top-6 allocation, base_semantic routing, MI route pressure, and fp32 precision evidence from the existing manifest.",
+        "Resolves the stale content-addressed and identity-first open gaps using real Run 5B manifest and metric evidence.",
+        "Carries multi-hop behavior, long-context transfer, seed stability, and decode economics forward as explicit open gaps.",
+        "Adds experiments/advance_tac_research_plan.py to generate phase_a_freeze.json, phase_b_replication_plan.json, phase_d_benchmark_protocol.json, tac_next_stage_research_contract.json, and RESULTS.md from local artifacts.",
+        "Writes the generated research contract to runs/benchmarks/tac_control_v1_next_stage_2026_06_04 and docs/tac_control_v1_research_contract.md.",
+        "Adds focused unit coverage for the freeze audit, Phase B commands, Phase D controls, and Markdown contract.",
+        "Runs the CLI against the real Run 5B artifacts and records a freeze_ready decision for TAC-Control-v1."
+      ]
+    },
+    {
+      "id": "TAC-144",
+      "title": "TAC-Control-v1 Phase B external seed replication launch",
+      "status": "completed",
+      "acceptance": [
+        "Builds and uploads refreshed jeffkolo/tac-run5b-capability-code-2026-06-04 so Phase B kernels use the current trainer flags and research-plan package exports.",
+        "Adds build_phase_b_kaggle_kernel plus experiments/stage_phase_b_kaggle_seeds.py to generate seed-specific Kaggle kernel metadata and wrappers from the frozen TAC-Control-v1 contract.",
+        "Stages seed 11, 23, and 37 kernels under runs/kaggle_tac_control_v1_phase_b_2026_06_04.",
+        "Launches jeffkolo/tac-control-v1-phase-b-seed-11-20k and jeffkolo/tac-control-v1-phase-b-seed-23-20k; both initially report KernelWorkerStatus.RUNNING.",
+        "Adds experiments/monitor_phase_b_kaggle_seeds.py and writes runs/kaggle_results/tac_control_v1_phase_b_2026_06_04/phase_b_kaggle_status.json for repeatable status checks, missing-seed push, and completed-output pulls.",
+        "Adds Phase B seed result summarization, aggregation, Markdown reporting, and experiments/aggregate_phase_b_seed_results.py so completed seed artifacts can be judged automatically against accuracy, memory-cosine, selected-route MI, and knockout gates.",
+        "Creates Codex heartbeat automation tac-phase-b-monitor to rerun the Phase B monitor and aggregate CLI every 30 minutes in this thread.",
+        "Initially leaves seed 37 staged because Kaggle returned Maximum batch GPU session count of 2 reached while seeds 11 and 23 were running.",
+        "Extends experiments/monitor_phase_b_kaggle_seeds.py with row-specific Kaggle config support, isolated USERPROFILE handling, and push-success detection so seed 37 can run under the user-supplied eweewee2 Kaggle credential without disturbing completed jeffkolo seeds.",
+        "Uploads refreshed private code dataset eweewee2/tac-run5b-capability-code-2026-06-04 and reuses eweewee2/tac-run5b-capability-data-2026-06-03 so the seed 37 kernel can attach accessible datasets.",
+        "Launches eweewee2/tac-control-v1-phase-b-seed-37-20k version 2 with valid eweewee2 dataset sources; latest monitor status is KernelWorkerStatus.RUNNING.",
+        "Stages seed 23 last.pt from the pulled time-stopped artifact as private resume dataset eweewee2/tac-pb-s23-resume-11121-20260604 after verifying internal step 11121 plus optimizer/scaler state.",
+        "Launches eweewee2/tac-control-v1-phase-b-seed-23-resume-20k to resume the frozen seed 23 Phase B config from step 11121 to the 20000-step target.",
+        "Extends Phase B monitor pulls plus Phase B/C/D result discovery to handle seed_23_resume_20k and prefer the highest-completed-step artifact when duplicate same-seed directories exist.",
+        "Pulls and validates completed seed_23_resume_20k output with completed_steps=20000, stopped_for_time=false, latest eval accuracy 0.9497884114583334, program_memory_cosine 0.0012824715668102726, and step_020000 selected-route MI 0.28223753215674147; Phase B remains fail because seed 11 still fails selected-route MI and seed 23 knockout evidence is pending.",
+        "Pulls and validates the original seed 37 output after it stops for time at completed_steps=10780, confirms seed 11 remains resumable from completed_steps=11110, and verifies both last.pt checkpoints include optimizer/scaler state.",
+        "Stages private resume datasets eweewee2/tac-pb-s11-resume-11110-20260604 and eweewee2/tac-pb-s37-resume-10780-20260604, patches the Phase B staging manifest with seed_11_resume_20k and seed_37_resume_20k rows, and launches eweewee2/tac-control-v1-phase-b-seed-11-resume-20k plus eweewee2/tac-control-v1-phase-b-seed-37-resume-20k; latest monitor status has both resume kernels RUNNING.",
+        "Runs post-hoc knockout analysis on seed_23_resume_20k specialization_checkpoints/step_020000/checkpoint.pt, backs up the prior no-knockout report, writes a knockout-bearing step_020000/program_specialization.json with 96 records and 12 program ablations, and clears seed 23's Phase B knockout gate with max_knockout_loss_delta=0.3221018575131893.",
+        "Pulls and validates completed seed_11_resume_20k and seed_37_resume_20k outputs with completed_steps=20000, stopped_for_time=false, nonzero best.pt/last.pt/checkpoint.pt artifacts, final_summary.json, metrics.jsonl, and specialization reports.",
+        "Runs post-hoc knockout analysis on seed_11_resume_20k and seed_37_resume_20k step_020000 checkpoints after backing up the no-knockout reports, closing the remaining knockout evidence gap for all three Phase B seeds.",
+        "Completes Phase B replication with a negative result: seed 23 passes, while seed 11 fails selected-route MI at 0.027327877207486778 and seed 37 fails selected-route MI at 0.08250998415748244 despite valid knockout deltas of 0.36063149260977906 and 0.5259283017367125 respectively; Phase B remains fail and Phase C/D remain blocked_by_phase_b."
+      ]
+    },
+    {
+      "id": "TAC-145",
+      "title": "TAC-Control-v1 Phase D benchmark gate automation",
+      "status": "completed",
+      "acceptance": [
+        "Adds aggregate_phase_d_benchmark_results to compare TAC-Control-v1 benchmark rows against parameter_matched_vanilla by task family.",
+        "Adds format_phase_d_benchmark_results_markdown for audit-ready Phase D reports.",
+        "Adds experiments/aggregate_phase_d_benchmarks.py to read benchmark rows, consume the current Phase B aggregate decision, and write phase_d_benchmark_results.json plus RESULTS.md.",
+        "Blocks Phase D with status blocked_by_phase_b when Phase B has not produced enough complete passing seed evidence.",
+        "Adds focused tests proving Phase D blocks on incomplete Phase B evidence and passes only when TAC beats parameter_matched_vanilla on memory-intensive and agentic task families.",
+        "Updates the tac-phase-b-monitor heartbeat to refresh Phase B monitor, Phase B aggregate, and Phase D aggregate artifacts every 30 minutes."
+      ]
+    },
+    {
+      "id": "TAC-146",
+      "title": "TAC-Control-v1 Phase C identity stability automation",
+      "status": "completed",
+      "acceptance": [
+        "Adds summarize_phase_c_identity_seed, aggregate_phase_c_identity_stability_results, and format_phase_c_identity_stability_markdown to align program identities across seeds by route, memory, and knockout profiles.",
+        "Blocks Phase C with status blocked_by_phase_b until Phase B has enough complete passing seed evidence.",
+        "Requires at least two complete seed profiles and a minimum alignment similarity before reporting identity stability as passed.",
+        "Adds experiments/aggregate_phase_c_identity_stability.py to read pulled Phase B specialization reports and write phase_c_identity_stability.json plus RESULTS.md.",
+        "Extends kaggle/analyze_program_specialization.py with a compact program_memory_summary so post-hoc checkpoint analysis can provide memory-vector evidence for Phase C.",
+        "Includes the Phase B/C/D aggregate scripts in the Kaggle training bundle and refreshes jeffkolo/tac-run5b-capability-code-2026-06-04 with the Phase C/analyzer upgrade.",
+        "Updates the tac-phase-b-monitor heartbeat to refresh Phase B monitor, Phase B aggregate, Phase C identity stability, and Phase D benchmark artifacts every 30 minutes."
+      ]
+    },
+    {
+      "id": "TAC-147",
+      "title": "TAC-Control-v1 Phase D benchmark suite harness",
+      "status": "completed",
+      "acceptance": [
+        "Adds tac_transformer.phase_d_benchmarks with deterministic generators for multi_hop_chain_retrieval, long_context_retrieval_4096, episodic_fact_update, tool_selection, and delayed_goal_binding.",
+        "Adds score_phase_d_predictions so task predictions become aggregate_phase_d_benchmark_results-compatible rows with exact-match primary scores, missing prediction counts, and throughput/timing fields.",
+        "Adds stage_phase_d_benchmark_suite so Phase D tasks, prediction templates, phase_d_benchmark_manifest.json, and RESULTS.md can be generated for seeds 11, 23, and 37.",
+        "Adds experiments/stage_phase_d_benchmark_suite.py and experiments/score_phase_d_predictions.py CLI entrypoints.",
+        "Stages the current Phase D benchmark suite under runs/benchmarks/tac_control_v1_phase_d_suite_2026_06_04.",
+        "Includes the Phase D benchmark harness and CLIs in the Kaggle training bundle and refreshes jeffkolo/tac-run5b-capability-code-2026-06-04 with the harness."
+      ]
+    },
+    {
+      "id": "TAC-148",
+      "title": "TAC-Control-v1 Phase D checkpoint prediction runner",
+      "status": "completed",
+      "acceptance": [
+        "Adds byte-level Phase D prompt encoding and decoding helpers matching the training corpus contract: UTF-8 bytes shifted by 4 with EOS token 3.",
+        "Adds auto-detecting checkpoint loading for TACTransformerLM and VanillaTransformerLM checkpoints saved by the Kaggle training scripts.",
+        "Adds greedy sliding-window generation that writes prediction rows with extracted prediction, raw completion, checkpoint metadata, prompt truncation, throughput, and wall-clock timing fields.",
+        "Adds experiments/run_phase_d_checkpoint_predictions.py so a staged task JSONL plus checkpoint can produce prediction JSONL and optional scored Phase D rows in one Kaggle command.",
+        "Includes the prediction runner in the Kaggle training bundle and documents the benchmark prediction command in RUN_ON_KAGGLE.md.",
+        "Adds focused tests using tiny real TAC and vanilla checkpoints to prove loader inference, prediction-row emission, tokenization, and scorer compatibility."
+      ]
+    },
+    {
+      "id": "TAC-149",
+      "title": "TAC-Control-v1 Phase D benchmark matrix automation",
+      "status": "completed",
+      "acceptance": [
+        "Adds experiments/run_phase_d_benchmark_matrix.py to discover staged Phase D seed tasks, Phase B TAC seed checkpoints, and the parameter-matched vanilla checkpoint.",
+        "Prefers each TAC seed's specialization_checkpoints/step_010000/checkpoint.pt before falling back to best.pt or last.pt so Phase D uses the fair-token checkpoint when available.",
+        "Runs TAC and parameter_matched_vanilla controls per seed through the Phase D checkpoint prediction runner and writes per-control predictions plus scored rows.",
+        "Writes a combined phase_d_benchmark_rows.jsonl, phase_d_prediction_matrix.json, and RESULTS.md under runs/benchmarks/tac_control_v1_phase_d_predictions_2026_06_04.",
+        "Keeps the matrix pending and cheap while TAC seed checkpoints are missing, and reuses existing score JSONL files by default unless --force is passed.",
+        "Keeps the matrix blocked_by_phase_b and skips checkpoint inference when the Phase B aggregate exists but ready_for_phase_d is false.",
+        "Extends experiments/aggregate_phase_d_benchmarks.py to discover the combined Phase D row file from the default predictions directory when --rows is omitted.",
+        "Updates the tac-phase-b-monitor heartbeat to run the Phase D matrix before the Phase D aggregate.",
+        "Includes the matrix runner in the Kaggle training bundle and documents the full matrix command."
+      ]
+    },
+    {
+      "id": "TAC-150",
+      "title": "TAC-Control-v1 Phase D benchmark suite Kaggle dataset",
+      "status": "completed",
+      "acceptance": [
+        "Adds experiments/stage_phase_d_suite_dataset.py to stage the generated Phase D suite as a Kaggle dataset with dataset-metadata.json.",
+        "Copies only phase_d_benchmark_manifest.json, RESULTS.md, seed task JSONL files, and prediction templates into the dataset staging directory.",
+        "Stages runs/kaggle_phase_d_suite_jeffkolo_2026_06_04 from runs/benchmarks/tac_control_v1_phase_d_suite_2026_06_04.",
+        "Creates private Kaggle dataset jeffkolo/tac-control-v1-phase-d-suite-2026-06-04 with all seed_11, seed_23, and seed_37 task files.",
+        "Includes the suite dataset staging CLI in the Kaggle training bundle.",
+        "Updates Phase D matrix instructions so Kaggle can either generate the suite in /kaggle/working or attach the uploaded suite dataset."
+      ]
+    },
+    {
+      "id": "TAC-156",
+      "title": "Trainable agentic controller learning gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds tac_transformer.agentic_controller with AgenticPolicyController trainable scratchpad commit, future-branch selection, and process-step teaching heads.",
+        "Adds a supervised controller loss that combines scratchpad BCE, simulation branch CE, and verifier-weighted process-trace distillation.",
+        "Adds experiments/benchmark_agentic_controller_learning.py to train the controller on verifier-labeled traces and compare against no-scratchpad, no-simulation, and no-teaching controls.",
+        "Writes runs/benchmarks/agentic_controller_learning_2026_06_04 with a policy_learned decision, loss reduction, controller scores, and contamination metrics.",
+        "Updates the agentic mathematical contract to distinguish math primitives, mechanism controls, and learned controller behavior.",
+        "Includes the controller module and benchmark CLI in the Kaggle training bundle."
+      ]
+    },
+    {
+      "id": "TAC-157",
+      "title": "Live TAC feature adapter for agentic policy controller",
+      "status": "completed",
+      "acceptance": [
+        "Adds AgenticPolicyFeatures plus build_agentic_policy_features_from_tac_output to convert a real TACOutput into scratchpad, simulation, and context feature tensors.",
+        "Adds run_agentic_policy_controller_from_tac_output so AgenticPolicyController can run directly from live TAC outputs.",
+        "Proves the adapter with a tiny TACTransformerLM forward pass and nonzero gradient flow from policy logits back to TAC token embeddings.",
+        "Adds experiments/benchmark_live_agentic_policy_adapter.py and writes runs/benchmarks/live_agentic_policy_adapter_2026_06_04 with a live_features_connected decision.",
+        "Updates docs/tac_agentic_rl_mathematical_contract.md with the live TAC feature adapter gate and its remaining scope boundary.",
+        "Includes the live adapter benchmark CLI in the Kaggle training bundle."
+      ]
+    },
+    {
+      "id": "TAC-158",
+      "title": "Frozen TAC live policy training preservation gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds experiments/benchmark_live_agentic_policy_training.py to train AgenticPolicyController on live TAC-derived feature tensors with TAC frozen.",
+        "Uses verified scratchpad, simulation, and process targets while optimizing only controller parameters.",
+        "Reports policy loss reduction and scratchpad, simulation, and teaching policy scores.",
+        "Reruns the same TAC input batch after controller training and reports eval-loss drift plus max-logit drift as capability preservation checks.",
+        "Writes runs/benchmarks/live_agentic_policy_training_2026_06_04 with a live_policy_trained_capability_preserved decision.",
+        "Updates docs/tac_agentic_rl_mathematical_contract.md with the frozen TAC live policy training gate and includes the benchmark CLI in the Kaggle bundle."
+      ]
+    },
+    {
+      "id": "TAC-159",
+      "title": "First-class verifier-gated scratchpad state",
+      "status": "completed",
+      "acceptance": [
+        "Adds AgenticScratchpadState as a first-class scratchpad state X_t with budget and step fields.",
+        "Adds apply_agentic_scratchpad_transition to consume controller commit logits and candidate ScratchpadItems.",
+        "Applies verifier support before budgeted scratchpad update so unverified imagined hypotheses cannot consume committed state capacity.",
+        "Marks committed scratchpad items as verified in the next state and reports selected, committed, rejected, and contamination metrics.",
+        "Adds experiments/benchmark_agentic_scratchpad_state.py and writes runs/benchmarks/agentic_scratchpad_state_2026_06_04 with a scratchpad_state_verified decision.",
+        "Updates docs/tac_agentic_rl_mathematical_contract.md with the first-class scratchpad state gate and includes the benchmark CLI in the Kaggle bundle."
+      ]
+    },
+    {
+      "id": "TAC-160",
+      "title": "Phase D scratchpad-state execution gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds verified-only Phase D scratchpad prompt formatting with format_agentic_scratchpad_context and augment_phase_d_prompt_with_scratchpad.",
+        "Adds run_phase_d_scratchpad_state_predictions so AgenticScratchpadState emits standard score_phase_d_predictions-compatible rows.",
+        "Excludes unverified imagined scratchpad payloads from augmented prompts and answer extraction while preserving state item IDs for auditability.",
+        "Adds experiments/benchmark_phase_d_scratchpad_state_execution.py and writes runs/benchmarks/phase_d_scratchpad_state_execution_2026_06_04 with a phase_d_scratchpad_state_execution_verified decision.",
+        "Scores all five Phase D task families at primary_score=1.0 in the local oracle scratchpad-state gate with leaked_unverified_prompt_count=0.",
+        "Updates docs/tac_agentic_rl_mathematical_contract.md with the Phase D scratchpad-state execution gate and includes the benchmark CLI in the Kaggle bundle."
+      ]
+    },
+    {
+      "id": "TAC-161",
+      "title": "Opt-in coalition routing integration check",
+      "status": "completed",
+      "acceptance": [
+        "Reads the Distributed Functional Specialization proposal and implements the minimal testable coalition mechanism as an opt-in architecture path rather than a default TAC-Control-v1 change.",
+        "Adds TACConfig.coalition_context_type and coalition_context_scale with validation and parameter-count support.",
+        "Adds per-identity-layer coalition_context_projection for coalition_context_type=program_memory.",
+        "Injects a projected routed weighted sum of previous program-memory vectors into embedding, dense linear-expert, and sparse linear-expert program context.",
+        "Reports coalition_context_norm through TAC auxiliary metrics and chunked-memory evaluation outputs so benchmarks can prove the path is active.",
+        "Adds focused tests for coalition context modulation, gradient flow, invalid option rejection, and parameter-count parity.",
+        "Exposes the opt-in architecture path through kaggle/train_best_tac_agentic.py as --coalition-context-type and --coalition-context-scale for deliberate external reruns.",
+        "Adds experiments/benchmark_coalition_routing_ablation.py to compare current_parallel_topk against coalition_program_memory on direct recall and multi-hop.",
+        "Runs supervised local ablations at coalition_scale 0.1 and 0.5; both keep coalition_active=true and preserve/improve single_key, but neither improves multi_hop.",
+        "Records the decision not to promote TAC-Coalition-v1 because the implemented minimal coalition embedding does not clear the targeted multi-hop help gate."
+      ]
+    },
+    {
+      "id": "TAC-162",
+      "title": "Learned scratchpad autoregressive decoding gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds experiments/benchmark_scratchpad_autoregressive_decoding.py to train a real TACTransformerLM decoder on verified scratchpad-augmented prompts.",
+        "Uses masked next-token completion loss so prompt tokens are ignored and only answer bytes after the prompt are supervised.",
+        "Evaluates the trained decoder through greedy byte-level autoregressive generation using generate_phase_d_completion.",
+        "Compares verified scratchpad prompts against a no-scratchpad control and counterfactual scratchpad values.",
+        "Writes runs/benchmarks/scratchpad_autoregressive_decoding_2026_06_04 with scratchpad_autoregressive_decoding_proved, scratchpad_score=1.0, counterfactual_score=1.0, no_scratchpad_score=0.1, and scratchpad_control_margin=0.9.",
+        "Adds focused unit coverage and updates docs/tac_agentic_rl_mathematical_contract.md plus the Kaggle bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-163",
+      "title": "Joint TAC and agentic controller training gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds experiments/benchmark_joint_tac_controller_training.py to jointly optimize TACTransformerLM and AgenticPolicyController with a single optimizer.",
+        "Combines masked decoder next-token loss with supervised controller scratchpad, simulation, and process-teaching action losses.",
+        "Proves controller policy loss has nonzero gradient flow into TAC parameters before training.",
+        "Reports both TAC and controller parameter deltas after joint optimization.",
+        "Evaluates scratchpad-conditioned greedy autoregressive decoding after joint training and compares it against a no-scratchpad control.",
+        "Writes runs/benchmarks/joint_tac_controller_training_2026_06_04 with joint_tac_controller_training_proved, decoder/controller loss reductions, scratchpad_score=1.0, no_scratchpad_score=0.1, controller action scores=1.0, tac_policy_grad_abs_sum=3.2623797561698624, tac_max_abs_delta=0.43995827436447144, and controller_max_abs_delta=0.5669759511947632.",
+        "Adds focused unit coverage and updates docs/tac_agentic_rl_mathematical_contract.md plus the Kaggle bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-164",
+      "title": "Agentic rollout trajectory record gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds AgenticTrajectoryStep and AgenticTrajectory to preserve rollout actions, action log probabilities, route IDs, memory read IDs, scratchpad item IDs, verifier scores, step rewards, and costs.",
+        "Adds build_agentic_trajectory with contiguous step validation and cost-weight validation.",
+        "Adds trajectory_to_training_record to emit a stable JSON-compatible training and audit record.",
+        "Computes total cost, summed action log probability, verifier mean, and cost-adjusted final reward from trajectory data.",
+        "Adds experiments/benchmark_agentic_trajectory_records.py and writes runs/benchmarks/agentic_trajectory_records_2026_06_04 with trajectory_records_proved.",
+        "Adds focused unit coverage and updates docs/tac_agentic_rl_mathematical_contract.md plus package exports and the Kaggle bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-165",
+      "title": "Authority-report verifier reward gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds verifier_reward_from_authority_report to consume the existing AuthorityReport.to_manifest contract or an equivalent manifest mapping.",
+        "Rewards clean trusted verification and penalizes false authority plus cross-domain authority contamination.",
+        "Reports trusted event count, trusted correct count, false authority count, cross-domain authority violation count, false authority rate, and trusted accuracy.",
+        "Adds experiments/benchmark_agentic_verifier_rewards.py and writes runs/benchmarks/agentic_verifier_rewards_2026_06_04 with verifier_rewards_proved.",
+        "Adds focused unit coverage using real VerifierCase and build_authority_report machinery.",
+        "Updates docs/tac_agentic_rl_mathematical_contract.md plus package exports and the Kaggle bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-166",
+      "title": "Group-relative trajectory policy training gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds group_relative_trajectory_policy_loss to normalize complete trajectory cost-adjusted rewards within prompt groups.",
+        "Uses the existing policy_gradient_loss over trajectory-level advantages.",
+        "Validates that positive-advantage trajectory actions receive upward policy-gradient pressure while negative-advantage actions receive downward pressure.",
+        "Adds experiments/benchmark_group_relative_trajectory_training.py and writes runs/benchmarks/group_relative_trajectory_training_2026_06_04 with group_relative_trajectory_training_proved.",
+        "Shows good action probability increasing from 0.5 to 0.9568014144897461 and bad action probability decreasing from 0.5 to 1.100365840112083e-10.",
+        "Adds focused unit coverage and updates docs/tac_agentic_rl_mathematical_contract.md plus package exports and the Kaggle bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-167",
+      "title": "Dynamic sampling and cost/length shaping gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds shaped_trajectory_rewards to apply explicit compute-cost and length penalties to complete trajectory rewards.",
+        "Adds dapo_dynamic_sampling_filter to keep prompt groups with mixed success/failure outcomes while dropping solved-only and failed-only groups.",
+        "Validates that a short successful rollout receives higher shaped reward than both failed rollouts and a longer equally successful rollout.",
+        "Adds experiments/benchmark_dynamic_sampling_cost_shaping.py and writes runs/benchmarks/dynamic_sampling_cost_shaping_2026_06_04 with dynamic_sampling_cost_shaping_proved.",
+        "Reports selected_group_ids=[\"mixed\"], dropped_group_ids=[\"failed\", \"solved\"], selected_fraction=0.5, short_success shaped reward 0.8999999761581421, and long_success shaped reward 0.4000000059604645.",
+        "Adds focused unit coverage and updates docs/tac_agentic_rl_mathematical_contract.md plus package exports and the Kaggle bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-168",
+      "title": "Sequence-level process reward and value support gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds gspo_sequence_policy_loss for clipped sequence-level policy ratios over complete action trajectories.",
+        "Adds implicit_process_rewards for PRIME-style policy/reference step rewards combined with verifier support.",
+        "Adds value_prediction_loss for masked value regression over trajectory or process returns.",
+        "Extends AgenticPolicyController with a lightweight value_head over context features and optional value_targets support in agentic_controller_supervised_loss.",
+        "Adds focused unit coverage proving sequence-gradient direction, verified process reward separation, masked value loss behavior, and controller value-head gradient flow.",
+        "Adds experiments/benchmark_sequence_process_value_support.py and writes runs/benchmarks/sequence_process_value_support_2026_06_04 with sequence_process_value_support_proved.",
+        "Reports sequence ratios moving from [1.0, 1.0] to [1.052454948425293, 0.9372621178627014], verified process reward 1.100000023841858, unsupported process reward -1.0499999523162842, value loss improving from 0.8433103561401367 to 1.4699178052524076e-07, and value_head_max_abs_delta=0.6007930040359497.",
+        "Updates docs/tac_agentic_rl_mathematical_contract.md plus package exports and the Kaggle bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-169",
+      "title": "Accepted coalition cue-chain routing gate",
+      "status": "completed",
+      "acceptance": [
+        "Implements stronger coalition routing modes beyond the TAC-161 weighted memory summary: program_memory_graph and program_memory_task_graph.",
+        "Adds confidence_margin and cue_match iterative content-read gates with validation and Kaggle trainer CLI exposure.",
+        "Adds structured ChunkedRecallBatcher.context_write_mask so local chunked recall writes only task-relevant key/value edges into content memory.",
+        "Adds first-class content_cue_token_ids and content_value_token_ids to IdentityState so structured token-edge memory persists with TAC identity state.",
+        "Adds exact cue-match token-chain memory_read_logits: key -> value, then value -> final value when the first value is also a stored cue.",
+        "Updates chunked memory train/eval paths to use memory_read_logits consistently and exposes memory_injection_weight in experiments/benchmark_coalition_routing_ablation.py.",
+        "Adds coalition_program_memory_graph_cue_chain to the B2 ablation matrix and sets the harness default memory_injection_weight to 6.0 for the accepted protocol.",
+        "Rejects weaker branches that failed confirmation: global program_memory, static graph alone, task-conditioned graph, confidence-margin chain, and hidden-vector cue-match chain.",
+        "Writes runs/benchmarks/coalition_routing_token_chain_injection_w6_2026_06_05 with promote_candidate, accepted_variant=coalition_program_memory_graph_cue_chain, single_key delta 0.0, and multi_hop delta +0.7265625.",
+        "Writes confirmation artifact runs/benchmarks/coalition_routing_token_chain_injection_w6_confirm16_2026_06_05 with promote_candidate, single_key delta 0.0, and multi_hop delta +0.7317708333333333.",
+        "Adds focused tests for graph coalition gradients, content-addressed embedding readout, cue-match token-chain readout, structured chunked write masks, cue-match gate validation, and trainer flag propagation."
+      ]
+    },
+    {
+      "id": "TAC-170",
+      "title": "Identity and coalition mathematical representation upgrade",
+      "status": "completed",
+      "acceptance": [
+        "Updates docs/tac_agentic_rl_mathematical_contract.md so the current model mapping reflects implemented scratchpad, commit gate, value, verifier, and RL objective support.",
+        "Extends the real persistent state representation with G_t for memory-overlap/coalition-link graph state and P_t for identity-persistence statistics.",
+        "Adds identity_persistence_score for IPS-style retrieval recurrence, memory survival, and reuse-frequency scoring.",
+        "Adds memory_overlap_graph and memory_link_utility for identity-overlap memory linkage and linked-neighbor retrieval gain.",
+        "Adds coalition_participation_metrics and basal_apical_belief_state for coalition coactivation analysis and basal/apical disagreement signals.",
+        "Adds phase_d_agentic_reward with identity-persistence, memory-link, and coalition reward terms.",
+        "Extends dapo_dynamic_sampling_filter with optional reward_values so success classification can use shaped cost-aware rewards.",
+        "Adds focused tests proving identity persistence ordering, memory link creation, linked retrieval gain, coalition coactivation, basal/apical disagreement, cost-aware DAPO sampling, and upgraded Phase D reward terms.",
+        "Adds experiments/benchmark_identity_coalition_math_upgrade.py and writes runs/benchmarks/identity_coalition_math_upgrade_2026_06_05 with identity_coalition_math_upgrade_proved.",
+        "Reports IPS [0.800000011920929, 0.29999998211860657], memory link gain 0.9938837289810181, basal/apical disagreement [0.0, 2.0], and Phase D reward 3.7438837409019468.",
+        "Updates package exports and includes the benchmark in the Kaggle bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-171",
+      "title": "Live Phase D scratchpad policy wiring gate",
+      "status": "completed",
+      "acceptance": [
+        "Adds experiments/benchmark_live_phase_d_scratchpad_policy.py to connect live TAC-derived Phase D prompt/candidate features to AgenticPolicyController scratchpad logits.",
+        "Builds correct and wrong scratchpad candidates for deterministic Phase D examples, applies apply_agentic_scratchpad_transition, and requires verifier support before an item enters AgenticScratchpadState.",
+        "Scores verified-scratchpad predictions and empty-scratchpad controls with the standard score_phase_d_predictions contract.",
+        "Proves scratchpad_beats_no_scratchpad locally with scratchpad_mean_score=1.0, no_scratchpad_mean_score=0.0, and score_margin=1.0.",
+        "Reports scratchpad_selection_score=1.0, live TAC token embedding grad abs sum=0.0006830802303738892, hypothesis_contamination_rate=0.0, and unverified_prompt_leak_count=0.",
+        "Writes runs/benchmarks/live_phase_d_scratchpad_policy_2026_06_05 with live_phase_d_scratchpad_policy_proved.",
+        "Adds focused unit coverage and includes the benchmark in the Kaggle bundle file list plus docs/tac_agentic_rl_mathematical_contract.md."
+      ]
+    },
+    {
+      "id": "TAC-172",
+      "title": "OOD multi-step and ATS transfer benchmark contract",
+      "status": "completed",
+      "acceptance": [
+        "Adds tac_transformer/ats_transfer.py with deterministic ATS-style train/test suite generation over disjoint domains.",
+        "Includes cross_domain_identity_transfer and two_program_sequential task families so Phase D can measure stable invariant transfer and sequential program cooperation.",
+        "Adds build_ats_oracle_predictions and build_ats_surface_baseline_predictions controls to prove the suite is solvable while surface memorization fails held-out domains.",
+        "Adds score_ats_transfer_predictions and aggregate_ats_transfer_results with a decision gate requiring identity_oracle test score >=0.95, surface_baseline train score >=0.95, and surface_baseline test score <=0.25.",
+        "Adds experiments/benchmark_ats_transfer_suite.py and writes runs/benchmarks/ats_transfer_suite_2026_06_05 with ats_transfer_benchmark_valid.",
+        "Reports 32 examples across train domains navigation/inventory and test domains lab_protocol/incident_response, identity_oracle_test_score=1.0, surface_baseline_train_score=1.0, surface_baseline_test_score=0.0, and oracle_test_advantage=1.0.",
+        "Adds focused tests, package exports, documentation, research log updates, and includes the module and experiment in the Kaggle bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-173",
+      "title": "Phase B selected-route collapse repair",
+      "status": "completed",
+      "acceptance": [
+        "Diagnoses restored seed 11 and seed 37 20k checkpoints as record-level selected-route collapse rather than missing training, failed accuracy, memory-vector collapse, or pure expert starvation.",
+        "Records that seed 11 failed only selected_route_mi with 0.0273278772 and 95/96 records routed to program 0 while passing eval accuracy, program-memory cosine, and knockout-loss gates.",
+        "Records that seed 37 failed only selected_route_mi with 0.0825099842 and 93/96 records routed to program 8 while passing eval accuracy, program-memory cosine, and knockout-loss gates.",
+        "Adds selected_program_mi_loss to train category/program mutual information over the record-level selected-program scores used by Phase B specialization analysis.",
+        "Adds --category-route-objective selected_mi to kaggle/train_best_tac_agentic.py and wires it to output.aux.program_activations plus output.aux.selected_program_mask.",
+        "Updates capability and specialization benchmark helpers to support selected_mi for local comparisons.",
+        "Updates generated Kaggle Phase B instructions and README paths to use best_tac_agentic_run4_semantic_selected_mi.",
+        "Adds focused unit/smoke coverage and verifies the touched Python files with py_compile.",
+        "Leaves external Phase B recovery pending until fresh selected_mi seed runs pass the Phase B gate."
+      ]
+    },
+    {
+      "id": "TAC-174",
+      "title": "ATS checkpoint scorer and failure diagnosis",
+      "status": "completed",
+      "acceptance": [
+        "Adds run_ats_checkpoint_predictions to run TAC or vanilla checkpoints over ATS transfer examples using the existing Phase D byte-level checkpoint loading and generation contract.",
+        "Adds experiments/run_ats_checkpoint_predictions.py to write ATS checkpoint prediction rows and score rows for reusable local or Kaggle evaluation.",
+        "Tightens the ATS prompt contract with focused tests so generated prompts fit within 220 UTF-8 bytes and do not overflow the 256-token TAC-Control-v1 context window.",
+        "Runs available local TAC checkpoints runs/TAC-seed 11/best (1).pt and runs/TAC-seed 37/best.pt on the compact fixed ATS suite with max_new_tokens=24.",
+        "Writes runs/benchmarks/ats_checkpoint_tac_seed11_compact_24tok_fixedprompt_2026_06_05 and runs/benchmarks/ats_checkpoint_tac_seed37_compact_24tok_fixedprompt_2026_06_05.",
+        "Reports both TAC checkpoints scoring 0.0 on train and test ATS splits after prompt truncation and generation-budget issues are fixed.",
+        "Diagnoses model behavior from raw completions: available TAC checkpoints emit hard-corpus-style prose/JSON fragments rather than ATS target tokens.",
+        "Confirms no nonzero local vanilla .pt checkpoint is available for the required parameter-matched comparison.",
+        "Identifies the next repair: stage ATS examples as supervised train/eval data, produce TAC and parameter-matched vanilla checkpoints on that corpus, then rerun ATS scoring.",
+        "Adds focused checkpoint-runner test coverage, package exports, documentation, research log updates, and includes the runner in the Kaggle bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-175",
+      "title": "ATS supervised corpus staging and matched checkpoint validation",
+      "status": "completed",
+      "acceptance": [
+        "Adds reusable ATS transfer supervised corpus staging that writes train.prepared.jsonl and eval.prepared.jsonl for the existing TAC and vanilla trainer JSONL contract.",
+        "Keeps train domains limited to navigation/inventory and eval domains limited to lab_protocol/incident_response with explicit leakage counts in the manifest.",
+        "Writes ats_transfer_suite.json, ats_transfer_training_manifest.json, and RESULTS.md under runs/benchmarks/ats_transfer_training_corpus_2026_06_05.",
+        "Reports 512 train records, 512 eval records, max_text_bytes 173, no duplicate record IDs, and zero train/eval domain leakage for seed 37 with 128 examples per domain.",
+        "Adds experiments/stage_ats_transfer_corpus.py, focused unit coverage, package exports, and includes the staging CLI in the Kaggle bundle file list.",
+        "Runs TAC and parameter-matched vanilla smoke training on the staged corpus, scores both checkpoints through the ATS checkpoint runner, and records whether the smoke comparison is valid or needs another repair.",
+        "Records that 20-step, 200-step, and 500-step seq_len=176 local generic-JSONL smoke runs all score 0.0 train/test exact match for both TAC and vanilla despite improving eval losses.",
+        "Adds experiments/benchmark_ats_answer_copy_training.py to run masked answer-only TAC and parameter-matched vanilla controls, proving both can emit exact train-domain answers while still failing held-out domain transfer locally.",
+        "Launches private Kaggle base-scale TAC and vanilla 5k-step ATS transfer kernels using uploaded code and corpus datasets, with each kernel scoring best.pt through the ATS checkpoint runner.",
+        "Diagnoses the first Kaggle launch as blocked by stale code-dataset contents and occupied GPU batch slots, repairs the code dataset metadata/version, verifies inputs with diagnostic_version=2, deletes only the two blocked TAC-175 kernels, and relaunches TAC/vanilla scripts that emit kernel_run_version=2.",
+        "Adds aggregate_ats_checkpoint_run_results plus experiments/aggregate_ats_checkpoint_runs.py to classify external TAC-vs-vanilla ATS score outputs as pending, ats_external_transfer_promote, or ats_external_transfer_fail using train-fit, held-out transfer, vanilla-advantage, missing-prediction, and task-presence gates.",
+        "Reroutes external validation through the previously authorized isolated eweewee2 Kaggle profile when jeffkolo kernels remain opaque, uploads eweewee2-owned code/corpus datasets, and launches eweewee2 TAC/vanilla base 5k ATS kernels with the same v2 scripts and aggregate gate.",
+        "Adds and repairs an eweewee2 CPU canary that verifies Kaggle exposes the code dataset in extracted layout, confirms 512 train records, 512 eval records, 1024 suite examples, required ATS bundle files, healthy corpus visibility, and working output downloads.",
+        "Stages a GPU-only eweewee2 canary and observes Kaggle reject it with maximum batch GPU session count reached, confirming the active eweewee2 TAC/vanilla ATS training kernels occupy the two GPU batch slots while score outputs remain pending.",
+        "Runs eweewee2/tac-ats-transfer-cpu-smoke-2026-06-05 to validate the real Kaggle trainer, checkpoint save/load, ATS checkpoint scorer, and aggregate path on CPU with 2-step TAC/vanilla smoke controls and an 8-example compact ATS suite; records the expected ats_external_transfer_fail smoke result separately from the pending base-scale gate.",
+        "Records the 20260605_093127 poll and 20260605_093526 source-pull check: all four jeffkolo/eweewee2 TAC/vanilla GPU slugs still return session-status HTTP 500 with no logs/files/output, but source pulls succeed and confirm the v2 TAC/vanilla trainer/scorer scripts remain attached; the aggregate remains pending with both required score controls missing.",
+        "Records the 20260605_094300 poll and 20260605_094506 source-pull check with the same pending score-output state, then stages a fresh eweewee2 GPU canary slug and observes maximum batch GPU session count reached again, confirming the eweewee2 GPU slots remain occupied while base-scale score outputs are still unavailable.",
+        "Records the 20260605_100048 direct Kaggle SDK probe and 20260605_100244 poll: get_kernel works for all four refs and confirms stable v2 source hashes, selected_mi TAC script wiring, GPU metadata, and attached datasets, while session output remains empty and only get_kernel_session_status returns HTTP 500; the aggregate remains pending with both required score controls missing.",
+        "Records the first completed external base-scale score artifact: eweewee2 vanilla 5k completed 5000 steps, scored 1024 ATS examples with no missing predictions, reached train exact match 0.298828125 and test exact match 0.0, while TAC output remains unavailable and the aggregate remains pending with only tac_base_ats_5k missing.",
+        "Downloads completed TAC base-scale score artifacts from eweewee2 and corroborating jeffkolo runs, then runs the official aggregate over explicit eweewee2 TAC and vanilla score JSONs.",
+        "Records the final external TAC-vs-vanilla ATS gate decision under runs/benchmarks/ats_checkpoint_comparison_2026_06_05: decision.status=ats_external_transfer_fail, required controls/tasks present, no missing predictions, TAC train/test 0.0/0.0, vanilla train/test 0.298828125/0.0, TAC test advantage 0.0."
+      ]
+    },
+    {
+      "id": "TAC-176",
+      "title": "Parallel trajectory verifier architecture probe",
+      "status": "completed",
+      "acceptance": [
+        "Tests the pasted width-over-depth idea as an explicit parallel trajectory selection probe over TAC-style direct and multi-hop chunked-recall memory edges.",
+        "Adds a label-free verifier scoring rule that selects among multiple candidate first-hop program/retrieval trajectories without using value_targets at selection time.",
+        "Compares greedy single-trajectory selection against parallel top-k verifier selection on single_key and multi_hop batches.",
+        "Requires direct recall preservation and a substantial multi-hop improvement before recommending architecture integration.",
+        "Writes a reproducible JSON and Markdown artifact under runs/benchmarks/parallel_program_trajectories_2026_06_05.",
+        "Adds focused tests for candidate generation, verifier selection, aggregate decision logic, and CLI artifact shape.",
+        "Records decision.status=parallel_trajectory_probe_promote with single_key greedy/parallel accuracy 1.0/1.0, multi_hop greedy/parallel accuracy 0.0/1.0, direct_regression 0.0, and no target labels used for selection.",
+        "Includes experiments/benchmark_parallel_program_trajectories.py in the generated Kaggle code bundle file list for future architecture validation runs."
+      ]
+    },
+    {
+      "id": "TAC-177",
+      "title": "Full parallel-program architecture probe",
+      "status": "completed",
+      "acceptance": [
+        "Runs one reproducible local architecture probe covering all five pasted ideas: parallel reasoning trajectories, program disagreement as signal, integrated verifiers, specialized computation beyond memory, and stochastic retrieval/program exploration.",
+        "Extends TAC-176 with a program-disagreement signal that separates direct confident routes from multi-hop greedy-distractor routes without using answer labels.",
+        "Compares confidence-only selection against an integrated structural verifier and requires the structural verifier to recover multi-hop bridge routes when confidence-only selection fails.",
+        "Compares deterministic top-k exploration against stochastic route sampling and reports exploration coverage, stochastic success rate, and seed stability.",
+        "Adds a controlled specialized-computation task where program modules perform distinct token transforms and beat a memory-only raw-retrieval control.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/full_parallel_program_architecture_2026_06_05 with per-idea metrics, decision status, and explicit proof boundaries.",
+        "Records decision.status=full_parallel_program_architecture_promote with all five ideas marked promote_candidate: multi-hop parallel delta 1.0, disagreement AUC 1.0, structural verifier delta 1.0, specialized computation delta 0.75, stochastic accuracy 1.0, and stochastic bridge sample rate 0.9947916666666666.",
+        "Adds focused tests for public benchmark behavior and includes the benchmark in the generated Kaggle code bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-178",
+      "title": "TAC-native serving, tokenized corpus, and GUI path",
+      "status": "completed",
+      "acceptance": [
+        "Adds tac_transformer.serving with TAC byte-token encode/decode, checkpoint loading, and generation with temperature, top-k, top-p, max-token, seed, and metadata controls.",
+        "Keeps serving optimized for current TAC checkpoints by preserving the UTF-8 byte-token contract rather than forcing GPT-2 BPE onto incompatible checkpoints.",
+        "Adds scripts/prepare_tac_tokenized_corpus.py to build train/valid memmap token files and manifests from prepared JSONL splits.",
+        "Adds scripts/tac_generate.py for CLI checkpoint inference.",
+        "Adds scripts/tac_gradio_gui.py as an optional Gradio desktop/browser GUI for prompt input, generation controls, output display, and run metadata.",
+        "Documents whether TAC is GPT-style and describes the TAC language-model layer order plus the inside-block Identity Field arrangement.",
+        "Adds focused unit coverage for tokenizer compatibility, sampling controls, checkpoint loading, generation metadata, and tokenized-corpus CLI defaults."
+      ]
+    },
+    {
+      "id": "TAC-179",
+      "title": "Identity attention selectivity ablation gate",
+      "status": "completed",
+      "acceptance": [
+        "Makes coherence-sparse identity attention cheaper when TAC uses causal local attention by allowing identity_sparse_mask to stay on the sliding-window attention path instead of forcing dense seq-by-seq attention.",
+        "Keeps the optimization selective: compressed-memory attention still uses the dense/memory path, while coherence_sparse_local uses the local causal window only when attention_window_size is configured.",
+        "Adds experiments/benchmark_identity_attention_selectivity.py to compare identity_first, coherence_sparse, compressed_memory, and coherence_sparse_local on TAC chunked-memory tasks.",
+        "Defines a promotion gate requiring combined carry plus state-utility quality improvement, no average carry drop, no multi-hop carry drop when multi-hop is present, and query-speed ratio at or above threshold.",
+        "Runs a local smoke ablation under runs/benchmarks/identity_attention_selectivity_smoke_2026_06_05 over single_key and multi_hop with seed 11.",
+        "Records decision.status=no_identity_attention_promotion for the smoke: compressed_memory improves the tiny quality score but fails speed ratio, while coherence_sparse_local does not improve quality and also misses the speed threshold against identity_first.",
+        "Leaves best_tac_config at identity_attention_type=identity_first because no benchmarked candidate improves memory/reasoning without speed loss.",
+        "Adds focused tests for local sparse-mask attention shape/equivalence and for the ablation promotion/rejection decision contract.",
+        "Includes the identity selectivity ablation CLI in the generated Kaggle code bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-180",
+      "title": "Persistent computational identity intelligence proof",
+      "status": "completed",
+      "acceptance": [
+        "Defines a bounded intelligence metric as held-out exact-match accuracy on latent-rule tasks where support observations reveal an identity-specific computation and later queries omit that rule.",
+        "Adds a constructive theorem-style bound showing a stateless/reset policy without identity history is limited by the best rule prior while a persistent identity policy can reach perfect accuracy after diagnostic support examples.",
+        "Compares persistent identity, stateless/reset, global-persistent-without-identity, and memory-only-without-computation controls on balanced copy/successor/predecessor/affine_jump rule families.",
+        "Requires persistent identity accuracy >=0.95, stateless/reset accuracy <=0.30, memory-only held-out accuracy <=0.05, and persistent advantage over the best non-identity control >=0.45.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/persistent_computational_identity_2026_06_05 with theorem assumptions, empirical metrics, and proof boundaries.",
+        "Records decision.status=persistent_computational_identity_proved with persistent_identity_accuracy 1.0, stateless_reset_accuracy 0.25, global_persistent_without_identity_accuracy 0.25, memory_only_unseen_accuracy 0.0, and persistent_advantage_over_best_non_identity 0.75 over 192 held-out queries.",
+        "Adds focused tests for public benchmark behavior and includes the benchmark in the generated Kaggle code bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-181",
+      "title": "Persistent identity broader-task bridge",
+      "status": "completed",
+      "acceptance": [
+        "Connects the TAC-180 persistent computational identity proof to controlled broader task families: transfer learning, multi-hop reasoning, agent memory, and language-like instruction exact-match rows.",
+        "Builds each task so support observations reveal an identity-specific computation while held-out queries use unseen values, domains, chains, event contexts, or paraphrased instruction templates.",
+        "Compares persistent identity, stateless/reset, global-persistent-without-identity, and memory-only controls on every task family.",
+        "Requires persistent identity accuracy >=0.95 on every task family, best non-identity control accuracy <=0.35 on every task family, and mean persistent advantage >=0.60.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/persistent_identity_broader_tasks_2026_06_05 with per-task metrics and explicit real-world benchmark boundary.",
+        "Records decision.status=persistent_identity_broader_task_bridge_proved with persistent identity accuracy 1.0, best non-identity accuracy 0.25, and persistent advantage 0.75 on transfer learning, multi-hop reasoning, agent memory, and language-like instruction proxy rows.",
+        "Adds focused tests for public benchmark behavior and includes the benchmark in the generated Kaggle code bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-182",
+      "title": "Live persistent identity state bridge",
+      "status": "completed",
+      "acceptance": [
+        "Wires the TAC-181 broader-task rows to a live identity-state adapter that encodes support observations, carries identity-keyed computational state, and answers held-out queries without seeing the hidden rule label.",
+        "Compares carried identity state, reset-per-query state, global-persistent-without-identity state, and memory-only controls under the same rows and answer interface.",
+        "Requires carried identity state accuracy >=0.95 on every controlled task family, best non-identity control accuracy <=0.35 on every family, and mean carried-state advantage >=0.60.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/live_persistent_identity_state_bridge_2026_06_05 with explicit boundary that this is a live-state contract proof, not a trained checkpoint or real-world language benchmark.",
+        "Records decision.status=live_persistent_identity_state_bridge_proved with carried identity state accuracy 1.0, reset-per-query accuracy 0.25, global-persistent-without-identity accuracy 0.25, memory-only accuracy 0.0, and mean carried-state advantage 0.75 over 576 controlled rows.",
+        "Adds focused tests for public benchmark behavior and includes the benchmark in the generated Kaggle code bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-183",
+      "title": "Trained identity collapse-recovery gate",
+      "status": "completed",
+      "acceptance": [
+        "Trains a local TAC-style identity-state learner on the TAC-182 controlled distribution using support/query supervision only; hidden rule labels may be used for evaluation metrics but not for training loss.",
+        "Deliberately applies identity-collapse pressure during training and injects gradient noise, then measures whether learned identity states re-separate rather than staying globally collapsed.",
+        "Reports learnability metrics: held-out exact-match accuracy, identity state separation margin, selected-route/rule mutual information or equivalent normalized agreement, and routing consistency across repeated task-family queries.",
+        "Reports stability-under-gradient-noise metrics across at least three training seeds, including minimum held-out accuracy and minimum route agreement under the noisy training condition.",
+        "Reports degradation gap versus the TAC-182 live solver ceiling and requires trained accuracy >=0.90, solver gap <=0.10, best non-identity control <=0.35, trained advantage >=0.60, state separation margin >0.15, and route agreement >=0.90.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/trained_identity_collapse_recovery_2026_06_05 with explicit boundary that this is a local controlled trained learner, not an external checkpoint or real-world language benchmark.",
+        "Records decision.status=trained_identity_collapse_recovery_proved with trained accuracy mean/min 1.0/1.0, solver gap 0.0, best non-identity control 0.25, trained advantage 0.75, state separation margin min 0.8844, and route agreement min 1.0 across three noisy training seeds.",
+        "Adds focused tests for the public benchmark behavior and includes the benchmark in the generated Kaggle code bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-184",
+      "title": "Identity interference stress test",
+      "status": "completed",
+      "acceptance": [
+        "Runs a local trained-learner stress suite that reuses the TAC-183 support/query learning contract while applying structured interference rather than only the base TAC-182 distribution.",
+        "Includes an identity-collision test where identities share input/query distributions but require distinct identity-conditioned computations, and requires accuracy >=0.90, route agreement >=0.90, and state separation margin >0.15.",
+        "Includes a distribution-shift test where training task families are held out from evaluation task families, and requires the learned identity route to transfer with accuracy >=0.90 and route agreement >=0.90.",
+        "Includes an adversarial collapse-pressure sweep from the TAC-183 mild setting through substantially higher pressure, reports the first pressure where accuracy, route agreement, or state separation fails the gate, and records whether a phase boundary was observed.",
+        "Includes a scaled-load test with increased identity count and state dimension, and requires accuracy >=0.90, route agreement >=0.90, and state separation margin >0.15.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/identity_interference_stress_2026_06_05 with explicit boundary that this maps controlled stress behavior, not real-world language generalization or full TACTransformerLM checkpoint behavior.",
+        "Records decision.status=identity_interference_stress_boundary_mapped: identity collision, distribution shift, and scaled load all pass at accuracy 1.0 and route agreement 1.0; collapse-pressure sweep remains stable through 10.0 but first fails at pressure 20.0 with accuracy 0.875 and route agreement 0.75.",
+        "Adds focused tests for public benchmark behavior and includes the benchmark in the generated Kaggle code bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-185",
+      "title": "Relaxed learnable routing and trainable memory probe",
+      "status": "completed",
+      "acceptance": [
+        "Adds a local controlled experiment that keeps the TAC identity/persistent-memory ideas but removes explicit route-label supervision from the training loss.",
+        "Trains a soft identity router and recurrent memory update from support/query supervision only, with hidden rule labels used only for posthoc evaluation metrics.",
+        "Reports whether learned route structure approximates the latent identity programs using route-rule NMI or equivalent posthoc agreement.",
+        "Evaluates long-horizon consistency across multiple query windows and compares carried memory against reset-state and shuffled-memory controls.",
+        "Requires carried long-horizon accuracy >=0.90, reset and shuffled controls <=0.35, carried advantage >=0.55, route-rule NMI >=0.75, and route consistency >=0.90 before promotion as an opt-in candidate.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/relaxed_identity_routing_memory_2026_06_05 with explicit boundary that this is a controlled local probe, not a full TACTransformerLM checkpoint or real-world language benchmark.",
+        "Records decision.status=relaxed_identity_routing_memory_promote_candidate with carried accuracy mean 0.9167, horizon-tail accuracy mean 0.9167, reset accuracy mean 0.25, shuffled-memory accuracy mean 0.0833, carried advantage 0.6667, route-rule NMI min 0.75, and route consistency min 1.0 across three model seeds.",
+        "Adds focused tests for the public benchmark behavior and includes the benchmark in the generated Kaggle code bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-186",
+      "title": "Phase boundary quantification harness",
+      "status": "completed",
+      "acceptance": [
+        "Adds a local measurement harness over TAC-185 that sweeps memory coherence, routing entropy, task entropy, and horizon depth without optimizing for accuracy.",
+        "Produces a 4D phase grid with per-cell carried accuracy, reset accuracy, shuffled-memory accuracy, performance gap, collapse index, routing stability, and accuracy variance.",
+        "Computes phase sharpness along memory, routing, task, and horizon axes from finite-difference performance drops.",
+        "Estimates the identity-advantage phase boundary where carried-vs-reset performance gap approaches a configurable threshold for each task/horizon slice.",
+        "Emits compact heatmap/slice data for memory-vs-routing, memory-vs-horizon, and routing-vs-task projections.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/phase_boundary_quantification_2026_06_05 with explicit boundary that this is a controlled measurement instrument, not an accuracy promotion run.",
+        "Records decision.status=phase_boundary_mapped over the default 108-cell grid with mean performance gap 0.3001, min gap -0.25, max gap 0.75, harmful-memory cell count 17, mapped boundary count 9, max memory phase sharpness 1.0, max routing phase sharpness 0.28125, max task phase sharpness 0.03125, and max horizon phase sharpness 0.025.",
+        "Adds focused tests for grid construction, phase metric contracts, boundary extraction, and CLI artifact shape, and includes the benchmark in the generated Kaggle code bundle file list."
+      ]
+    },
+    {
+      "id": "TAC-187",
+      "title": "ATS TAC fp32 optimizer-health repair",
+      "status": "in_progress",
+      "acceptance": [
+        "Diagnoses the completed TAC-175 external TAC base runs as TAC-specific fp16 optimizer-scaler collapse rather than a Kaggle output, ATS scorer, prompt, answer-extraction, or vanilla-control failure.",
+        "Records evidence from the completed TAC manifests and metrics: precision=fp16, fail_on_unhealthy_optimization=false, GradScaler collapse to 0.0, gradient_norm=0.0, eval accuracy around 0.001-0.003, best_eval_loss 6.359759747982025, and degenerate raw ATS predictions.",
+        "Updates ATS recommended TAC training commands to use base 5k seq_len=176 with --precision fp32, --min-healthy-gradient-norm 1e-12, and --fail-on-unhealthy-optimization while preserving selected_mi routing supervision.",
+        "Updates generated Kaggle bundle instructions and kaggle/README.md selected_mi commands to use the same fp32/fail-fast optimizer-health contract.",
+        "Regenerates the ATS transfer corpus manifest/RESULTS and rebuilds runs/kaggle_agentic_training_bundle/best-tac-agentic-training-bundle.zip with the repaired command text.",
+        "Runs a local two-step fp32 health smoke on the ATS corpus and verifies optimization_health.status=passed with nonzero gradient norm and grad_scaler_scale=1.0.",
+        "Stages repaired eweewee2 and jeffkolo fp32 TAC Kaggle kernels under new slugs without overwriting the completed failed fp16 evidence.",
+        "Records that both repaired Kaggle pushes were initially blocked by Maximum weekly GPU quota of 30.00 hours reached, then the original repaired slugs entered Kaggle's stale Notebook not found state.",
+        "Stages fresh unique fp32 repair slugs and successfully pushes eweewee2/tac-ats-transfer-tac-base-fp32-0033-2026-06-06 as version 1 with source-pull evidence confirming kernel_run_version=3, fp32 training/scoring, --min-healthy-gradient-norm 1e-12, and --fail-on-unhealthy-optimization.",
+        "Leaves external repaired validation pending until the accepted fp32 eweewee2 run exposes logs or ats_score/ats_checkpoint_prediction_run.json and can be aggregated against the existing vanilla score."
+      ]
+    },
+    {
+      "id": "TAC-188",
+      "title": "Research-integrated memory-advantage model version",
+      "status": "completed",
+      "acceptance": [
+        "Reads the investor-style attachment and research.md, then defines the experiment question as whether persistent computational identity creates a measurable long-horizon memory advantage over transformer plus retrieval baselines under equal resource constraints.",
+        "Adds an opt-in TAC model preset that composes the promoted research mechanisms: modern backbone, learnable semantic routing, persistent program-conditioned memory, content-addressed synthesis reads, identity-first attention, gated residual memory adapter, coalition memory graph context, and fp32 fail-fast optimizer-health defaults.",
+        "Exposes the preset through the public package and Kaggle training CLI so it can be launched by name without reconstructing a long manual flag list.",
+        "Adds a benchmark harness that writes the model-version manifest, equal-resource baseline plan, long-horizon evaluation axes, adversarial stress axes, and explicit non-claim boundary for the attachment question.",
+        "Reports parameter counts for the TAC preset and parameter-matched vanilla baseline so follow-on benchmark runs can enforce equal-resource comparisons.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/memory_advantage_model_version_2026_06_05 and includes the benchmark in the generated Kaggle code bundle file list.",
+        "Records decision.status=memory_advantage_model_version_ready with default parameter counts memory_advantage_tac=2097684, parameter_matched_vanilla=2106264, and current_best_tac=1899796.",
+        "Adds focused tests for the preset, CLI selection, artifact contract, and bundle inclusion before marking the version ready for downstream training/evaluation."
+      ]
+    },
+    {
+      "id": "TAC-189",
+      "title": "Controlled long-horizon memory advantage benchmark",
+      "status": "completed",
+      "acceptance": [
+        "Runs a controlled benchmark answering the attachment question: whether persistent computational identity creates a measurable long-horizon memory advantage over transformer plus retrieval baselines under equal-resource constraints.",
+        "Trains/evaluates a TAC-style persistent memory learner using support/query supervision only and no explicit route-label loss, then compares carried memory against reset and shuffled-state adversarial controls.",
+        "Compares TAC carried-state performance against transformer-window, transformer-retrieval, and transformer-memory-database controls using the same task rows, model-version parameter-count contract, and explicit context-token accounting.",
+        "Produces the investor-facing graph data for Context Tokens Required vs Task Success and records tokens required to reach at least 90 percent task success for every control.",
+        "Produces a secondary Days Since Instruction vs Accuracy curve at a fixed low context budget to test long-horizon consistency.",
+        "Requires TAC to reach at least 90 percent carried accuracy, beat the best control at TAC's context budget by at least 50 percentage points, and require fewer context tokens for 90 percent success than every transformer/retrieval/memory-db control before reporting a controlled advantage.",
+        "Writes JSON, Markdown, and CSV graph artifacts under runs/benchmarks/long_horizon_memory_advantage_2026_06_05 and includes the benchmark in the generated Kaggle code bundle file list.",
+        "Records decision.status=controlled_long_horizon_memory_advantage_observed with TAC carried accuracy mean 0.9167, best control at TAC's 6-token budget 0.25, advantage at TAC budget 0.6667, and context tokens required for 90 percent success: TAC 6, transformer memory DB 14, transformer retrieval 22, transformer window 62.",
+        "Records seed robustness caveat: default model seeds 5 and 11 reach 1.0 carried accuracy while seed 7 reaches 0.75, so the aggregate mean passes but not every default seed clears the 90 percent threshold.",
+        "Records the result boundary explicitly as a controlled local benchmark, not an external trained TACTransformerLM checkpoint or real-world product benchmark."
+      ]
+    },
+    {
+      "id": "TAC-190",
+      "title": "Kaggle TAC training speed profile",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in Kaggle fast TAC preset that preserves the promoted semantic-routing and content-memory path while reducing avoidable per-step work from full content-read queries and unrestricted attention.",
+        "Exposes the speed profile through kaggle/train_best_tac_agentic.py as --preset kaggle_fast_tac, with fp32 optimizer-health defaults, selected_mi routing pressure, and explicit CLI override support for the local attention window.",
+        "Adds a local benchmark harness that compares base TAC, Kaggle fast TAC, and parameter-matched vanilla training-step throughput on the same synthetic batch and records the residual vanilla gap separately from structural TAC work reduction.",
+        "Requires the benchmark artifact to show the fast TAC profile using at most 25 percent of the full content-read query positions on the default local shape before reporting the profile as ready for Kaggle validation.",
+        "Updates generated Kaggle bundle instructions and kaggle/README.md with the recommended fast-profile command, without replacing the previous baseline command.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/kaggle_tac_training_speed_profile_2026_06_05 and records the boundary that local CPU/GPU microbenchmarks do not prove external Kaggle T4 wall-clock speed until the Kaggle run is executed.",
+        "Records decision.status=kaggle_fast_tac_profile_ready_for_external_validation with local CPU benchmark fast TAC tokens/s 1860.3669, base TAC tokens/s 1707.3959, parameter-matched vanilla tokens/s 3445.0678, fast-vs-base ratio 1.0896, fast-vs-vanilla ratio 0.5400, and content-read query fraction 0.25."
+      ]
+    },
+    {
+      "id": "TAC-191",
+      "title": "Lossless local TAC chunked-state training speedup",
+      "status": "completed",
+      "acceptance": [
+        "Profiles the local CPU TAC training path and identifies a lossless bottleneck rather than changing TAC architecture, routing, memory, attention, or training objectives.",
+        "Updates chunked-state training so the context half skips auxiliary loss/metric collection because those context auxiliary values are not used in the returned query output, optimizer loss, selected-MI route loss, or metrics contract.",
+        "Adds a public-behavior RED/GREEN test proving chunked forward calls the context half with collect_auxiliary=False while preserving query auxiliary collection, context-to-query identity-state handoff, returned logits, and weighted next-token loss.",
+        "Runs the same local benchmark shape before and after the change and records whether fast TAC tokens/s improves without changing content-read query fraction or any capability-critical outputs.",
+        "Writes the result and boundary to research.md and progress.txt, making clear this is an exact computation-path cleanup and not a capability-reducing approximation.",
+        "Records the measured local result: fast TAC improved from 1149.0545 tokens/s in runs/benchmarks/local_speed_baseline_2026_06_05 to 1643.4754 tokens/s in runs/benchmarks/local_lossless_context_aux_speedup_2026_06_05 on the same 3-iteration CPU shape, about a 1.43x absolute fast-TAC throughput gain, while real-model tests preserved carried state, query logits, query loss, total loss, and auxiliary losses."
+      ]
+    },
+    {
+      "id": "TAC-192",
+      "title": "Local TAC efficiency experiment matrix",
+      "status": "completed",
+      "acceptance": [
+        "Builds a reproducible local CPU experiment matrix over the user's proposed TAC speed tactics, starting from the current fast TAC training path.",
+        "Compares eager full auxiliary training, logging-metric deferral, auxiliary-loss cadence, CPU torch.compile reduce-overhead, and CPU thread/interop settings where available.",
+        "Records not-applicable or deferred status for CUDA/Triton-only kernels, foreach refactors, hard routing, routing cache, and parameter reallocation instead of presenting them as tested wins.",
+        "Reports tokens/s, speed ratio versus the eager full-auxiliary baseline, training loss, held-out next-token loss delta, auxiliary cadence, compile status, and capability-tradeoff flags for each completed variant.",
+        "Promotes only variants whose held-out loss delta stays within the configured tolerance, and keeps any objective-changing variant opt-in rather than replacing the default training path.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/local_tac_efficiency_matrix_2026_06_05 and records the local CPU boundary in research.md and progress.txt.",
+        "Adds focused tests for the public artifact contract and includes the benchmark in the generated Kaggle/code bundle file list.",
+        "Adds an opt-in trainer flag --aux-loss-cadence that keeps the default every-step objective unchanged while allowing speed experiments that compute auxiliary losses every N optimizer steps.",
+        "Records the longer local CPU matrix result: eager full aux 1982.4279 tokens/s, aux every 4 2276.8946 tokens/s, vanilla reference 4307.4206 tokens/s, aux-every-4 speed ratio 1.1485, held-out loss delta -0.0006, and torch.compile skipped because CPU Inductor could not find MSVC cl.exe."
+      ]
+    },
+    {
+      "id": "TAC-193",
+      "title": "Opt-in CPU research TAC version",
+      "status": "completed",
+      "acceptance": [
+        "Creates a named opt-in cpu_research_tac preset without changing the main best, memory_advantage, or kaggle_fast_tac presets.",
+        "Applies CPU-runnable versions of the TAC-192 efficiency ideas: thinner routing/controller footprint, hard lower-k routing, sparse content reads, local attention, cheaper memory adapter, auxiliary-loss cadence, and explicit CPU thread settings.",
+        "Exposes the preset through tac_transformer exports and kaggle/train_best_tac_agentic.py as --preset cpu_research_tac.",
+        "Keeps default trainer behavior unchanged when cpu_research_tac is not selected.",
+        "Adds a local benchmark comparing cpu_research_tac against kaggle_fast_tac and parameter-matched vanilla on the same CPU shape, reporting tokens/s, parameter count, identity-field parameter share, held-out next-token loss proxy, and applied tactics.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/cpu_research_tac_version_2026_06_05 with an explicit research-only boundary.",
+        "Adds focused tests for preset composition, trainer selection, artifact contract, and bundle inclusion before marking the version ready.",
+        "Records the same-run local CPU ablation: kaggle_fast_tac_reference 1682.9961 tokens/s, kaggle_fast_tac_aux_every_4 1819.1413 tokens/s and 1.0809x, cpu_research_arch_full_aux 2031.9437 tokens/s and 1.2073x, combined cpu_research_tac 2051.5230 tokens/s and 1.2190x with held-out loss delta 0.0258, vanilla_reference 4478.1487 tokens/s, plus the prior TAC-192 tac_aux_every_4 reference of 2276.89 tokens/s, 1.15x versus full-aux TAC, held-out loss delta -0.0006.",
+        "Runs a real two-step trainer smoke with --preset cpu_research_tac and verifies thread pinning, aux_loss_cadence=4, auxiliary_loss_collected=false on non-cadence steps, nonzero gradients, and optimizer_health.status=passed."
+      ]
+    },
+    {
+      "id": "TAC-194",
+      "title": "Run 5B best-capability fast launch preset",
+      "status": "completed",
+      "acceptance": [
+        "Adds a named opt-in run5b_best_capability_fast preset that combines the TAC-188 memory-advantage model version with the TAC-169 cue-chain readout instead of relaunching stale Run 5B or plain memory_advantage unchanged.",
+        "Keeps the strongest capability-side mechanisms: base-semantic top-2 routing, 24 programs, program-conditioned persistent memory writes, CREB k=6 allocation, content-addressed two-step reads, graph coalition context, gated residual memory adapter, and identity-first attention.",
+        "Applies the trainer-supported speed path without switching to the capacity-reducing cpu_research_tac architecture: content_read_query_top_k=8, attention_window_size=128, existing lossless chunked-context auxiliary skipping, and aux_loss_cadence=4.",
+        "Uses Run 5B optimizer-health and specialization lessons: fp32, min_healthy_gradient_norm=1e-12, fail_on_unhealthy_optimization=1, category_route_objective=selected_mi, and a safer category_route_weight=0.1.",
+        "Exposes the preset through tac_transformer exports and kaggle/train_best_tac_agentic.py as --preset run5b_best_capability_fast.",
+        "Adds the new launch command to kaggle/README.md and the generated RUN_ON_KAGGLE.md bundle instructions, with --aux-loss-cadence 4 explicit in the command.",
+        "Adds focused tests for preset composition, CLI config selection, trainer manifest output, and generated instruction inclusion.",
+        "Runs a real two-step CPU trainer smoke verifying the manifest records preset=run5b_best_capability_fast, cue_match content reads, graph coalition context, selected_mi weight 0.1, aux_loss_cadence=4, fp32 fail-fast optimizer health, nonzero gradients, and completed_steps=2.",
+        "Rebuilds runs/kaggle_agentic_training_bundle/best-tac-agentic-training-bundle.zip and verifies the packaged RUN_ON_KAGGLE.md contains --preset run5b_best_capability_fast and --aux-loss-cadence 4.",
+        "Records the boundary that TAC-194 is a smoke-tested launch path, not external Phase B recovery, ATS transfer success, or real long-horizon checkpoint validation.",
+        "After the Kaggle version 1 run failed under DDP, identifies the unused aux-cadence parameter as blocks.7.identity_field.raw_energy_costs and adds a zero-weight energy safety path so non-cadence steps preserve the gradient graph without changing the objective.",
+        "Rebuilds and versions the private Kaggle code dataset, pushes jeffkolo/tac-run5b-best-capability-fast-20k-2026-06-06 as kernel version 2, and records that source pull confirms kernel_run_version=2 while completed output artifacts are still pending."
+      ]
+    }
+  ]
+}
