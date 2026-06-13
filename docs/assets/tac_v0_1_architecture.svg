@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">TAC v0.1 persistent-state agent architecture</title>
+  <desc id="desc">A one-page diagram showing user query, routing, programs, persistent state, repair planning, and output, with benchmark annotations.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#1f2937"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { font: 700 32px Arial, sans-serif; fill: #111827; }
+      .subtitle { font: 400 17px Arial, sans-serif; fill: #4b5563; }
+      .box { fill: #ffffff; stroke: #1f2937; stroke-width: 2; rx: 10; }
+      .boxAccent { fill: #ecfeff; stroke: #0e7490; stroke-width: 2; rx: 10; }
+      .boxPlan { fill: #f0fdf4; stroke: #15803d; stroke-width: 2; rx: 10; }
+      .label { font: 700 22px Arial, sans-serif; fill: #111827; text-anchor: middle; }
+      .small { font: 400 15px Arial, sans-serif; fill: #374151; text-anchor: middle; }
+      .note { font: 700 14px Arial, sans-serif; fill: #0f172a; }
+      .noteText { font: 400 13px Arial, sans-serif; fill: #334155; }
+      .arrow { stroke: #1f2937; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .stateArrow { stroke: #0e7490; stroke-width: 3; fill: none; marker-end: url(#arrow); stroke-dasharray: 7 6; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1280" height="720"/>
+  <text class="title" x="640" y="58" text-anchor="middle">TAC v0.1: Persistent-State Agent Architecture</text>
+  <text class="subtitle" x="640" y="88" text-anchor="middle">Bounded benchmark evidence for memory, compression, control, repair, and causal fix selection</text>
+
+  <rect class="box" x="55" y="250" width="150" height="90"/>
+  <text class="label" x="130" y="288">User Query</text>
+  <text class="small" x="130" y="316">task / context</text>
+
+  <rect class="box" x="255" y="250" width="150" height="90"/>
+  <text class="label" x="330" y="288">Routing</text>
+  <text class="small" x="330" y="316">select paths</text>
+
+  <rect class="boxAccent" x="455" y="250" width="160" height="90"/>
+  <text class="label" x="535" y="288">Programs</text>
+  <text class="small" x="535" y="316">specialized modules</text>
+
+  <rect class="boxAccent" x="665" y="250" width="185" height="90"/>
+  <text class="label" x="757" y="288">Persistent State</text>
+  <text class="small" x="757" y="316">compressed memory</text>
+
+  <rect class="boxPlan" x="900" y="250" width="185" height="90"/>
+  <text class="label" x="993" y="288">Repair Planning</text>
+  <text class="small" x="993" y="316">causal fix order</text>
+
+  <rect class="box" x="1135" y="250" width="90" height="90"/>
+  <text class="label" x="1180" y="288">Output</text>
+  <text class="small" x="1180" y="316">answer / patch</text>
+
+  <path class="arrow" d="M205 295 L250 295"/>
+  <path class="arrow" d="M405 295 L450 295"/>
+  <path class="arrow" d="M615 295 L660 295"/>
+  <path class="arrow" d="M850 295 L895 295"/>
+  <path class="arrow" d="M1085 295 L1130 295"/>
+
+  <path class="stateArrow" d="M758 250 C758 160 330 160 330 245"/>
+  <text class="noteText" x="555" y="154" text-anchor="middle">carried IdentityState influences future routing and programs</text>
+
+  <rect class="box" x="70" y="430" width="255" height="110"/>
+  <text class="note" x="92" y="462">Compression</text>
+  <text class="noteText" x="92" y="488">TAC-251 / TAC-252</text>
+  <text class="noteText" x="92" y="512">20x bounded validation</text>
+
+  <rect class="box" x="360" y="430" width="255" height="110"/>
+  <text class="note" x="382" y="462">Continuity</text>
+  <text class="noteText" x="382" y="488">TAC-261 / TAC-266</text>
+  <text class="noteText" x="382" y="512">multi-session state</text>
+
+  <rect class="box" x="650" y="430" width="255" height="110"/>
+  <text class="note" x="672" y="462">Repair and Causality</text>
+  <text class="noteText" x="672" y="488">TAC-270 / TAC-272</text>
+  <text class="noteText" x="672" y="512">no-restore repair + causal disambiguation</text>
+
+  <rect class="box" x="940" y="430" width="270" height="110"/>
+  <text class="note" x="962" y="462">Interaction Planning</text>
+  <text class="noteText" x="962" y="488">TAC-274</text>
+  <text class="noteText" x="962" y="512">dependency graph + patch ordering</text>
+
+  <text class="subtitle" x="640" y="632" text-anchor="middle">Public v0.1 claim: reproducible bounded mechanisms, not transformer replacement or open-ended autonomy.</text>
+</svg>

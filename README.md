@@ -18,6 +18,7 @@ Start here:
 - [LIMITATIONS.md](LIMITATIONS.md) defines what TAC v0.1 does not prove.
 - [REPRODUCIBILITY.md](REPRODUCIBILITY.md) gives the local and Kaggle validation commands.
 - [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md) summarizes the TAC-235 through TAC-272 evidence.
+- [docs/tac_v0_1_architecture_diagram.md](docs/tac_v0_1_architecture_diagram.md) is the one-page visual explanation.
 - [runs/benchmarks/benchmark_summary_tac235_tac272.md](runs/benchmarks/benchmark_summary_tac235_tac272.md) is the compact benchmark table.
 
 Core validation pack:
