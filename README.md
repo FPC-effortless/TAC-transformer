@@ -19,6 +19,9 @@ Start here:
 - [REPRODUCIBILITY.md](REPRODUCIBILITY.md) gives the local and Kaggle validation commands.
 - [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md) summarizes the TAC-235 through TAC-272 evidence.
 - [docs/tac_v0_1_architecture_diagram.md](docs/tac_v0_1_architecture_diagram.md) is the one-page visual explanation.
+- [docs/tac_v0_1_demo_script.md](docs/tac_v0_1_demo_script.md) is a 3-5 minute walkthrough script.
+- [docs/tac_v0_1_research_outreach.md](docs/tac_v0_1_research_outreach.md) is the research-feedback outreach plan.
+- [docs/tac_v0_2_stage4_roadmap.md](docs/tac_v0_2_stage4_roadmap.md) is the proposed scaling roadmap.
 - [runs/benchmarks/benchmark_summary_tac235_tac272.md](runs/benchmarks/benchmark_summary_tac235_tac272.md) is the compact benchmark table.
 
 Core validation pack:
