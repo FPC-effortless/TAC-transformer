@@ -1,0 +1,72 @@
+[{"stream_name":"stdout","time":0.903559697,"data":"{\n"}
+,{"stream_name":"stdout","time":0.904501874,"data":"  \"benchmarks\": [\n"}
+,{"stream_name":"stdout","time":0.904510074,"data":"    {\n"}
+,{"stream_name":"stdout","time":0.904514374,"data":"      \"benchmark\": \"tac251\",\n"}
+,{"stream_name":"stdout","time":0.904519105,"data":"      \"cpu_metric\": 20.0,\n"}
+,{"stream_name":"stdout","time":0.904523682,"data":"      \"cpu_replicated\": true,\n"}
+,{"stream_name":"stdout","time":0.904527998,"data":"      \"decision\": \"PASS\",\n"}
+,{"stream_name":"stdout","time":0.904532748,"data":"      \"gate\": 20.0,\n"}
+,{"stream_name":"stdout","time":0.904537122,"data":"      \"kaggle_metric\": 20.0,\n"}
+,{"stream_name":"stdout","time":0.904541513,"data":"      \"measured_metric\": 20.0,\n"}
+,{"stream_name":"stdout","time":0.904545981,"data":"      \"tolerance\": 0.0,\n"}
+,{"stream_name":"stdout","time":0.904550224,"data":"      \"validated_on_kaggle\": true\n"}
+,{"stream_name":"stdout","time":0.904554626,"data":"    },\n"}
+,{"stream_name":"stdout","time":0.904558654,"data":"    {\n"}
+,{"stream_name":"stdout","time":0.904563056,"data":"      \"benchmark\": \"tac252\",\n"}
+,{"stream_name":"stdout","time":0.904567466,"data":"      \"cpu_metric\": 20.0,\n"}
+,{"stream_name":"stdout","time":0.904571631,"data":"      \"cpu_replicated\": true,\n"}
+,{"stream_name":"stdout","time":0.904576071,"data":"      \"decision\": \"PASS\",\n"}
+,{"stream_name":"stdout","time":0.904580803,"data":"      \"gate\": 20.0,\n"}
+,{"stream_name":"stdout","time":0.904585012,"data":"      \"kaggle_metric\": 20.0,\n"}
+,{"stream_name":"stdout","time":0.904589287,"data":"      \"measured_metric\": 20.0,\n"}
+,{"stream_name":"stdout","time":0.904602838,"data":"      \"tolerance\": 0.0,\n"}
+,{"stream_name":"stdout","time":0.904607291,"data":"      \"validated_on_kaggle\": true\n"}
+,{"stream_name":"stdout","time":0.904611556,"data":"    },\n"}
+,{"stream_name":"stdout","time":0.904615771,"data":"    {\n"}
+,{"stream_name":"stdout","time":0.904620011,"data":"      \"benchmark\": \"tac267\",\n"}
+,{"stream_name":"stdout","time":0.904624516,"data":"      \"cpu_metric\": 0.6767,\n"}
+,{"stream_name":"stdout","time":0.904629288,"data":"      \"cpu_replicated\": true,\n"}
+,{"stream_name":"stdout","time":0.904633671,"data":"      \"decision\": \"PASS\",\n"}
+,{"stream_name":"stdout","time":0.904638015,"data":"      \"gate\": 0.6,\n"}
+,{"stream_name":"stdout","time":0.904642739,"data":"      \"kaggle_metric\": 0.6755652153795335,\n"}
+,{"stream_name":"stdout","time":0.904647494,"data":"      \"measured_metric\": 0.6755652153795335,\n"}
+,{"stream_name":"stdout","time":0.904651902,"data":"      \"tolerance\": 0.08,\n"}
+,{"stream_name":"stdout","time":0.904656537,"data":"      \"validated_on_kaggle\": true\n"}
+,{"stream_name":"stdout","time":0.904661042,"data":"    },\n"}
+,{"stream_name":"stdout","time":0.904665323,"data":"    {\n"}
+,{"stream_name":"stdout","time":0.904669463,"data":"      \"benchmark\": \"tac270\",\n"}
+,{"stream_name":"stdout","time":0.904674256,"data":"      \"cpu_metric\": 0.9635,\n"}
+,{"stream_name":"stdout","time":0.904678738,"data":"      \"cpu_replicated\": true,\n"}
+,{"stream_name":"stdout","time":0.90468321,"data":"      \"decision\": \"PASS\",\n"}
+,{"stream_name":"stdout","time":0.904687644,"data":"      \"gate\": 0.85,\n"}
+,{"stream_name":"stdout","time":0.904691962,"data":"      \"kaggle_metric\": 0.9639435862006436,\n"}
+,{"stream_name":"stdout","time":0.904696567,"data":"      \"measured_metric\": 0.9639435862006436,\n"}
+,{"stream_name":"stdout","time":0.904707458,"data":"      \"tolerance\": 0.08,\n"}
+,{"stream_name":"stdout","time":0.904712408,"data":"      \"validated_on_kaggle\": true\n"}
+,{"stream_name":"stdout","time":0.904716997,"data":"    },\n"}
+,{"stream_name":"stdout","time":0.904721329,"data":"    {\n"}
+,{"stream_name":"stdout","time":0.904725567,"data":"      \"benchmark\": \"tac272\",\n"}
+,{"stream_name":"stdout","time":0.904730021,"data":"      \"cpu_metric\": 0.8417,\n"}
+,{"stream_name":"stdout","time":0.904734529,"data":"      \"cpu_replicated\": true,\n"}
+,{"stream_name":"stdout","time":0.904738825,"data":"      \"decision\": \"PASS\",\n"}
+,{"stream_name":"stdout","time":0.904743073,"data":"      \"gate\": 0.65,\n"}
+,{"stream_name":"stdout","time":0.904747277,"data":"      \"kaggle_metric\": 0.8,\n"}
+,{"stream_name":"stdout","time":0.904751657,"data":"      \"measured_metric\": 0.8,\n"}
+,{"stream_name":"stdout","time":0.904755996,"data":"      \"tolerance\": 0.1,\n"}
+,{"stream_name":"stdout","time":0.904760694,"data":"      \"validated_on_kaggle\": true\n"}
+,{"stream_name":"stdout","time":0.904765226,"data":"    }\n"}
+,{"stream_name":"stdout","time":0.904769646,"data":"  ],\n"}
+,{"stream_name":"stdout","time":0.904774272,"data":"  \"boundary\": \"This pack validates reproducibility of the bounded TAC v0.1 benchmark metrics. It does not claim TAC beats transformers or validates open-ended agency.\",\n"}
+,{"stream_name":"stdout","time":0.904779666,"data":"  \"case_count\": 50,\n"}
+,{"stream_name":"stdout","time":0.904784085,"data":"  \"decision\": \"PASS\",\n"}
+,{"stream_name":"stdout","time":0.90478867,"data":"  \"execution_environment\": \"kaggle\",\n"}
+,{"stream_name":"stdout","time":0.904793162,"data":"  \"schema\": \"tac_core_kaggle_validation.v1\",\n"}
+,{"stream_name":"stdout","time":0.904797763,"data":"  \"seed_count\": 5\n"}
+,{"stream_name":"stdout","time":0.904806366,"data":"}\n"}
+,{"stream_name":"stderr","time":3.9377768399999997,"data":"/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
+,{"stream_name":"stderr","time":3.937843401,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
+,{"stream_name":"stderr","time":4.35128072,"data":"/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
+,{"stream_name":"stderr","time":4.3513061969999995,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
+,{"stream_name":"stderr","time":5.933399097,"data":"[NbConvertApp] Converting notebook __script__.ipynb to html\n"}
+,{"stream_name":"stderr","time":7.63223771,"data":"[NbConvertApp] Writing 302134 bytes to __results__.html\n"}
+]

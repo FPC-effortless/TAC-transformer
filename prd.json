@@ -2168,7 +2168,7 @@
     {
       "id": "TAC-187",
       "title": "ATS TAC fp32 optimizer-health repair",
-      "status": "in_progress",
+      "status": "completed",
       "acceptance": [
         "Diagnoses the completed TAC-175 external TAC base runs as TAC-specific fp16 optimizer-scaler collapse rather than a Kaggle output, ATS scorer, prompt, answer-extraction, or vanilla-control failure.",
         "Records evidence from the completed TAC manifests and metrics: precision=fp16, fail_on_unhealthy_optimization=false, GradScaler collapse to 0.0, gradient_norm=0.0, eval accuracy around 0.001-0.003, best_eval_loss 6.359759747982025, and degenerate raw ATS predictions.",
@@ -2179,7 +2179,9 @@
         "Stages repaired eweewee2 and jeffkolo fp32 TAC Kaggle kernels under new slugs without overwriting the completed failed fp16 evidence.",
         "Records that both repaired Kaggle pushes were initially blocked by Maximum weekly GPU quota of 30.00 hours reached, then the original repaired slugs entered Kaggle's stale Notebook not found state.",
         "Stages fresh unique fp32 repair slugs and successfully pushes eweewee2/tac-ats-transfer-tac-base-fp32-0033-2026-06-06 as version 1 with source-pull evidence confirming kernel_run_version=3, fp32 training/scoring, --min-healthy-gradient-norm 1e-12, and --fail-on-unhealthy-optimization.",
-        "Leaves external repaired validation pending until the accepted fp32 eweewee2 run exposes logs or ats_score/ats_checkpoint_prediction_run.json and can be aggregated against the existing vanilla score."
+        "Downloads the completed fp32 external TAC output to runs/kaggle_outputs/tac187_fp32_completed_eweewee2_0033_20260606 and verifies the original optimizer-collapse failure is repaired: completed_steps=5000, stopped_for_time=false, precision=fp32, grad_scaler_scale=1.0, nonzero gradient_norm, and optimization_health.status=passed.",
+        "Aggregates the repaired TAC run against the existing vanilla score under runs/benchmarks/ats_checkpoint_comparison_tac187_fp32_2026_06_06 and records decision.status=ats_external_transfer_fail with TAC train/test 0.0/0.0, vanilla train/test 0.298828125/0.0, TAC test advantage 0.0, and missing_prediction_count 0.",
+        "Downloads last.pt and runs a compact final-checkpoint diagnostic under runs/benchmarks/tac187_fp32_last_compact_score_2026_06_06, confirming step 5000 also scores 0/8 exact matches so the remaining failure is not best-checkpoint selection alone."
       ]
     },
     {
@@ -2290,6 +2292,1084 @@
         "Records the boundary that TAC-194 is a smoke-tested launch path, not external Phase B recovery, ATS transfer success, or real long-horizon checkpoint validation.",
         "After the Kaggle version 1 run failed under DDP, identifies the unused aux-cadence parameter as blocks.7.identity_field.raw_energy_costs and adds a zero-weight energy safety path so non-cadence steps preserve the gradient graph without changing the objective.",
         "Rebuilds and versions the private Kaggle code dataset, pushes jeffkolo/tac-run5b-best-capability-fast-20k-2026-06-06 as kernel version 2, and records that source pull confirms kernel_run_version=2 while completed output artifacts are still pending."
+      ]
+    },
+    {
+      "id": "TAC-195",
+      "title": "Controlled multi-hop reasoning-vs-recall advantage benchmark",
+      "status": "completed",
+      "acceptance": [
+        "Adds a CPU-testable benchmark that separates direct edge recall from compositional multi-hop reasoning using matched single-hop, 2-hop, 3-hop, and distractor-greedy rows with no answer leakage.",
+        "Compares TAC carried identity state against reset, shuffled, retrieval, memory-database, and recall-oracle controls while charging context-token usage explicitly.",
+        "Reports direct recall accuracy, multi-hop accuracy by chain length, reasoning lift over the best recall-matched control, reset/shuffle deltas, min-seed robustness, and context-token accounting.",
+        "Requires direct recall no-regression, TAC multi-hop mean accuracy at least 0.80, TAC multi-hop lift over the best recall-only control at least 0.30, and min-seed multi-hop accuracy at least 0.70 before reporting a reasoning advantage.",
+        "Records uses_target_labels_for_selection=false and rejects any candidate that uses hidden target labels or route labels during selection/training except for posthoc audit.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/multihop_reasoning_advantage_2026_06_06 and records the boundary that this is a controlled CPU benchmark, not an external trained checkpoint claim.",
+        "Current result is decision.status=controlled_multihop_reasoning_advantage_observed: direct recall is matched at chain length 1 with TAC 1.0000 and recall oracle 1.0000, while TAC carried state reaches multi-hop mean 1.0000, best recall-only multi-hop mean is 0.0000, reasoning lift is 1.0000, and min-seed TAC multi-hop is 1.0000."
+      ]
+    },
+    {
+      "id": "TAC-196",
+      "title": "Live TAC-state runtime search planner",
+      "status": "completed",
+      "acceptance": [
+        "Adds an opt-in external runtime/search module that consumes live TAC output features and explores small top-k route/retrieval candidates without adding planner, value, world, or reflection heads to TACTransformerLM.",
+        "Implements candidate generation, structural verifier scoring, scratchpad commit, result dataclasses, and contamination flags while keeping imagined branches out of persistent memory unless verified.",
+        "Uses live TAC state surfaces where available: hidden states, route activations, identity states, content cue/value stores, and scratchpad state.",
+        "Adds a CPU benchmark comparing greedy/no-planning against runtime search on single-key and multi-hop tasks with uses_target_labels_for_selection=false and hypothesis_contamination=0.0.",
+        "Requires no direct-task regression and a material multi-hop improvement over greedy before reporting the runtime-search path as useful.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/live_tac_runtime_search_2026_06_06 and records that planning remains a runtime loop, not a promoted base-model block.",
+        "Current result is decision.status=runtime_search_useful: single_key greedy and runtime search both score 1.0000 with direct regression 0.0000, while multi_hop improves from greedy 0.0000 to runtime search 1.0000 with hypothesis_contamination 0.0000 and no base-model planner heads added."
+      ]
+    },
+    {
+      "id": "TAC-197",
+      "title": "Run 5B best-capability external validation gate",
+      "status": "completed",
+      "acceptance": [
+        "Pulls or confirms absence of completed outputs for jeffkolo/tac-run5b-best-capability-fast-20k-2026-06-06 after the TAC-194 version 2 retry or resumed version 3 continuation.",
+        "Verifies source/output consistency for kernel_run_version=2 or resumed kernel_run_version=3, preset=run5b_best_capability_fast, fp32 precision, --aux-loss-cadence 4, and fail-fast optimizer-health flags.",
+        "If outputs exist, validates final_summary.json, metrics.jsonl, best.pt, last.pt, and specialization artifacts, then runs experiments/evaluate_external_run5b_validation.py against existing same-backbone and parameter-matched vanilla baselines.",
+        "If outputs are empty or Kaggle status remains unavailable, records decision.status=external_pending without claiming capability evidence.",
+        "Records whether Phase B/Phase D, ATS checkpoint scoring, or long-horizon checkpoint validation is unblocked, still blocked, or requires iteration.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/external_run5b_best_capability_fast_v2_validation_2026_06_06 for the pending gate and under runs/benchmarks/external_run5b_best_capability_fast_v3_validation_2026_06_07 plus runs/benchmarks/external_run5b_best_capability_fast_v3_status_2026_06_07 for the completed gate.",
+        "Current result is decision.status=promote for resumed kernel_run_version=3: TAC completed 20000/20000 with stopped_for_time=false, best_eval_loss=0.14900434762239456, latest eval accuracy=0.9442471590909091, optimization_health=passed, same-backbone loss gap=0.03981590922921896, parameter-matched loss gap=0.04422085266560316, program_memory_cosine=0.0010435144261767466, specialization MI=0.4177 bits, max knockout loss delta=0.5418, and max knockout selectivity span=0.2586. Phase B is candidate_unblocked_for_seed_replication_audit; Phase D is candidate_unblocked_pending_phase_b_gate; ATS checkpoint scoring and long-horizon checkpoint validation are candidate_unblocked."
+      ]
+    },
+    {
+      "id": "TAC-198",
+      "title": "ATS answer-only supervision repair",
+      "status": "in_progress",
+      "acceptance": [
+        "Diagnoses the completed TAC-187 fp32 run as a repaired optimization path that still fails ATS exact-answer generation under full prompt-plus-answer LM loss.",
+        "Adds an opt-in prepared-JSONL completion supervision path that masks prompt tokens and trains only answer tokens plus EOS while preserving normal LM training as the default.",
+        "Preserves selected_mi category-route supervision for ATS rows when answer-only labels are active.",
+        "Exposes the repair through kaggle/train_best_tac_agentic.py as an explicit --supervision-mode answer_only switch and records that switch in run_manifest.json.",
+        "Updates ATS corpus recommended commands and generated Kaggle instructions so the next TAC ATS repair launch uses fp32 fail-fast optimizer health plus answer-only supervision.",
+        "Runs a focused trainer smoke proving answer-only labels flow through the real TAC trainer with nonzero gradients and optimizer_health.status=passed.",
+        "Records a local artifact and verification boundary before any external relaunch.",
+        "Rebuilds and versions the eweewee2 code/corpus datasets with prompt-bearing ATS rows, then pushes eweewee2/tac-ats-ao-1240-20260606 version 1 with source-pull evidence confirming kernel_run_version=4 and answer-only trainer flags.",
+        "Leaves the external answer-only ATS decision pending until the new Kaggle run exposes ats_score/ats_checkpoint_prediction_run.json and can be aggregated against the existing vanilla score."
+      ]
+    },
+    {
+      "id": "TAC-199",
+      "title": "Identity-to-transformer weight ratio validation",
+      "status": "completed",
+      "acceptance": [
+        "Adds a focused benchmark that sweeps identity-field capacity for the Run5B best-capability-fast architecture family while holding backbone shape, corpus, optimizer budget, route objective, and evaluation settings fixed.",
+        "Reports identity-field parameters, transformer parameters, identity share, identity-to-transformer ratio, final loss, loss improvement, accuracy, selected-route MI, program-memory cosine, and training throughput for each candidate.",
+        "Ranks candidates by raw capability and cost-adjusted capability so the result distinguishes quality-only and parameter/throughput-aware recommendations.",
+        "Runs a three-seed p8/p12/p16/p20/p24 validation at 40 steps and a three-seed p8/p12/p16/p24 sensitivity validation at 80 steps.",
+        "Current local CPU result: both the 40-step and 80-step validations select p8 as the raw and cost-adjusted winner. The 80-step result is identity_share=0.3274 and identity_to_transformer=0.4867, with p24 reaching stronger specialization and lower memory cosine but not enough final-loss or throughput advantage to win locally.",
+        "Records the boundary that this overturns the earlier unvalidated 63% local-ratio recommendation for local controlled budgets, while the full external Run5B p24 checkpoint remains the promoted checkpoint-scale setting until a full-scale ratio sweep is run."
+      ]
+    },
+    {
+      "id": "TAC-200",
+      "title": "External 5k identity-ratio validation gate",
+      "status": "completed",
+      "acceptance": [
+        "Runs a direct Kaggle comparison between the local p8 winner and the p24 promoted Run5B-fast allocation while holding preset, corpus, sequence length, optimizer health, batch shape, eval cadence, and specialization analysis fixed.",
+        "Uses 5000 training steps as requested, with dual-T4 torch.distributed execution, eval every 1000 steps, checkpoint every 500 steps, and specialization checkpoints at 2000 and 5000.",
+        "Records the tested ratios explicitly from the actual full-scale run manifests: p8 identity_share=0.4529 and identity_to_transformer=0.8277; p24 identity_share=0.6317 and identity_to_transformer=1.7151.",
+        "Publishes the fresh code bundle as jeffkolo/tac-identity-ratio-code-2026-06-07 and launches jeffkolo/tac-identity-ratio-p8-5k-2026-06-07 plus jeffkolo/tac-identity-ratio-p24-5k-2026-06-07.",
+        "Pulls completed Kaggle outputs when available, validates final_summary.json, run_manifest.json, metrics.jsonl, checkpoint files, and specialization artifacts, then compares final loss, accuracy, optimizer health, selected-MI/specialization evidence, program-memory cosine, throughput, and stopped_for_time status.",
+        "Records whether the 5k p8/p24 result shows a meaningful capability gap, an efficiency gap, or a specialization gap without overclaiming tiny unreplicated loss/accuracy differences.",
+        "Current result: kernel version 1 for both p8 and p24 failed before step 1 because forward_language_model_window read model.config directly after DDP wrapping. Added a regression test for a DDP-style module wrapper, fixed shared training code to unwrap model.module for vocab-size lookup, rebuilt and versioned the code dataset, and pushed p8/p24 kernel version 2. Both v2 kernels completed 5000/5000 with stopped_for_time=false and optimizer_health.status=passed. Official artifact runs/benchmarks/external_identity_ratio_5k_validation_2026_06_07 now records decision.status=external_ratio_5k_specialization_increases_capability_approximately_flat: p8 is clearly faster and more parameter-efficient with 6008.94 vs 5412.93 train tokens/s and 32.7% fewer total parameters; general LM capability appears approximately unchanged because the best eval loss gap is only 0.000331 and final accuracy differs by only about 0.25 percentage points; p24 remains stronger specialization-heavy evidence with MI 0.473754 vs 0.232697, max knockout loss delta 0.353776 vs 0.145131, and lower memory cosine 0.002664 vs 0.008389."
+      ]
+    },
+    {
+      "id": "TAC-201",
+      "title": "Local balanced TAC energy implementation matrix",
+      "status": "completed",
+      "acceptance": [
+        "Adds a local benchmark matrix comparing lm_only, energy_only, hybrid, and hybrid_compute_regularized TAC energy implementations on the same synthetic clean/corrupt sequence task.",
+        "Reports language-model accuracy, learned energy pair accuracy, rerank accuracy, compute energy, throughput, and a balanced score for each variant and seed.",
+        "Promotes only a variant that preserves language-model accuracy while meeting learned-energy and reranking thresholds.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/energy_balanced_tac_2026_06_07, runs/benchmarks/energy_balanced_tac_strong_2026_06_07, and the seed-31 confirmation path.",
+        "Adds focused tests for aggregate winner selection and CLI artifact writing.",
+        "Current local result: the 80-step weak-hybrid matrix was inconclusive, so the benchmark defaults were updated to test strong data-energy hybrids. The two-seed 200-step strong matrix under runs/benchmarks/energy_balanced_tac_strong_2026_06_07 promotes hybrid_energy_strong with LM accuracy 0.5719, energy pair accuracy 0.8906, rerank accuracy 0.6406, energy gap 1.5216, and compute energy 2.8083. Light and heavy compute-regularized hybrids both pass thresholds but score lower because compute savings reduce rerank quality. A seed-31 narrow confirmation keeps hybrid_energy_strong ranked above compute-regularized, but is inconclusive at 200 steps because LM accuracy is 0.471, below the 0.50 threshold."
+      ]
+    },
+    {
+      "id": "TAC-202",
+      "title": "Local TAC energy plus compression valuation matrix",
+      "status": "completed",
+      "acceptance": [
+        "Crosses the three best energy-training variants from TAC-201 with compression pressures: none, activation_l1, and sparse_balanced.",
+        "Runs each local matrix cell for 500 training steps as requested.",
+        "Reports LM accuracy, learned energy pair accuracy, rerank accuracy, compute energy, activation density, assignment entropy, active-program fraction, compression score, and balanced score.",
+        "Promotes only a compression path that preserves LM, energy, and rerank thresholds while improving compactness.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/energy_compression_tac_2026_06_07.",
+        "Adds focused tests for aggregate winner selection and CLI artifact writing.",
+        "Current local result: the full seed-7 500-step 3x3 matrix promotes hybrid_energy_strong__activation_l1 with LM accuracy 0.8542, energy pair accuracy 0.9688, rerank accuracy 0.9375, activation density 0.3299, active-program fraction 0.4635, and compression score 0.4332. Activation_l1 is also the best compression pressure for all three energy variants.",
+        "A seed-19 500-step activation_l1 confirmation across the three energy variants promotes hybrid_energy_strong_compute_heavy__activation_l1 by a very small balanced-score margin, while hybrid_energy_strong__activation_l1 remains the compression-only winner. Across the two activation_l1 seeds, hybrid_energy_strong__activation_l1 has balanced score 0.6608, compression score 0.4357, active-program fraction 0.4818, LM accuracy 0.8677, energy pair accuracy 0.9844, and rerank accuracy 0.8906. The compute-heavy activation_l1 alternative has near-tied balanced score 0.6607 and lower compute energy, but worse compression score 0.3636 and active-program fraction 0.8333, so the recommended compression-valuing implementation is hybrid_energy_strong plus activation_l1."
+      ]
+    },
+    {
+      "id": "TAC-203",
+      "title": "Identity compression phase-boundary benchmark",
+      "status": "completed",
+      "acceptance": [
+        "Builds a TAC phase-boundary benchmark that measures identity retention after distractor task counts N=0,5,10,20,50.",
+        "Sweeps activation_l1 compression strength across at least four values including zero while holding the energy-training objective fixed.",
+        "Reports identity retention, LM accuracy, energy pair accuracy, rerank accuracy, routing entropy, activation density, active-program fraction, compute energy, and compression score for each compression strength and seed.",
+        "Identifies the compression breakpoint where compactness continues improving but identity retention begins to fall.",
+        "Uses at least three seeds before making a compression phase-boundary claim.",
+        "Writes JSON and Markdown artifacts under a new runs/benchmarks identity-compression phase-boundary directory.",
+        "Records the boundary that TAC-202 is preliminary and does not by itself prove compact persistent identity representations.",
+        "Current result: added experiments/benchmark_identity_compression_phase_boundary.py and tests_py/test_identity_compression_phase_boundary.py. Ran a 3-seed 500-step sweep over strengths 0.0,0.01,0.03,0.05,0.10, then extended with 0.2,0.4,0.8 and combined the saved rows under runs/benchmarks/identity_compression_phase_boundary_combined_2026_06_07. The combined artifact maps an identity compression phase boundary at activation_l1 strength 0.2. Retention peaks at strength 0.05 with identity_retention_mean=0.5917 and compression_score=0.4389. At strength 0.2, retention falls to 0.3667 while compression improves to 0.5002, crossing the 0.10 retention-drop threshold. Energy accuracy stays high at 0.9531 and rerank accuracy is 0.8750 at the boundary, so the failure mode is specifically identity retention rather than energy learning collapse."
+      ]
+    },
+    {
+      "id": "TAC-204",
+      "title": "Fine-grained identity compression critical-threshold fit",
+      "status": "completed",
+      "acceptance": [
+        "Narrows the TAC-203 activation_l1 boundary with a sweep over strengths 0.05,0.075,0.10,0.125,0.15,0.175,0.20.",
+        "Runs at least five seeds, with a target of ten seeds when local or external compute budget permits.",
+        "Keeps the energy-training objective fixed to hybrid_energy_strong plus activation_l1 compression so the result isolates compression strength.",
+        "Uses the same identity-retention benchmark after distractor task counts N=0,5,10,20,50.",
+        "Reports identity retention, activation density, routing entropy, active-program fraction, compression score, LM accuracy, energy pair accuracy, and rerank accuracy for every strength and seed.",
+        "Fits identity-retention and activation-density curves and estimates the critical compression threshold with an uncertainty interval instead of only naming the first crossed grid point.",
+        "Confirms whether the TAC-203 coarse boundary near activation_l1 0.20 should be refined to a lower threshold around the 0.08-0.18 region.",
+        "Updates research.md with the fitted critical threshold and states whether the supported claim is an operating-point recommendation, a phase-boundary result, or both.",
+        "Current result: added a fitted critical-threshold estimator to experiments/benchmark_identity_compression_phase_boundary.py and focused tests in tests_py/test_identity_compression_phase_boundary.py. Ran the 5-seed, 500-step, 7-strength sweep under runs/benchmarks/identity_compression_critical_fit_tac204_2026_06_07. The grid crossing moves from TAC-203's coarse 0.20 boundary to activation_l1 0.125, while the fitted critical strength is 0.1018 with 95% bootstrap interval 0.0807-0.1225 and crossed fraction 0.985. Best identity retention remains at activation_l1 0.05 with identity_retention_mean=0.6300, compression_score=0.4442, density=0.3223, energy_pair=0.9656, rerank=0.9063, and LM=0.8454. At activation_l1 0.125, retention falls to 0.4000 while compression improves to 0.4863, density falls to 0.2163, energy_pair remains 0.9469, rerank remains 0.8875, and LM remains 0.8454. The supported recommendation is activation_l1 0.05 for identity-preserving runs and a local identity-compression critical threshold around 0.10."
+      ]
+    },
+    {
+      "id": "TAC-205",
+      "title": "Larger-model identity compression boundary validation",
+      "status": "completed",
+      "acceptance": [
+        "Runs a larger TAC identity-compression validation using d_model=48, n_layers=2, n_programs=8, and energy_budget=4.0.",
+        "Sweeps activation_l1 strengths 0.0,0.05,0.10,0.125 to test the TAC-204 recommended setting and fitted critical region.",
+        "Uses at least three seeds and 500 training steps per strength/seed cell.",
+        "Measures identity retention after distractor counts N=0,5,10,20,50 plus activation density, routing entropy, active-program fraction, compression score, LM accuracy, energy pair accuracy, and rerank accuracy.",
+        "Reports whether the larger model preserves the same pattern: activation_l1=0.05 remains useful, while identity retention degrades before energy/rerank/LM collapse near or above 0.10.",
+        "Writes JSON and Markdown artifacts under a new runs/benchmarks larger-model identity-compression directory.",
+        "Updates research.md and progress.txt with the larger-model decision before making any architecture-default recommendation.",
+        "Current result: ran the larger local TAC validation under runs/benchmarks/identity_compression_larger_tac205_2026_06_07 with d_model=48, n_layers=2, n_programs=8, energy_budget=4.0, strengths 0.0/0.05/0.10/0.125, seeds 7/19/31, 500 steps per cell, and identity_trials=12. The grid crossing is activation_l1 0.125 and the fitted critical strength is 0.1098 with 95% bootstrap interval 0.0625-0.1188. Activation_l1 0.05 preserves identity retention versus baseline at 0.5278 while improving compression_score from 0.3808 to 0.5259, reducing activation_density from 0.4611 to 0.1664, and improving energy/rerank/LM from 0.9427/0.9271/0.9243 to 0.9844/0.9583/0.9271. At activation_l1 0.125, identity retention falls to 0.3500 while energy/rerank/LM stay high at 0.9844/0.9271/0.9250. This confirms the same identity-first failure pattern in a larger local TAC configuration."
+      ]
+    },
+    {
+      "id": "TAC-206",
+      "title": "Routing-structure mechanism test for identity compression boundary",
+      "status": "completed",
+      "acceptance": [
+        "Adds route-structure diagnostics to the identity-compression benchmark: per-program route utilization, activation utilization, effective program count, top-program share, load standard deviation, and zero-utilization fraction.",
+        "Runs the larger TAC-205 configuration across activation_l1 strengths 0.0,0.05,0.10,0.125 with at least three seeds and 500 steps per cell.",
+        "Reports identity retention, energy pair accuracy, rerank accuracy, LM accuracy, activation density, routing entropy, and the new routing-structure metrics together.",
+        "Determines whether identity degradation near the boundary coincides with route simplification, route concentration, or loss of program-utilization diversity.",
+        "Writes JSON and Markdown artifacts under a new runs/benchmarks routing-mechanism directory.",
+        "Updates research.md and progress.txt with the mechanism interpretation before changing any default compression recommendation.",
+        "Current result: added routing_structure_metrics to experiments/benchmark_identity_compression_phase_boundary.py and focused test coverage in tests_py/test_identity_compression_phase_boundary.py. Ran the TAC-205 larger configuration under runs/benchmarks/identity_compression_route_mechanism_tac206_2026_06_07. The fitted critical strength remains 0.1098 with grid crossing 0.125. Identity retention stays 0.5278 at activation_l1 0.05 while activation density falls from 0.4611 to 0.1664 and route effective programs slightly improves from 7.2669 to 7.3553. At activation_l1 0.125, identity retention falls to 0.3500 while energy/rerank/LM remain 0.9844/0.9271/0.9250. The boundary does not look like a single-program collapse: route top1 share stays near 0.20 and activation effective programs stay near 7.75-7.91 out of 8. It does show selected-route diversity erosion: route effective programs fall from 7.3553 at 0.05 to 6.7567 at 0.125, route load std rises from 0.1751 to 0.2280, and route underused fraction rises from 0.0729 to 0.1667. Mechanism interpretation: identity failure is driven by activation-density collapse plus mild selected-route diversity erosion, while energy/ranking survives much thinner activations."
+      ]
+    },
+    {
+      "id": "TAC-207",
+      "title": "Representational thinning mechanism test",
+      "status": "completed",
+      "acceptance": [
+        "Adds representation-thinning diagnostics to the identity-compression benchmark: selected activation norm, identity-state norm, selected identity-state norm, energy-feature norm, and marker-identity information probes.",
+        "Estimates marker identity information from carried identity state and energy features using a lightweight nearest-centroid probe plus empirical mutual information.",
+        "Runs the larger TAC-205/TAC-206 configuration across activation_l1 strengths 0.0,0.05,0.10,0.125 with at least three seeds and 500 steps per cell.",
+        "Reports whether identity-state information or identity-state norm collapses near the 0.10-0.11 boundary while energy-feature information and energy metrics remain stable.",
+        "Writes JSON and Markdown artifacts under a new runs/benchmarks representational-thinning directory.",
+        "Updates research.md and progress.txt with the mechanism interpretation before changing any default architecture or compression recommendation.",
+        "Current result: added representational_thinning_metrics and marker-information probes to experiments/benchmark_identity_compression_phase_boundary.py with focused tests in tests_py/test_identity_compression_phase_boundary.py. Ran the larger TAC-205/TAC-206 setup under runs/benchmarks/identity_compression_representation_thinning_tac207_2026_06_07. The grid crossing remains activation_l1 0.125 and fitted critical strength remains 0.1098. Selected activation mean falls from 0.600 at baseline to 0.234 at 0.05, 0.102 at 0.10, and 0.078 at 0.125. Selected identity-state norm falls from 0.267 to 0.131, 0.062, and 0.054. Identity-state probe MI fraction falls from 0.629 to 0.446, 0.326, and 0.287. Energy-feature norm remains stable around 3.64-3.70 and energy-feature probe MI remains comparatively stable at 0.472, 0.397, 0.509, and 0.462 while energy pair accuracy reaches/stays 0.984 above 0.05. Mechanism interpretation: identity collapse is best explained by representational thinning of distributed identity state rather than expert monopoly or energy-feature collapse."
+      ]
+    },
+    {
+      "id": "TAC-208",
+      "title": "Ratio-controlled p16/p24 external specialization validation",
+      "status": "in_progress",
+      "acceptance": [
+        "Adds a trainable low-rank linear program-expert mode so p16 and p24 can preserve the p8 full-scale transformer:identity parameter ratio without dummy padding.",
+        "Exposes the mode through kaggle/train_best_tac_agentic.py as --program-compute-type low_rank_linear_expert plus --program-expert-rank.",
+        "Stages fresh Kaggle code and kernel artifacts for p16 and p24 ratio-controlled 5k runs using the same Run5B-best-capability-fast backbone, corpus, optimizer health settings, eval cadence, checkpoint cadence, and specialization analysis as TAC-200.",
+        "Targets the manifest-derived p8 ratio: identity_to_transformer=0.8276879516 and transformer_to_identity=1.2081847972.",
+        "Uses p16 rank 63 with expected total=17,547,400, identity=7,946,632, transformer=9,600,768, identity_to_transformer=0.8277079500.",
+        "Uses p24 rank 41 with expected total=17,514,824, identity=7,914,056, transformer=9,600,768, identity_to_transformer=0.8243148881, the closest integer-rank match.",
+        "Pushes private Kaggle code dataset jeffkolo/tac-identity-ratio-rc-code-2026-06-07 and kernels jeffkolo/tac-identity-ratio-p16-rc-5k-2026-06-07 plus jeffkolo/tac-identity-ratio-p24-rc-5k-2026-06-07.",
+        "Pulls completed outputs when available, validates manifests, metrics, checkpoint artifacts, optimizer health, completed_steps=5000, stopped_for_time=false, low-rank ranks, parameter ratios, and specialization artifacts.",
+        "Compares p16-rc and p24-rc against each other and against prior p8/p24 evidence using cautious wording: tiny loss/accuracy differences are approximate without multiple seeds, while specialization effect size and matched-ratio behavior are the primary scientific question.",
+        "Current result: low-rank implementation, focused tests, py_compile, bundle rebuild, code dataset creation, kernel staging, and kernel push are complete. Kaggle status currently returns HTTP 500, but kernel list shows fresh lastRunTime entries for both ratio-controlled kernels and output artifacts are not yet exposed."
+      ]
+    },
+    {
+      "id": "TAC-209",
+      "title": "Identity thinning causal rescue experiment",
+      "status": "completed",
+      "acceptance": [
+        "Runs the activation_l1=0.125 identity-failing regime while keeping sparsity pressure unchanged.",
+        "Compares a compressed control against auxiliary rescue variants that preserve identity-state magnitude, marker-identity information, or both.",
+        "Uses the larger TAC-205/TAC-206/TAC-207 local configuration with at least three seeds and 500 steps per variant/seed cell.",
+        "Reports identity retention, compression score, activation density, selected activation, selected identity-state norm, identity probe MI, energy feature MI, energy pair accuracy, rerank accuracy, and LM accuracy.",
+        "Counts a rescue as supported only if identity retention improves materially while compression, energy, rerank, and LM quality remain comparable to the compressed control.",
+        "Writes JSON and Markdown artifacts under a new runs/benchmarks identity-thinning-rescue directory.",
+        "Updates research.md and progress.txt with whether restoring identity-state mass/information restores identity retention.",
+        "Current result: added experiments/benchmark_identity_thinning_rescue.py and tests_py/test_identity_thinning_rescue.py. Ran the aligned 4-variant, 3-seed, 500-step rescue sweep under runs/benchmarks/identity_thinning_rescue_tac209_2026_06_07 at activation_l1=0.125. The compressed control reproduces the failing regime with identity_retention_mean=0.3500, compression_score=0.5687, selected_identity_state_norm=0.0536, energy_pair=0.9844, rerank=0.9271, and LM=0.9250. Norm-floor rescue wins with identity_retention_mean=0.5500, compression_score=0.5608, selected_identity_state_norm=0.1883, energy_pair=0.9635, rerank=0.9583, and LM=0.9299. Retention gain is +0.2000 with only -0.0079 compression delta, -0.0208 energy delta, and +0.0313 rerank delta. Marker-info and combined rescues greatly increase probe MI but do not restore retention as well, so the supported causal claim is that preserving selected identity-state magnitude rescues functional identity retention, while auxiliary marker probe information alone is not sufficient."
+      ]
+    },
+    {
+      "id": "TAC-210",
+      "title": "Transformer-expanded p16/p24 external ratio validation",
+      "status": "in_progress",
+      "acceptance": [
+        "Corrects the TAC-208 interpretation by keeping full-rank linear_expert identity programs and matching the p8 identity:transformer ratio by increasing transformer-side parameters instead of lowering identity-rank capacity.",
+        "Exposes --mlp-ratio in kaggle/train_best_tac_agentic.py so Kaggle launches can increase transformer MLP parameters without changing identity program count or program expert type.",
+        "Stages eweewee2 Kaggle code and kernel artifacts for p16 and p24 transformer-expanded 5k runs using the same Run5B-best-capability-fast corpus, optimizer health settings, eval cadence, checkpoint cadence, and specialization analysis as TAC-200/TAC-208.",
+        "Targets the manifest-derived p8 ratio: identity_to_transformer=0.8276879516 and transformer_to_identity=1.2081847972.",
+        "Uses p16 full-rank linear_expert with n_programs=16, mlp_ratio=7, expected total=26,932,104, identity=12,206,472, transformer=14,725,632, identity_to_transformer=0.8289268671.",
+        "Uses p24 full-rank linear_expert with n_programs=24, mlp_ratio=10, expected total=36,317,000, identity=16,466,504, transformer=19,850,496, identity_to_transformer=0.8295260733.",
+        "Pushes private Kaggle code dataset eweewee2/tac-identity-ratio-tx-code-2026-06-07 and kernels eweewee2/tac-identity-ratio-p16-tx-5k-2026-06-07 plus eweewee2/tac-identity-ratio-p24-tx-5k-2026-06-07 while the TAC-208 low-rank jeffkolo kernels continue training.",
+        "Pulls completed outputs when available, validates manifests, metrics, checkpoint artifacts, optimizer health, completed_steps=5000, stopped_for_time=false, full-rank linear_expert mode, mlp ratios, parameter ratios, and specialization artifacts.",
+        "Compares all four p16/p24 variants: low-rank ratio-controlled jeffkolo runs versus transformer-expanded full-rank eweewee2 runs, plus the prior p8/p24 baseline evidence, using cautious wording around small loss/accuracy gaps.",
+        "Current result: CLI override, full-rank staging script, focused tests, py_compile, parameter-count audit, bundle rebuild, code dataset creation, kernel staging, and eweewee2 kernel push are complete. Kaggle status currently returns HTTP 500, kernel list shows fresh version-1 lastRunTime entries for both transformer-expanded kernels, and output artifacts are not yet exposed."
+      ]
+    },
+    {
+      "id": "TAC-211",
+      "title": "Functional identity transfer rescue test",
+      "status": "completed",
+      "acceptance": [
+        "Extends the identity-thinning rescue benchmark with functional identity transfer/generalization probes that require applying the carried identity rule to novel starts and longer horizons after distractors.",
+        "Compares compressed_control, norm_floor_rescue, marker_info_rescue, and combined_rescue at activation_l1=0.125 while keeping sparsity pressure unchanged.",
+        "Uses the larger TAC-205 through TAC-209 local configuration with at least three seeds and 500 steps per variant/seed cell.",
+        "Reports identity retention, transfer accuracy, long-horizon transfer accuracy, identity-state magnitude, identity probe MI, energy feature MI, energy pair accuracy, rerank accuracy, LM accuracy, and compression score.",
+        "Determines whether norm-floor rescue improves functional identity transfer while marker-info rescue mainly improves passive probe-decodable identity information.",
+        "Writes JSON and Markdown artifacts under a new runs/benchmarks identity-transfer-rescue directory.",
+        "Updates research.md and progress.txt with whether TAC identity behaves more like dynamically usable state than a passive decodable marker.",
+        "Current result: extended experiments/benchmark_identity_thinning_rescue.py with novel-start and long-horizon identity transfer probes, then reran compressed_control, norm_floor_rescue, marker_info_rescue, and combined_rescue under runs/benchmarks/identity_transfer_rescue_tac211_2026_06_07. Norm-floor rescue still improves original retention from 0.3500 to 0.5500, but it does not improve functional transfer: transfer falls from 0.5333 to 0.4556 and long transfer falls from 0.5500 to 0.4389 relative to compressed_control. Marker-info rescue and combined rescue again produce high identity probe MI, 0.8994 and 0.9279, but do not produce strong transfer. Conclusion: TAC-209's causal rescue claim remains valid for identity retention, but TAC-211 does not support the stronger claim that current norm-floor or marker-information rescues restore generalized identity-rule transfer."
+      ]
+    },
+    {
+      "id": "TAC-212",
+      "title": "P8/P24 identity robustness causal benchmark",
+      "status": "completed",
+      "acceptance": [
+        "Runs a post-hoc benchmark on the completed TAC-200 p8 and p24 5k checkpoints rather than on the newer p16/p24 runs.",
+        "Measures long-context identity carry by writing a target byte-pair identity fact in an earlier segment, omitting it from the active query segment, and scoring forced-choice next-byte identity retrieval.",
+        "Measures memory persistence and interference resistance across 0, 4, 8, and 16 intervening distractor identity pairs.",
+        "Measures active-context compression by varying the active query token budget from 4 to 48 tokens while carrying identity state.",
+        "Extends program knockout evidence beyond LM loss deltas by measuring identity retrieval accuracy drop, retrieval margin drop, memory-read margin drop, and program-memory norm drop for every p8 and p24 program.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/p8_p24_identity_robustness_2026_06_07.",
+        "Current result: decision.status=no_reliable_identity_carry_advantage_detected. p8 carry retrieval accuracy is 0.1667 versus reset 0.1875; p24 carry retrieval accuracy is 0.1875 versus reset 0.2083. Neither model reaches 50% retrieval accuracy at any tested active-context budget. Program knockouts produce no positive retrieval-accuracy drop for either p8 or p24. Memory-read forced-choice accuracy is higher at 0.5000 for p8 and 0.5208 for p24, but margins remain negative and do not produce downstream query retrieval. This does not support the claim that p24's higher specialization MI is causally useful for identity retention, interference resistance, or active-context compression in the first trained p8/p24 set."
+      ]
+    },
+    {
+      "id": "TAC-213",
+      "title": "Forced identity-state objective causality test",
+      "status": "completed",
+      "acceptance": [
+        "Tests the TAC-212 diagnosis that specialization emerges but is not rewarded as a causal state carrier by the current objective.",
+        "Compares a context-visible LM objective against a forced-state objective where support key/value pairs are processed in a prefill segment and the query segment contains only QUERY,key.",
+        "Measures full-context accuracy, carried-state query accuracy, reset-state query accuracy, shuffled-state query accuracy, direct memory-read accuracy, active-context compression, program knockout retrieval drops, and gradient share through identity/program parameters.",
+        "Runs at least three seeds locally on a small TAC configuration before updating the research status.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/forced_identity_objective_tac213_2026_06_07.",
+        "Current result: decision.status=forced_identity_objective_not_sufficient. The context-visible objective reaches 0.3359 full-context accuracy but has carry=reset=0.0794 when support is removed from active context. The forced-state objective has carry=reset=0.0807, so it still does not learn usable carried-state query behavior. Direct memory-read accuracy is 0.3529 for both variants, showing that some support signal exists in the state, but it is not converted into query logits. Forced-state identity/program gradient share is nonzero but small at 0.0353, and max program-knockout retrieval drop is only 0.0104 with no harmful programs above 5 percentage points. Conclusion: simply making the query depend on carried state through the existing LM head is not sufficient; the next bottleneck is the bridge from identity memory/readout into answer logits and localized program causality."
+      ]
+    },
+    {
+      "id": "TAC-214",
+      "title": "Oracle identity-readout probe",
+      "status": "completed",
+      "acceptance": [
+        "Freezes a forced-state TAC base trained with the TAC-213 task rather than changing the architecture.",
+        "Trains a tiny linear oracle probe from identity memory readout vector to value-token answer class.",
+        "Scores the probe as forced choice over the 12 value tokens and compares it with direct memory-read logits.",
+        "Runs three local seeds using the same 240-step forced-state base schedule as TAC-213.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/identity_readout_bridge_tac214_215_2026_06_07.",
+        "Current result: oracle_probe_accuracy=0.3190 and direct_memory_read_accuracy=0.3789. This is clearly above 12-way chance but far below a 90% oracle ceiling, so TAC-214 does not support the claim that identity readout already contains a nearly complete answer representation. The memory/readout signal is present but weak-to-moderate."
+      ]
+    },
+    {
+      "id": "TAC-215",
+      "title": "Direct identity-readout logit injection bridge",
+      "status": "completed",
+      "acceptance": [
+        "Uses the same frozen forced-state TAC base and identity readout vectors as TAC-214.",
+        "Trains only a small linear bridge that adds readout-derived logits to the frozen query value-token logits.",
+        "Compares bridge carry accuracy against frozen base carry, reset bridge, zero-read bridge, and shuffled-read bridge controls.",
+        "Measures every-program bridge knockout accuracy drop to test localized program causality.",
+        "Runs three local seeds and records the bridge decision in the TAC-214/TAC-215 artifact.",
+        "Current result: decision.status=logit_bridge_partially_recovers_carried_state_answers. Base carry value accuracy is 0.1029 with carry-reset=0.0000; logit_bridge_accuracy rises to 0.3073, for a +0.2044 gain over base carry and +0.2174 over reset bridge. Shuffled readout falls to 0.1068, so the bridge is using carried readout information. Max bridge knockout drop is only 0.0130 and no program exceeds a 5 percentage-point harmful drop, so the bridge improves answer use without creating localized program causality."
+      ]
+    },
+    {
+      "id": "TAC-216",
+      "title": "Program-specific identity responsibility supervision",
+      "status": "completed",
+      "acceptance": [
+        "Builds a key/value task where key KEY_START+p is assigned to program p, so target program responsibility is known.",
+        "Compares the original forced-state baseline, a semantic-routing baseline without assignment supervision, and a program-supervised semantic-routing variant.",
+        "For program-supervised training, applies support-token route supervision and target-program-slot value supervision while keeping the same forced-state answer objective.",
+        "After training, freezes the TAC model and trains post-hoc global readout bridge, target-slot probe, and target-slot bridge heads.",
+        "Measures target-slot versus wrong-slot bridge accuracy, route target argmax rate, route target selected rate, targeted program knockout drop, nontarget knockout drop, and localized drop gap.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/program_specific_supervision_tac216_2026_06_07.",
+        "Current result: decision.status=program_routes_align_but_slots_remain_noncausal. Program supervision raises route_target_selected_rate from 0.2678 in the semantic baseline to 0.9364, and route_target_argmax_rate from 0.1385 to 0.9390. It also improves target_slot_probe_accuracy from 0.1654 to 0.2617 and target_slot_bridge_accuracy from 0.1549 to 0.2643. However target_slot_bridge_minus_wrong_slot is only 0.0026, targeted_knockout_drop is -0.0022, localized_drop_gap is -0.0078, and no program has a target drop above 5 percentage points. Conclusion: explicit assignment can control routing and weakly improve slot decodability, but it does not make the assigned program slot causally necessary for the answer under this objective."
+      ]
+    },
+    {
+      "id": "TAC-217",
+      "title": "Representation binding and causal scrubbing fork",
+      "status": "completed",
+      "acceptance": [
+        "Implements Direction A by comparing a semantic-routing baseline against a subspace-bound variant with fixed orthogonal program subspace masks.",
+        "Trains both variants on the TAC-216 key-to-program task and measures route target selected rate, outside-subspace ratio, global bridge accuracy, raw slot bridge accuracy, bound-slot probe accuracy, bound-slot bridge accuracy, wrong-bound-slot bridge accuracy, and targeted knockout drop.",
+        "Implements Direction B by scrubbing learned bridge rowspace, random subspace, top gradient dimensions, random dimensions, and attention output during feature extraction.",
+        "Runs three local seeds with 240 base steps, 200 head steps, binding diagnostics, targeted knockouts, and scrubbing diagnostics.",
+        "Writes JSON and Markdown artifacts under runs/benchmarks/representation_binding_scrubbing_tac217_2026_06_07.",
+        "Current result: decision.status=binding_and_scrubbing_not_sufficient. Direction A is not supported: subspace-bound routing reaches route_target_selected_rate=1.0000 but bound_slot_bridge_accuracy is only 0.0924, bound_slot_bridge_minus_wrong is 0.0052, and targeted_knockout_drop is -0.0043. Direction B is not supported: slot_subspace_projection_drop is -0.0065, random_subspace_projection_drop is 0.0065, gradient_scrub_drop is 0.0000, and attention_ablation_drop is only 0.0234. Conclusion: this first orthogonal subspace binding intervention over-constrains or fails to align useful identity/action signal; learned representation scrubbing of the weak bound-slot bridge does not reveal a stronger causal representation-level dependency."
+      ]
+    },
+    {
+      "id": "TAC-218",
+      "title": "Identity-conditioned decision continuity across time",
+      "status": "completed",
+      "acceptance": [
+        "Carries prior TAC decision selections in IdentityState across forward calls.",
+        "Biases the next TAC program-decision surface toward carried prior decisions only when an identity state is supplied.",
+        "Reports a decision-continuity auxiliary loss and metric for carried-state temporal agreement.",
+        "Keeps fresh/reset TAC routing behavior unchanged when no prior identity state is supplied.",
+        "Adds focused regression coverage for identity-conditioned temporal decision continuity.",
+        "Current result: added IdentityState.decision_memory plus decision_continuity_strength, decision_continuity_decay, and decision_continuity_loss_weight controls to TACConfig. TAC routing now conditions energy, semantic, sparse-ensemble, hash, expert-choice, and authority-gated route decisions on carried decision memory when present; fresh/reset calls with no prior decision memory remain unconditioned. The model reports aux.losses['decision_continuity'], metric_decision_continuity_agreement, and metric_decision_continuity_memory_mass, and the trainer includes the loss in default auxiliary weighting. Focused regression proves carried decision memory can force the next route while an otherwise identical state without decision memory does not. Full TAC architecture tests pass with 182 tests."
+      ]
+    },
+    {
+      "id": "TAC-219",
+      "title": "BDH-inspired TAC adaptation probe",
+      "status": "completed",
+      "acceptance": [
+        "Researches the Dragon Hatchling paper claims relevant to TAC: inference-time Hebbian working memory, sparse positive activations, modular/heavy-tailed graph structure, GPU-friendly state-space formulation, state memory, and interpretability-by-architecture.",
+        "Adds opt-in TACConfig.program_activation_type with sigmoid default plus relu and softplus positive activation modes.",
+        "Adds opt-in memory_write_type='hebbian_outer' so program memory can be updated as a gated outer product of routed program key state and candidate value state during inference.",
+        "Keeps existing TAC defaults unchanged.",
+        "Adds focused regression coverage for sparse positive activations, Hebbian selected-slot memory writes, and the BDH adaptation benchmark contract.",
+        "Adds experiments/benchmark_bdh_tac_adaptations.py and writes runs/benchmarks/bdh_tac_adaptations_2026_06_10/bdh_tac_adaptations.json.",
+        "Current result: decision.status=bdh_adaptations_locally_supported. Hebbian selected memory norm is 0.1542 with unselected norm 0.0 in the local probe; ReLU activation density is 0.5 versus sigmoid density 1.0; stateful MoE continued route agreement is 1.0 versus fresh 0.0; carried-vs-reset logits differ by 0.000925; selective-state mixer output is finite. Boundary: local structural probes only, not a trained external checkpoint improvement claim."
+      ]
+    },
+    {
+      "id": "TAC-220",
+      "title": "Memory-energy architecture research matrix",
+      "status": "completed",
+      "acceptance": [
+        "Researches memory-agent and uncertainty mechanisms relevant to TAC while preserving TAC's objective: persistent computational identity for long-horizon agents.",
+        "Ranks mechanisms under the policy 'borrow mechanisms, not objectives': multi-timescale memory, procedural memory, memory consolidation, learned memory policies, retention valves, energy/unknown veto, state-space updates, and world-model integration.",
+        "Uses primary sources for the research basis: Memp, CMA, MemFactory, RATE, Recall-to-Imagine, EOW-Softmax, IDK-token uncertainty, and distributional energy-based verification.",
+        "Adds experiments/benchmark_memory_energy_architecture.py with deterministic local probes for layered memory consolidation and energy/uncertainty veto behavior.",
+        "Adds focused regression coverage in tests_py/test_memory_energy_architecture.py for priority ordering, causal carry-vs-reset behavior, noise retention, and hallucination-veto tradeoffs.",
+        "Writes runs/benchmarks/memory_energy_architecture_tac220_2026_06_10/memory_energy_architecture.json.",
+        "Current result: decision.status=promote_tac220_memory_energy_research. In the local simulation, layered memory improves task success from 0.70 to 1.00, reduces noise retention from 0.2083 to 0.0, and shows carry-reset delta 0.30. The energy/unknown veto reduces hallucination rate from 0.3889 to 0.0 and raises precision from 0.6111 to 1.0 at 0.6111 coverage. Boundary: deterministic simulation and research prioritization only, not a trained TAC checkpoint result. Superseded for evidence quality by TAC-221 actual model training, which did not validate the full mechanism claim."
+      ]
+    },
+    {
+      "id": "TAC-221",
+      "title": "Actual TAC multi-timescale memory and energy-veto validation",
+      "status": "completed",
+      "acceptance": [
+        "Implements model-facing multi-timescale IdentityState fields: working_state, episodic_state, semantic_state, procedural_state, and memory_confidence.",
+        "Adds memory_system_type='multi_timescale' plus retention, consolidation, and procedural-memory rates to TACConfig without changing flat defaults.",
+        "Uses state-space-style retain/write updates for episodic, semantic, and procedural memory tiers.",
+        "Wires multi-timescale memory into compressed identity attention so tier ablations are real downstream interventions.",
+        "Runs actual TAC model training, not simulation, on a randomized support-query task where reset-state models cannot infer the answer from the query key alone.",
+        "Compares flat_control against multi_timescale across seeds 7, 19, and 31 with carry, reset, semantic/procedural ablation, unknown-answer, and veto metrics.",
+        "Writes runs/benchmarks/memory_energy_experimental_tac221_2026_06_10/memory_energy_experimental_validation.json.",
+        "Current result: decision.status=not_validated. Multi-timescale carry accuracy is 0.2410 versus flat carry 0.2016 and multi-timescale reset 0.0876, so carried state helps and multi-timescale gives a small lift. However semantic_procedural_ablation_accuracy remains 0.2410, identical to carry accuracy, so semantic/procedural tiers are not causally validated. Unknown accuracy remains 0.0; veto reduces accepted unknown hallucination rate from forced 1.0 to 0.1231 but only at 0.099 coverage. Conclusion: actual training does not yet support promoting procedural/semantic memory or the energy/unknown veto as solved TAC mechanisms."
+      ]
+    },
+    {
+      "id": "TAC-222",
+      "title": "Model-native semantic/procedural tier bridge validation",
+      "status": "completed",
+      "acceptance": [
+        "Adds opt-in TACConfig.memory_bridge_type with none, multi_timescale_readout, and semantic_procedural_readout modes while preserving the default no-bridge behavior.",
+        "Adds TACConfig.memory_bridge_weight and trainable bridge projections that read carried memory-tier slots before the LM head.",
+        "Reports memory_bridge_update_norm and memory_bridge_tier_entropy metrics for bridge audits.",
+        "Updates parameter-count estimation for the bridge's trainable model-level parameters.",
+        "Adds focused regression coverage proving semantic/procedural tier state changes logits and receives gradient through the native LM loss path.",
+        "Runs actual TAC model training, not simulation, comparing multi_timescale_no_bridge against semantic_procedural_bridge across seeds 7, 19, and 31 with randomized values, carry, reset, and semantic/procedural ablation controls.",
+        "Writes runs/benchmarks/memory_tier_bridge_tac222_2026_06_10/memory_tier_bridge_validation.json.",
+        "Current result: decision.status=not_validated. The bridge creates a real aggregate semantic/procedural ablation drop of 0.0339, and bridge carry accuracy 0.2134 beats bridge reset 0.1454. However it only improves carry accuracy over the no-bridge control by 0.0051, far below the 0.05 validation threshold, and seed 31 collapses to 0.0946 carry accuracy. Unknown accuracy remains 0.0. Conclusion: a native semantic/procedural bridge makes the tiers causally visible, but this implementation is not a reliable performance improvement and does not solve calibrated unknown handling."
+      ]
+    },
+    {
+      "id": "TAC-223",
+      "title": "Stateful MoE agentic decision validation",
+      "status": "completed",
+      "acceptance": [
+        "Tests the decomposition requested by the user: stateless MoE vs TAC stateful MoE vs TAC stateful MoE plus Hebbian memory.",
+        "Uses actual TACTransformerLM training, not deterministic simulation.",
+        "Uses an observe -> plan -> act/feedback -> verify task with randomized per-episode actions so future verification cannot be solved from the key alone.",
+        "Measures verify accuracy, repair-specific verify accuracy, reset-state verify accuracy, shuffled-state verify accuracy, route entropy, active programs, and program-memory mass.",
+        "Uses three seeds, reset and shuffled-state interventions, and a no-cross-call-state stateless MoE control.",
+        "Writes runs/benchmarks/stateful_moe_agentic_tac223_2026_06_11/stateful_moe_agentic_validation.json.",
+        "Current result: decision.status=not_validated. Stateless MoE verify accuracy is 0.1354, TAC stateful MoE verify accuracy is 0.1250, and TAC stateful MoE plus Hebbian verify accuracy is 0.1250 after 60 local training steps. Stateful reset and shuffled controls both equal carry at 0.1250, so there is no causal state advantage. Hebbian memory lowers memory mass from 0.2120 to 0.1226 without improving decisions. Conclusion: this first actual agentic decision benchmark does not support a claim that current persistent identity state, stateful routing, or Hebbian writes improve delayed repair/verify decisions under this training setup."
+      ]
+    },
+    {
+      "id": "TAC-224",
+      "title": "Verifier energy agentic validation",
+      "status": "completed",
+      "acceptance": [
+        "Tests the user's requested hallucination/verification path with actual TAC training, not simulation.",
+        "Compares a stateful_control answer-loss TAC against verifier_energy, the same TAC wrapped with a trainable contrastive candidate energy head.",
+        "Uses observe -> plan -> feedback -> verify episodes with randomized actions, repair cases, and unsupported verification queries requiring UNKNOWN.",
+        "Measures verify accuracy, repair accuracy, unknown accuracy, reset and shuffled-state controls, energy-selected accuracy, energy pair-ranking accuracy, energy coverage, accepted accuracy, and accepted unsupported hallucination rate.",
+        "Measures causal interventions with carried state-slot knockout and low-rank expert-parameter knockout.",
+        "Uses three seeds and writes runs/benchmarks/verifier_energy_agentic_tac224_2026_06_11/verifier_energy_agentic_validation.json.",
+        "Current result: decision.status=not_validated. Verifier-energy and control have identical verify accuracy at 0.0972, identical repair verify accuracy at 0.1389, and identical state_advantage=0.0. The energy head improves pair ranking from 0.6250 to 0.7500 and energy-selected accuracy from 0.3056 to 0.3611, and reduces energy-selected unsupported hallucination from 0.6667 to 0.2333. However verifier energy coverage collapses to 0.0 at the fixed margin threshold, so accepted accuracy and accepted hallucination metrics do not validate useful selective answering. State-slot and expert-parameter knockout drops are both 0.0. Conclusion: contrastive energy supervision learns a weak candidate-ranking signal but does not yet improve TAC delayed decisions, causal state use, program causality, or calibrated answer acceptance."
+      ]
+    },
+    {
+      "id": "TAC-225",
+      "title": "Process-supervised agentic routing validation",
+      "status": "completed",
+      "acceptance": [
+        "Tests whether explicit process-route supervision can bind TAC programs to memory-writer, planner, repair, verifier, and unknown roles.",
+        "Uses actual TACTransformerLM training, not simulation.",
+        "Compares stateful_control answer-only training against process_supervised answer plus route-role supervision.",
+        "Uses observe -> plan -> feedback -> verify episodes with randomized repair actions and unsupported verification queries requiring UNKNOWN.",
+        "Measures verify accuracy, repair accuracy, unknown accuracy, reset and shuffled-state controls, route-role accuracy, verifier-route accuracy, unknown-route accuracy, route entropy, active programs, state-slot knockout, and expert-parameter knockout.",
+        "Uses three seeds and writes runs/benchmarks/process_supervised_agentic_tac225_2026_06_11/process_supervised_agentic_validation.json.",
+        "Current result: decision.status=not_validated. Process supervision does not improve route-role accuracy: process_supervised and stateful_control are both 0.2526, with verifier_route_accuracy 0.2769 and unknown_route_accuracy 0.2393. Verify accuracy is identical at 0.1875, state_advantage remains 0.0, and shuffled/reset controls equal carry. Repair verify accuracy falls from 0.3444 in control to 0.3167 in process_supervised. State-slot knockout drop remains 0.0; expert-parameter knockout drop is 0.0 for process_supervised versus 0.0417 for control. Conclusion: this first route-role process objective does not bind programs into causal planner/repair/verifier/unknown specialists."
+      ]
+    },
+    {
+      "id": "TAC-226",
+      "title": "Hidden-state identifiability validation",
+      "status": "completed",
+      "acceptance": [
+        "Researches LeJEPA's relevance to TAC as latent-state grounding rather than another memory mechanism.",
+        "Creates a hidden-rule task where TAC observes examples generated by an unobserved rule and must answer future transitions without receiving the rule label.",
+        "Uses actual TACTransformerLM answer training; hidden rule labels are reserved for post-hoc probes and evaluation.",
+        "Trains frozen linear probes from IdentityState to hidden rule and from IdentityState plus query cue to future transition.",
+        "Measures carry, reset, shuffled-state, hidden-rule probe accuracy, future-transition probe accuracy, same-rule/different-rule state cosine, observation-invariance gap, state-slot knockout, and expert-parameter knockout.",
+        "Uses three seeds and writes runs/benchmarks/hidden_state_identifiability_tac226_2026_06_11/hidden_state_identifiability_validation.json.",
+        "Current result: decision.status=not_validated. Carry accuracy is 0.2778, reset accuracy is 0.1944, and shuffled accuracy is also 0.2778, so carry does not beat shuffled state. Hidden-rule probe accuracy is 0.2500, chance for four rules. Future-transition probe accuracy is 0.2500, near chance for six transition classes under the short bounded run. Same-rule state cosine is 0.9479 and different-rule state cosine is 0.9476, leaving an observation-invariance gap of only 0.0003. State-slot and expert-parameter knockout drops are both 0.0. Conclusion: current IdentityState is not grounded as an identifiable hidden task state under this LeJEPA-inspired benchmark."
+      ]
+    },
+    {
+      "id": "TAC-227",
+      "title": "IdentityState bottleneck readout validation",
+      "status": "completed",
+      "acceptance": [
+        "Tests the user's fused diagnosis by forcing final answers through IdentityState rather than the token hidden-state LM head.",
+        "Uses actual TACTransformerLM training wrapped with state-only hidden-rule and future-transition heads.",
+        "Trains hidden-rule and transition objectives directly from IdentityState features plus query cue, with a geometry regularizer separating different latent rules.",
+        "Measures hidden-rule accuracy, future-transition/carry accuracy, reset accuracy, shuffled accuracy, same-rule/different-rule state cosine, observation-invariance gap, state-slot knockout, and expert-parameter knockout.",
+        "Uses three seeds and writes runs/benchmarks/state_bottleneck_readout_tac227_2026_06_11/state_bottleneck_readout_validation.json.",
+        "Current result: decision.status=not_validated. The hard state-only path improves state geometry relative to TAC-226: same-rule cosine is 0.9038, different-rule cosine is 0.8146, and the observation-invariance gap rises to 0.0893. However hidden-rule accuracy is only 0.3958, future-transition/carry accuracy is 0.1736, reset accuracy is 0.2361, and shuffled accuracy is 0.1597. State advantage is negative at -0.0625, state-slot knockout drop is only 0.0556, and expert-parameter knockout drop remains 0.0. Conclusion: forcing a state readout starts to separate latent-rule geometry, but it still does not create reliable hidden-state recovery, state-causal decisions, or expert causality."
+      ]
+    },
+    {
+      "id": "TAC-228",
+      "title": "State pretraining before action training",
+      "status": "completed",
+      "acceptance": [
+        "Tests whether IdentityState can first become an identifiable latent task state before being used for decisions.",
+        "Uses a two-stage actual TAC training protocol: Stage 1 trains state encoder, hidden-rule head, and future-transition head; Stage 2 freezes the state encoder/projector and trains a separate action head.",
+        "Keeps visible token hidden states out of the Stage 2 answer head, which reads only IdentityState features plus query cue.",
+        "Measures Stage 1 hidden-rule accuracy, Stage 1 future-transition accuracy, Stage 2 carry/reset/shuffled accuracy, state geometry, state-slot knockout, and expert-parameter knockout.",
+        "Uses three seeds and writes runs/benchmarks/state_pretraining_before_action_tac228_2026_06_11/state_pretraining_before_action_validation.json.",
+        "Current result: decision.status=not_validated with decision.failure_mode=transition_grounding_failed. Stage 1 hidden-rule accuracy reaches 0.9167 and state geometry is strongly structured: same-rule cosine is 0.9588, different-rule cosine is 0.1702, and observation-invariance gap is 0.7886. However Stage 1 future-transition accuracy is only 0.2708. With the state encoder frozen, Stage 2 carry accuracy is 0.2847, reset accuracy is 0.2639, shuffled accuracy is 0.2986, state-slot knockout drop is 0.0556, and expert-parameter knockout drop remains 0.0. Conclusion: two-stage pretraining can make IdentityState identify the hidden rule, but it does not yet ground that state into future-transition or action prediction."
+      ]
+    },
+    {
+      "id": "TAC-229",
+      "title": "State-query binding validation",
+      "status": "completed",
+      "acceptance": [
+        "Tests the narrowed TAC-228 diagnosis: whether a rule-identifiable IdentityState can compose with a query cue to predict the correct transition.",
+        "Uses actual TACTransformerLM state encoder training, not simulation, followed by frozen-state explicit binding heads.",
+        "Pretrains the state encoder only for hidden-rule identifiability, then freezes it before transition binding training.",
+        "Compares a concat/product binding head against a bilinear binding head over IdentityState embedding plus query cue.",
+        "Measures hidden-rule accuracy, future-transition/carry accuracy, reset accuracy, shuffled accuracy, state advantage, state geometry, state-slot knockout, and expert-parameter knockout reported only.",
+        "Uses three seeds and writes runs/benchmarks/state_query_binding_tac229_2026_06_12/state_query_binding_validation.json.",
+        "Current result: decision.status=validated. Both concat/product and bilinear binding heads reach hidden-rule accuracy 1.0000, future-transition accuracy 1.0000, and carry accuracy 1.0000. Reset accuracy is 0.2315 and shuffled accuracy is 0.2477, keeping controls near chance while state advantage is 0.7685. State geometry remains strongly structured with same-rule cosine 0.9511, different-rule cosine 0.0581, and observation-invariance gap 0.8930. State-slot knockout drops are 0.3472 for concat/product and 0.3611 for bilinear. Expert-parameter knockout drop is 0.0 and is intentionally ignored for this ticket because experts were excluded from the validation gate. Conclusion: after rule-identifiable state pretraining, an explicit state-query binding module can ground IdentityState into transition/action prediction under this controlled benchmark."
+      ]
+    },
+    {
+      "id": "TAC-230",
+      "title": "Expert-causal state-query binding",
+      "status": "completed",
+      "acceptance": [
+        "Tests whether specialist programs can become causally necessary once TAC-229 state-query binding is working.",
+        "Keeps the TAC-229 hidden-rule task and actual TACTransformerLM state encoder training.",
+        "Freezes the rule-identifiable state encoder before training a route-supervised expert binding head.",
+        "Assigns one transition family to each expert and trains route-role supervision so the state-derived route selects the matching expert.",
+        "Measures hidden-rule accuracy, carry accuracy, reset accuracy, shuffled accuracy, state-slot knockout, correct expert knockout, wrong expert knockout, expert knockout selectivity gap, and route-role accuracy.",
+        "Defines near-chance controls explicitly as four-rule chance 0.25 plus tolerance 0.05, so reset and shuffled controls must be <= 0.30.",
+        "Uses three seeds and writes runs/benchmarks/expert_causal_state_query_binding_tac230_2026_06_12/expert_causal_state_query_binding.json.",
+        "Current result: decision.status=validated. Hidden-rule accuracy is 1.0000, future-transition/carry accuracy is 1.0000, reset accuracy is 0.2693, shuffled accuracy is 0.2407, and state advantage is 0.7307. Route-role accuracy is 1.0000. Correct expert knockout drop is 1.0000, wrong expert knockout drop is 0.0, and expert knockout selectivity gap is 1.0000. State-slot knockout drop is 0.3426. State geometry remains strong with same-rule cosine 0.9511, different-rule cosine 0.0581, and observation-invariance gap 0.8930. Conclusion: with explicit route-role supervision and one expert per transition family, specialist experts become causally necessary on top of the validated TAC-229 state-query binding path."
+      ]
+    },
+    {
+      "id": "TAC-231",
+      "title": "Native low-rank program causal binding",
+      "status": "completed",
+      "acceptance": [
+        "Tests whether native TACTransformerLM low-rank program expert parameters can replace the explicit expert matrices used in TAC-230.",
+        "Keeps the TAC-229/TAC-230 hidden-rule task, actual TAC state encoder training, and frozen rule-identifiable IdentityState encoder.",
+        "Routes query cues through TAC native IdentityFieldLayer.program_expert_down, program_expert_up, and program_expert_bias parameters.",
+        "Uses route-role supervision so the state-derived route selects the native program matching the hidden rule.",
+        "Measures carry, reset, shuffled controls, route-role accuracy, state-slot knockout, correct native program parameter knockout, wrong native program parameter knockout, and program knockout selectivity gap.",
+        "Defines near-chance controls explicitly as four-rule chance 0.25 plus tolerance 0.05, so reset and shuffled controls must be <= 0.30.",
+        "Uses three seeds and writes runs/benchmarks/native_program_causal_binding_tac231_2026_06_12/native_program_causal_binding.json.",
+        "Current result: decision.status=validated. Hidden-rule accuracy is 1.0000, future-transition/carry accuracy is 1.0000, reset accuracy is 0.2346, shuffled accuracy is 0.2438, and state advantage is 0.7654. Route-role accuracy is 1.0000. Correct native program parameter knockout drop is 0.8657, wrong native program parameter knockout drop is 0.0, and program knockout selectivity gap is 0.8657. State-slot knockout drop is 0.3796. State geometry remains strong with same-rule cosine 0.9511, different-rule cosine 0.0581, and observation-invariance gap 0.8930. Conclusion: under this controlled state-query binding setup, TAC demonstrates causal state, causal state-query binding, and causal specialist computation through native low-rank program parameters."
+      ]
+    },
+    {
+      "id": "TAC-232",
+      "title": "Internal-route native program binding",
+      "status": "completed",
+      "acceptance": [
+        "Tests whether TAC internal IdentityFieldLayer routing can replace the explicit state-derived route head used in TAC-231.",
+        "Keeps the TAC-229/TAC-231 hidden-rule task, actual TAC state encoder training, frozen rule-identifiable IdentityState encoder, and native low-rank program parameters.",
+        "Forms a state-query hidden input, then lets IdentityFieldLayer.forward produce selected_program_mask and program_context through TAC's internal routing surface.",
+        "Uses native IdentityFieldLayer.program_expert_down, program_expert_up, and program_expert_bias for specialist computation.",
+        "Measures hidden-rule accuracy, carry accuracy, reset accuracy, shuffled accuracy, internal route-role accuracy from selected_program_mask, state-slot knockout, correct native program parameter knockout, wrong native program parameter knockout, and selectivity gap.",
+        "Defines near-chance controls explicitly as four-rule chance 0.25 plus tolerance 0.05, so reset and shuffled controls must be <= 0.30.",
+        "Uses three seeds and writes runs/benchmarks/internal_route_native_program_binding_tac232_2026_06_12/internal_route_native_program_binding.json.",
+        "Current result: decision.status=validated. Hidden-rule accuracy is 1.0000, future-transition/carry accuracy is 0.9915, reset accuracy is 0.2508, shuffled accuracy is 0.2508, and state advantage is 0.7407. Internal route-role accuracy is 0.9167. Correct native program parameter knockout drop is 0.7778, wrong native program parameter knockout drop is 0.0069, and program knockout selectivity gap is 0.7708. State-slot knockout drop is 0.3241. State geometry remains strong with same-rule cosine 0.9511, different-rule cosine 0.0581, and observation-invariance gap 0.8930. Seed-level caveat: seed 19 route-role accuracy is 0.75 and seed 7 state-slot knockout is 0.25, so this is an aggregate validation with some variance. Conclusion: TAC can use internal identity-field routing to select native causal programs under the controlled state-query hidden-input benchmark."
+      ]
+    },
+    {
+      "id": "TAC-233",
+      "title": "Near-native LM-head binding",
+      "status": "completed",
+      "acceptance": [
+        "Tests whether TAC-232's state-query hidden adapter and custom action readout can be relaxed toward the ordinary TACTransformerLM query-token and lm_head answer path.",
+        "Keeps the hidden-rule task, actual TAC state encoder training, carried IdentityState, internal IdentityFieldLayer routing, and native low-rank program parameters.",
+        "Feeds the query as a normal token through TACTransformerLM.forward with carried identity_states and trains the normal lm_head to predict answer token Y_START + transition.",
+        "Measures candidate transition accuracy, full-vocabulary answer accuracy, reset and shuffled controls, internal route-role accuracy, state-slot knockout, correct native program parameter knockout, wrong native program parameter knockout, and program knockout selectivity gap.",
+        "Defines near-chance controls explicitly as four-rule chance 0.25 plus tolerance 0.05, so reset and shuffled controls must be <= 0.30.",
+        "Uses three seeds and writes runs/benchmarks/near_native_lm_head_binding_tac233_2026_06_12/near_native_lm_head_binding.json.",
+        "Current result: decision.status=not_validated. Hidden-rule accuracy remains 1.0000, but future-transition/carry accuracy falls to 0.2431 and full-vocabulary answer accuracy is also 0.2431. Reset accuracy is 0.2423 and shuffled accuracy is 0.2431, leaving state advantage at only 0.0008. Internal route-role accuracy collapses to 0.0177. Correct native program parameter knockout drop is 0.0, wrong native program parameter knockout drop is 0.0, program knockout selectivity gap is 0.0, and state-slot knockout drop is only 0.0278. Conclusion: the ordinary LM-head query path does not preserve TAC-232's causal routing/program mechanism under this objective; the remaining adapter/readout scaffold is still doing essential binding work."
+      ]
+    },
+    {
+      "id": "TAC-234",
+      "title": "Native state-query fusion variant sweep",
+      "status": "completed",
+      "acceptance": [
+        "Tests the user's proposed fixes after TAC-233: residual fusion, input bottleneck, cross-attention bridge, process-supervised control, routing-token-style fusion, and activation steering.",
+        "Uses actual TAC training with the hidden-rule task, carried IdentityState, internal IdentityFieldLayer routing, native low-rank program parameters, and normal lm_head answer logits.",
+        "Runs a one-seed full screen across all six variants, then a focused three-seed validation on the two strongest contenders: input_bottleneck and residual_fusion.",
+        "Measures carry, reset, shuffled controls, full-vocabulary answer accuracy, internal route-role accuracy, state-slot knockout, correct native program parameter knockout, wrong native program parameter knockout, and selectivity gap.",
+        "Uses the same near-chance threshold as TAC-232/TAC-233: four-rule chance 0.25 plus tolerance 0.05, so reset and shuffled controls must be <= 0.30.",
+        "Writes final artifact runs/benchmarks/native_state_query_fusion_variants_tac234_2026_06_12/native_state_query_fusion_variants.json.",
+        "Current result: decision.status=not_validated. The focused three-seed run selects input_bottleneck as best by answer accuracy: hidden-rule accuracy 1.0000, carry/full-vocab accuracy 0.9931, reset 0.2662, shuffled 0.2269, state advantage 0.7269, and state-slot knockout 0.3056. However internal route-role accuracy is only 0.3912, correct program knockout drop is only 0.0116, wrong knockout is -0.0046, and selectivity gap is only 0.0162, so it solves the task by bypassing native causal programs. Residual_fusion is more mechanism-aligned but still fails: carry 0.7824, state advantage 0.4931, route-role 0.3866, correct program knockout 0.0810, wrong knockout 0.0440, selectivity gap 0.0370, and state-slot knockout 0.1944. Conclusion: simple native fusion bridges improve answer accuracy, but none yet preserve TAC-232's internal route/program causality under the normal lm_head path."
+      ]
+    },
+    {
+      "id": "TAC-235",
+      "title": "Native program bottleneck with anti-bypass loss",
+      "status": "completed",
+      "acceptance": [
+        "Tests the TAC-234 diagnosis that simple fusion is insufficient because the LM path can still bypass selected native program output.",
+        "Compares anti-bypass variants: program_only_bottleneck, residual_hidden_dropout, gated_program_residual, input_program_bottleneck, state_query_program_bottleneck, and slot_conditioned_program_bottleneck.",
+        "Uses normal lm_head logits while forcing prediction through selected native low-rank program output and adding true-program answer, selected-route, and anti-bypass losses.",
+        "Runs a one-seed screen to identify promising bottlenecks, then a focused three-seed run on input_program_bottleneck and slot_conditioned_program_bottleneck.",
+        "Measures carry/full-vocabulary accuracy, reset/shuffled controls, state advantage, internal route-role accuracy, correct native program parameter knockout, wrong native program parameter knockout, program knockout selectivity gap, and state-slot knockout.",
+        "Uses near-chance threshold 0.30 for reset and shuffled controls.",
+        "Writes final artifact runs/benchmarks/native_program_bottleneck_antibypass_tac235_2026_06_12/native_program_bottleneck_antibypass.json.",
+        "Current result: decision.status=validated. Best variant is slot_conditioned_program_bottleneck. It reaches hidden-rule accuracy 1.0000, carry accuracy 0.9329, full-vocabulary answer accuracy 0.9306, reset accuracy 0.2014, shuffled accuracy 0.2477, state advantage 0.7315, internal route-role accuracy 0.8843, correct native program knockout drop 0.5718, wrong native program knockout drop 0.0046, program knockout selectivity gap 0.5671, and state-slot knockout drop 0.3519. Caveat: seed 19 route-role accuracy is 0.7431, so the aggregate validates but per-seed route stability is not perfect. Conclusion: making selected native program output a slot-conditioned bottleneck restores TAC-232-style program causality while answering through normal lm_head logits."
+      ]
+    },
+    {
+      "id": "TAC-236",
+      "title": "Robust reproduction and scaling validation",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac236_reproduction_scaling.py with run_tac236_reproduction_scaling returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Sweeps d_model values 24, 48, and 96 by default across ten local CPU seeds.",
+        "Sweeps hidden_rule, modified_rule, and compositional_rule task families by default.",
+        "Reports hidden-rule accuracy, carry accuracy, route-role accuracy, state advantage, correct program knockout drop, wrong program knockout drop, and selectivity gap per seed/cell.",
+        "Validates only when each required cell has a majority of seeds with correct program knockout drop > 0.30, wrong program knockout drop < 0.05, and positive selectivity gap.",
+        "Writes runs/benchmarks/tac236_reproduction_scaling/tac236_reproduction_scaling.json by default and supports --smoke for fast local contract testing."
+      ]
+    },
+    {
+      "id": "TAC-237",
+      "title": "Long-horizon agent persistence",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac237_long_horizon_agent_persistence.py with run_tac237_long_horizon_agent_persistence returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Evaluates 10, 25, 50, and 100-step observe-plan-act-verify-repair chains by default.",
+        "Compares vanilla transformer, retrieval-style context control, TAC carried state, and TAC reset state metrics.",
+        "Reports completion accuracy, verification accuracy, repair accuracy, state advantage, retrieval advantage, and memory efficiency.",
+        "Marks interpretation blocked unless TAC-236 is supplied as validated.",
+        "Writes runs/benchmarks/tac237_long_horizon_agent_persistence/tac237_long_horizon_agent_persistence.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-238",
+      "title": "Program reuse and transfer learning",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac238_program_reuse_transfer.py with run_tac238_program_reuse_transfer returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Uses hidden_rule as the source task and evaluates modified_rule and compositional_rule transfer targets.",
+        "Represents the frozen-program condition as native program parameters frozen while routing and readout adapt.",
+        "Compares transfer, fresh training, and randomized program assignment controls.",
+        "Reports transfer accuracy, fresh accuracy, randomized-program accuracy, program reuse rate, and selectivity retention.",
+        "Marks interpretation blocked unless TAC-236 is supplied as validated."
+      ]
+    },
+    {
+      "id": "TAC-239",
+      "title": "Self-play program discovery",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac239_self_play_program_discovery.py with run_tac239_self_play_program_discovery returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Uses fixed roles conjecturer, solver, verifier, critic, memory, and loop.",
+        "Tracks task difficulty progression, solver improvement, role specialization, role entropy drop, and targeted knockout gap.",
+        "Validates only when difficulty increases, solver performance improves, role entropy decreases, and targeted role knockouts exceed unrelated knockouts.",
+        "Marks interpretation blocked unless TAC-236 is supplied as validated.",
+        "Writes runs/benchmarks/tac239_self_play_program_discovery/tac239_self_play_program_discovery.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-240",
+      "title": "Formal verification training",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac240_formal_verification_training.py with run_tac240_formal_verification_training returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Uses local CPU machine-verifiable symbolic_math and executable_program_specs domains by default.",
+        "Keeps Lean optional and not required for the local gate.",
+        "Reports verification success rate, baseline success rate, proof length, generalization accuracy, hallucination rate, and program knockout drop.",
+        "Validates only when verified correctness beats baseline, hallucination rate is controlled, and program knockout harms verification.",
+        "Marks interpretation blocked unless TAC-236 is supplied as validated."
+      ]
+    },
+    {
+      "id": "TAC-241",
+      "title": "Executable plan state",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac241_executable_plan_state.py with run_tac241_executable_plan_state returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Represents explicit IdentityState plan fields current_goal, current_subgoal, and remaining_steps.",
+        "Evaluates long-horizon plan execution across 10, 25, 50, and 100-step chains by default.",
+        "Compares executable plan state against reset-state and no-plan-text controls.",
+        "Reports completion accuracy, reset completion accuracy, plan-state advantage, goal probe accuracy, remaining-steps accuracy, repair accuracy, and memory efficiency.",
+        "Validates only when executable plan state improves completion, exposes recoverable plan fields, and improves repair."
+      ]
+    },
+    {
+      "id": "TAC-242",
+      "title": "Algorithm distillation",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac242_algorithm_distillation.py with run_tac242_algorithm_distillation returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Trains/distills program roles over sorting, graph_search, arithmetic, planning, and verification algorithm families.",
+        "Measures source algorithm accuracy, transfer algorithm accuracy, held-out algorithm accuracy, transfer advantage over fresh training, program reuse rate, and selectivity retention.",
+        "Compares transfer against fresh and randomized-program controls.",
+        "Validates only when transfer beats fresh training, held-out algorithm accuracy is meaningful, and program reuse/selectivity remain high.",
+        "Writes runs/benchmarks/tac242_algorithm_distillation/tac242_algorithm_distillation.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-243",
+      "title": "Program composition",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac243_program_composition.py with run_tac243_program_composition returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Tests Program A plus Program B against Program C alone on sort_then_verify, search_then_plan, and arithmetic_then_verify tasks.",
+        "Reports program A accuracy, program B accuracy, composed accuracy, single-program C accuracy, composition advantage, dual knockout drop, and targeted knockout gap.",
+        "Validates only when composed programs outperform the monolithic control and targeted dual knockouts are causally damaging.",
+        "Treats this as the primary reusable-computation question after TAC-236 validated core causality.",
+        "Writes runs/benchmarks/tac243_program_composition/tac243_program_composition.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-244",
+      "title": "World-state prediction",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac244_world_state_prediction.py with run_tac244_world_state_prediction returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Predicts hidden_state, future_state, and task_state targets instead of only next-token targets.",
+        "Evaluates rollout lengths 5, 10, 25, and 50 by default.",
+        "Compares world-state prediction against a token-baseline control.",
+        "Reports hidden-state accuracy, future-state accuracy, task-state accuracy, token-baseline accuracy, world-model advantage, and state knockout drop.",
+        "Validates only when latent state prediction beats the token baseline and state knockout harms the result."
+      ]
+    },
+    {
+      "id": "TAC-245",
+      "title": "Context compression benchmark",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac245_context_compression.py with run_tac245_context_compression returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Compares Transformer 1000-token context against TAC 100-token context by default.",
+        "Reports transformer accuracy, TAC accuracy, accuracy gap, compression ratio, equal-accuracy token savings, state knockout drop, and memory efficiency.",
+        "Validates only when TAC matches transformer accuracy within tolerance while using materially fewer tokens and depending on IdentityState.",
+        "Preserves the commercially legible value-proposition metric: equal accuracy at lower context length.",
+        "Writes runs/benchmarks/tac245_context_compression/tac245_context_compression.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-246",
+      "title": "Algorithm transfer matrix expansion",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac246_algorithm_transfer_matrix.py with run_tac246_algorithm_transfer_matrix returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Expands TAC-242 from aggregate transfer into a source-algorithm by target-algorithm matrix over sorting, graph_search, arithmetic, planning, and verification.",
+        "Reports cross-algorithm transfer accuracy, transfer advantage over fresh, transfer advantage over randomized programs, negative transfer rate, program reuse rate, and selectivity retention.",
+        "Validates only when transfer beats fresh, negative transfer remains low, and reuse/selectivity stay high.",
+        "Writes runs/benchmarks/tac246_algorithm_transfer_matrix/tac246_algorithm_transfer_matrix.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-247",
+      "title": "Algorithm transfer break controls",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac247_algorithm_transfer_break_controls.py with run_tac247_algorithm_transfer_break_controls returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Attempts to break TAC-242 with scrambled-label, surface-cue, route-shuffle, and program-knockout controls.",
+        "Reports clean transfer accuracy, scrambled-label accuracy, surface-cue control accuracy, program knockout drop, causal transfer gap, and shortcut resistance.",
+        "Validates only when transfer survives shortcut controls and program knockout causally damages transfer.",
+        "Writes runs/benchmarks/tac247_algorithm_transfer_break_controls/tac247_algorithm_transfer_break_controls.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-248",
+      "title": "Context compression scaling curve",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac248_context_compression_scaling.py with run_tac248_context_compression_scaling returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Scales TAC-245 across 10x, 20x, 50x, and 100x compression ratios by default.",
+        "Reports max validated compression ratio, mean accuracy gap, equal-accuracy token savings, collapse ratio, state knockout drop, and compression curve slope.",
+        "Validates only when at least 20x compression preserves equal-accuracy behavior and depends on IdentityState.",
+        "Writes runs/benchmarks/tac248_context_compression_scaling/tac248_context_compression_scaling.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-249",
+      "title": "Context compression stress controls",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac249_context_compression_stress.py with run_tac249_context_compression_stress returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Stress-tests TAC-245 under distractor and memory-collision pressure.",
+        "Sweeps distractor counts 0, 10, 25, 50, and 100 by default.",
+        "Reports stressed TAC accuracy, stressed transformer accuracy, stressed accuracy gap, distractor resilience, collision failure rate, and state knockout drop.",
+        "Validates only when TAC compression remains competitive under distractors, collision failure stays controlled, and IdentityState knockout remains damaging."
+      ]
+    },
+    {
+      "id": "TAC-250",
+      "title": "Program composition hardening",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac250_program_composition_hardening.py with run_tac250_program_composition_hardening returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Strengthens TAC-243 with composition depths 2, 3, and 4 by default.",
+        "Reports composed accuracy, single-program accuracy, composition advantage, depth-generalization accuracy, targeted knockout gap, and composition consistency.",
+        "Validates only when composed programs beat a single-program control, generalize across depth, and fail selectively under targeted knockout.",
+        "Writes runs/benchmarks/tac250_program_composition_hardening/tac250_program_composition_hardening.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-251",
+      "title": "Realistic context compression workloads",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac251_realistic_context_compression.py with run_tac251_realistic_context_compression returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Evaluates coding_repository, multi_session_assistant, research_workflow, and long_document workloads.",
+        "Sweeps 10x, 20x, and 50x compression ratios by default.",
+        "Reports realistic TAC accuracy, realistic transformer accuracy, accuracy gap, max validated ratio, token savings, state knockout drop, and estimated cost reduction.",
+        "Validates only when realistic workloads preserve quality at meaningful compression and maintain state dependence."
+      ]
+    },
+    {
+      "id": "TAC-252",
+      "title": "Context compression ROI curve",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac252_context_compression_roi_curve.py with run_tac252_context_compression_roi_curve returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Sweeps monthly token budgets from 1M through 1B and compression ratios 10x, 20x, and 50x by default.",
+        "Reports gross token savings, estimated cost reduction, quality-adjusted savings, break-even quality gap, validated ROI ratio, and state dependency.",
+        "Validates only when quality-adjusted savings remain positive at a validated ratio of at least 20x.",
+        "Keeps the result business-facing rather than architecture-facing."
+      ]
+    },
+    {
+      "id": "TAC-253",
+      "title": "Algorithm transfer chain",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac253_algorithm_transfer_chain.py with run_tac253_algorithm_transfer_chain returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Tests Task A to Task B to Task C transfer chains without full retraining.",
+        "Includes sorting_to_search_to_planning, arithmetic_to_verification_to_planning, and search_to_planning_to_verification chains by default.",
+        "Reports task A accuracy, task B no-retrain accuracy, task C no-retrain accuracy, chain retention, fresh training gap, program reuse rate, and knockout transfer drop.",
+        "Validates only when transfer across the chain beats fresh training and remains program-causal."
+      ]
+    },
+    {
+      "id": "TAC-254",
+      "title": "Composition moat retest",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac254_composition_moat_retest.py with run_tac254_composition_moat_retest returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Retests composition on product-shaped multi-skill tasks: search_plan_verify, sort_retrieve_summarize, and arithmetic_check_repair.",
+        "Reports composed accuracy, single-program accuracy, composition advantage, new capability score, targeted knockout gap, and composition reliability.",
+        "Validates only when composition beats a monolithic control and targeted knockouts remain selectively damaging.",
+        "Treats composition as a long-term moat rather than the primary near-term commercialization path."
+      ]
+    },
+    {
+      "id": "TAC-255",
+      "title": "Investment readiness scorecard",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac255_investment_readiness_scorecard.py with run_tac255_investment_readiness_scorecard returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Combines compression value, transfer moat, and composition option value into a single platform-readiness score.",
+        "Weights compression at 55 percent, transfer at 30 percent, and composition at 15 percent.",
+        "Reports compression value score, transfer moat score, composition option value, platform readiness score, risk-adjusted score, and recommended next milestone.",
+        "Validates only when compression and transfer are strong enough to justify TAC-260 as the next value milestone."
+      ]
+    },
+    {
+      "id": "TAC-256",
+      "title": "Architecture paper readiness audit",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac256_architecture_paper_readiness.py with run_tac256_architecture_paper_readiness returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Audits TAC-235 and TAC-236 as the foundational architecture-paper evidence base.",
+        "Reports causal program score, reproduction score, ablation strength, mechanistic clarity, paper readiness score, and recommended venue tier.",
+        "Validates only when causal-program evidence and reproduction evidence are both strong enough for an architecture paper.",
+        "Writes runs/benchmarks/tac256_architecture_paper_readiness/tac256_architecture_paper_readiness.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-257",
+      "title": "Algorithm transfer paper readiness",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac257_algorithm_transfer_paper_readiness.py with run_tac257_algorithm_transfer_paper_readiness returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Audits TAC-242, TAC-246, and TAC-247 as the causal algorithm-transfer evidence base.",
+        "Reports transfer effect size, control survival score, task coverage score, negative-transfer safety, citation-potential score, and paper readiness score.",
+        "Validates only when transfer survives fresh-training, randomized-program, shortcut, route-shuffle, and knockout controls.",
+        "Treats algorithm transfer as the strongest current academic paper path.",
+        "Writes runs/benchmarks/tac257_algorithm_transfer_paper_readiness/tac257_algorithm_transfer_paper_readiness.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-258",
+      "title": "Context compression paper readiness",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac258_context_compression_paper_readiness.py with run_tac258_context_compression_paper_readiness returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Audits TAC-245, TAC-248, TAC-249, TAC-251, and TAC-252 as the persistent-state context-compression evidence base.",
+        "Reports max validated compression, realistic workload score, stress survival score, state dependency score, scaling boundary clarity, and paper readiness score.",
+        "Validates only when 20x local compression remains supported, realistic workloads remain positive, and the failure boundary is clear.",
+        "Treats context compression as the highest likely citation-potential paper path.",
+        "Writes runs/benchmarks/tac258_context_compression_paper_readiness/tac258_context_compression_paper_readiness.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-259",
+      "title": "Transfer-compression scaling study",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac259_transfer_compression_scaling_study.py with run_tac259_transfer_compression_scaling_study returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Sweeps program counts and compression ratios to test whether transfer strength rises with specialization while context requirement falls.",
+        "Reports transfer-compression correlation, program-specialization slope, context-requirement slope, unified-claim score, scaling-law clarity, and paper readiness score.",
+        "Validates only when the transfer/compression relationship has the expected correlation and slope signs.",
+        "Treats the unified transfer-vs-compression scaling claim as the most publishable combined academic result.",
+        "Writes runs/benchmarks/tac259_transfer_compression_scaling_study/tac259_transfer_compression_scaling_study.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-260",
+      "title": "Composition publication gate",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac260_composition_publication_gate.py with run_tac260_composition_publication_gate returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Audits TAC-243, TAC-250, and TAC-254 as the program-composition evidence base.",
+        "Sweeps composition depths 2, 3, and 4 by default.",
+        "Reports composition advantage, depth-generalization accuracy, causal-composition score, new-capability score, publication-gate score, and recommended action.",
+        "Validates only when composition survives depth pressure with stable causal and new-capability evidence.",
+        "Writes runs/benchmarks/tac260_composition_publication_gate/tac260_composition_publication_gate.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-261",
+      "title": "Persistent agent state across sessions",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac261_persistent_agent_state.py with run_tac261_persistent_agent_state returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Evaluates task-state retention across 5, 10, and 20 synthetic agent sessions by default.",
+        "Compares carried IdentityState against reset-state, retrieval-context, and state-knockout controls.",
+        "Reports task-state retention, decision consistency, cross-session recall, reset-state gap, retrieval-state gap, state knockout drop, and agent-state score.",
+        "Validates only when carried IdentityState beats reset and retrieval controls while remaining knockout-sensitive.",
+        "Writes runs/benchmarks/tac261_persistent_agent_state/tac261_persistent_agent_state.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-262",
+      "title": "Long-horizon context compression for agents",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac262_long_horizon_context_compression_agent.py with run_tac262_long_horizon_context_compression_agent returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Evaluates coding_project, research_workflow, docs_maintenance, and ops_runbook workflows under 10x, 20x, and 50x compression by default.",
+        "Treats compression as an enabler of long-horizon agent work rather than the product thesis itself.",
+        "Reports agent completion accuracy, baseline completion accuracy, verification integrity, max validated agent compression, context cost reduction, state dependency score, and compressed agent score.",
+        "Validates only when compressed TAC-agent state maintains completion and verification at meaningful compression with state dependence.",
+        "Writes runs/benchmarks/tac262_long_horizon_context_compression_agent/tac262_long_horizon_context_compression_agent.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-263",
+      "title": "Reusable agentic programs",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac263_reusable_agentic_programs.py with run_tac263_reusable_agentic_programs returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Maps reusable programs onto agentic skills: read_code, edit_code, test_code, verify_result, document_decision, and recover_failure.",
+        "Measures whether algorithm-transfer evidence survives in agent-like tool-use roles.",
+        "Reports skill transfer accuracy, tool-use consistency, program reuse rate, route-skill alignment, program knockout drop, fresh-training gap, and agentic skill score.",
+        "Validates only when reusable programs beat fresh training and remain causally knockout-sensitive.",
+        "Writes runs/benchmarks/tac263_reusable_agentic_programs/tac263_reusable_agentic_programs.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-264",
+      "title": "Plan-verify-repair control layer",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac264_plan_verify_repair_control.py with run_tac264_plan_verify_repair_control returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Evaluates 10, 25, 50, and 100-step plan-verify-repair control loops by default.",
+        "Directly retests the TAC-237 and TAC-241 failure mode around explicit plan/control state.",
+        "Reports plan accuracy, verification accuracy, repair success rate, control-loop completion, baseline control completion, plan-state probe, and control-layer score.",
+        "Validates only when explicit planning, verification, repair, and plan-state probes all clear the long-horizon control gate.",
+        "Writes runs/benchmarks/tac264_plan_verify_repair_control/tac264_plan_verify_repair_control.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-265",
+      "title": "North-star multi-session agent workflow",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac265_north_star_agent_workflow.py with run_tac265_north_star_agent_workflow returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Models the north-star workflow: maintain a software project across sessions with read, fix, test, document, and continue steps.",
+        "Combines persistent state, context compression, reusable programs, verification, and repair into one agent-architecture gate.",
+        "Reports multi-session completion, baseline completion, memory continuity, verification-repair score, effective context ratio, cost-adjusted advantage, agent-architecture score, and recommended next milestone.",
+        "Validates only when TAC clears a complete agent architecture gate, not merely an isolated compression or transfer gate.",
+        "Writes runs/benchmarks/tac265_north_star_agent_workflow/tac265_north_star_agent_workflow.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-266",
+      "title": "Real repository multi-session agent harness",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac266_real_repository_agent_harness.py with run_tac266_real_repository_agent_harness returning schema, method, repository_profile, per_seed, metrics, decision, and artifact_path.",
+        "Profiles the actual repository in read-only mode, excluding .git, node_modules, dist, outputs, and runs.",
+        "Evaluates benchmark_extension, model_change, and research_handoff workflows across 5, 10, and 20 sessions by default.",
+        "Sweeps 10x and 20x compressed history ratios by default.",
+        "Reports multi-session repo completion, baseline repo completion, state continuity, tool-trace accuracy, verification command success, repair localization accuracy, compressed history ratio, cost-adjusted agent advantage, repository grounding score, and agent architecture score.",
+        "Validates only when repository-grounded completion, state continuity, tool trace, verification, repair localization, 20x compressed history, and architecture score all clear the gate.",
+        "Writes runs/benchmarks/tac266_real_repository_agent_harness/tac266_real_repository_agent_harness.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-267",
+      "title": "Repair-grounded responsible program control",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac267_repair_grounded_program_control.py with run_tac267_repair_grounded_program_control returning schema, method, repository_profile, per_seed, metrics, decision, and artifact_path.",
+        "Converts verification failures into failure localization, responsible program selection, targeted repair, and re-verification signals.",
+        "Evaluates benchmark_extension, model_change, and research_handoff workflows by default.",
+        "Evaluates schema_mismatch, metric_gate_miss, test_failure, artifact_missing, and stale_research_state failure types by default.",
+        "Reports verification failure detection, failure localization accuracy, responsible program selection accuracy, targeted program activation rate, unrelated program activation rate, targeted repair success, baseline repair success, repair selectivity gap, reverify success rate, and executive control score.",
+        "Validates only when targeted repair beats baseline repair, unrelated activation remains low, and the full failure-to-program-to-reverify loop clears its gates.",
+        "Writes runs/benchmarks/tac267_repair_grounded_program_control/tac267_repair_grounded_program_control.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-268",
+      "title": "Constrained workspace editing",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac268_constrained_workspace_editing.py with run_tac268_constrained_workspace_editing returning schema, method, repository_profile, workspace_artifacts, per_seed, metrics, decision, and artifact_path.",
+        "Creates disposable generated Python workspaces under the output directory and never edits the live repository.",
+        "Seeds failing tests for schema_mismatch, metric_gate_miss, test_failure, artifact_missing, and stale_research_state failure types by default.",
+        "Runs tests before repair, applies bounded patches, and runs tests again after repair.",
+        "Reports pre-patch test success, patch application rate, post-patch test success, test improvement rate, failure localization, responsible program selection, patch correctness, regression avoidance, workspace repair success, and autonomous editing score.",
+        "Validates only when constrained patches materially improve tests without regressions across the generated workspace matrix.",
+        "Writes runs/benchmarks/tac268_constrained_workspace_editing/tac268_constrained_workspace_editing.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-269",
+      "title": "Sandboxed real repository repair",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac269_sandboxed_real_repository_repair.py with run_tac269_sandboxed_real_repository_repair returning schema, method, repository_profile, sandbox_artifacts, per_seed, metrics, decision, and artifact_path.",
+        "Copies real repository files into sandbox workspaces and never edits the live repository.",
+        "Injects realistic bugs into copied real repository modules and runs failing tests before repair.",
+        "Applies bounded repair patches to sandbox copies and reruns tests after repair.",
+        "Reports real file copy rate, bug injection rate, pre-patch test success, patch application, post-patch test success, test improvement, failure localization, patch correctness, regression avoidance, sandbox repair success, and real repo repair score.",
+        "Validates only when sandboxed copied real-file repairs improve failing tests without regressions.",
+        "Writes runs/benchmarks/tac269_sandboxed_real_repository_repair/tac269_sandboxed_real_repository_repair.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-270",
+      "title": "Multi-file sandbox repair without restore",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac270_multifile_sandbox_repair_no_restore.py with run_tac270_multifile_sandbox_repair_no_restore returning schema, method, repository_profile, sandbox_artifacts, per_seed, metrics, decision, and artifact_path.",
+        "Copies a real multi-file repository slice into disposable sandbox workspaces and never edits the live repository.",
+        "Injects bugs that affect multiple copied files and runs failing tests before repair.",
+        "Applies localized multi-file patches only; full-file known-good restoration is forbidden and explicitly reported as full_file_restore_rate.",
+        "Runs tests after repair and reports real slice copy, multi-file bug injection, pre-patch test success, localized patch application, full-file restore rate, post-patch test success, test improvement, failure localization, responsible program selection, multi-file patch correctness, regression avoidance, sandbox repair success, and no-restore repair score.",
+        "Validates only when multi-file localized repairs improve failing tests without regressions and with near-zero full-file restoration.",
+        "Writes runs/benchmarks/tac270_multifile_sandbox_repair_no_restore/tac270_multifile_sandbox_repair_no_restore.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-271",
+      "title": "Ambiguous multi-file repair stress",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac271_ambiguous_multifile_repair_stress.py with run_tac271_ambiguous_multifile_repair_stress returning schema, method, repository_profile, sandbox_artifacts, per_seed, metrics, decision, and artifact_path.",
+        "Copies a real multi-file repository slice into disposable sandbox workspaces and never edits the live repository.",
+        "Injects ambiguous failures with incomplete tests, deceptive tests, conflicting repair objectives, and delayed verification by default.",
+        "Provides multiple plausible candidate repairs for each failure and measures whether the correct causal repair is selected before relying on retry.",
+        "Runs public and hidden/regression tests so a surface repair can pass public checks while still failing full verification.",
+        "Reports ambiguous failure copy, ambiguous bug injection, pre-patch test success, candidate fix count, plausible-fix disambiguation, incomplete-test guard, deceptive-test resistance, first-attempt failure, retry repair success, post-patch test success, test improvement, regression avoidance, ambiguity repair success, and ambiguity stress score.",
+        "Validates only when TAC handles ambiguity, resists incomplete/deceptive tests, recovers from wrong first attempts, and still improves full verification without regressions.",
+        "Writes runs/benchmarks/tac271_ambiguous_multifile_repair_stress/tac271_ambiguous_multifile_repair_stress.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-272",
+      "title": "Causal fix disambiguation",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac272_causal_fix_disambiguation.py with run_tac272_causal_fix_disambiguation returning schema, method, repository_profile, candidate_artifacts, per_seed, metrics, decision, and artifact_path.",
+        "Builds on TAC-271 ambiguous multi-file failures and scores multiple plausible candidate repairs before applying a patch.",
+        "Scores causal consistency, minimal edit distance, test coverage explanation, cross-file dependency impact, historical state consistency, responsible-program confidence, and predicted regression risk.",
+        "Applies the highest-scoring candidate first, then runs full verification and retry repair only if the first pass fails.",
+        "Reports candidate fix count, scoring feature aggregates, causal explanation alignment, first-pass disambiguation accuracy, post-patch test success, retry repair success, regression avoidance, and causal fix score.",
+        "Validates only when first-pass disambiguation is at least 0.65, post-patch success is at least 0.85, retry success is at least 0.90, regression avoidance is at least 0.90, and causal explanation alignment is at least 0.70.",
+        "Writes runs/benchmarks/tac272_causal_fix_disambiguation/tac272_causal_fix_disambiguation.json by default and supports --smoke."
+      ]
+    },
+    {
+      "id": "TAC-273",
+      "title": "Multi-bug long repair chain",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac273_multi_bug_long_repair_chain.py with run_tac273_multi_bug_long_repair_chain returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Tests whether TAC can handle multiple interacting bugs across several repair steps without state collapse.",
+        "Evaluates metric_artifact_contract, routing_state_regression, and compression_repair_interaction bug sets by default.",
+        "Sweeps repair chain lengths 3, 5, and 8 by default.",
+        "Reports first_pass_root_cause_set, chain_completion, regression_avoidance, average_repair_steps, repair_step_threshold, state_continuity, multi_bug_interaction_score, and repair_chain_score.",
+        "Validates only when first_pass_root_cause_set is at least 0.65, chain_completion is at least 0.70, regression_avoidance is at least 0.90, average_repair_steps is below the configured threshold, and state_continuity is at least 0.70.",
+        "Writes runs/benchmarks/tac273_multi_bug_long_repair_chain/tac273_multi_bug_long_repair_chain.json by default and supports --smoke."
       ]
     }
   ]

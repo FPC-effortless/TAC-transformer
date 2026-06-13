@@ -1,0 +1,15 @@
+{
+  "id": "jeffkolo/tac-v0-1-core-validation-2026-06-13",
+  "title": "TAC v0.1 Core Validation 2026-06-13",
+  "code_file": "kaggle_validate_tac_core.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": "true",
+  "enable_gpu": "false",
+  "enable_tpu": "false",
+  "enable_internet": "false",
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
