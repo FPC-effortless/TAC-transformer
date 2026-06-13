@@ -12910,3 +12910,34 @@ Interpretation:
   0.7306 versus 0.6335 chain completion.
 - The boundary remains bounded simulation. TAC-274 does not yet prove
   unrestricted live repository repair or long autonomous project execution.
+
+## 2026-06-13 - TAC v0.1 Visibility Deliverables And v0.2 Kaggle 100M Feasibility
+
+TAC v0.1 is now treated as feature-complete for public benchmark scope. The next
+deliverables are visibility and external feedback rather than TAC-275.
+
+Added public-facing deliverables:
+
+- demo recording checklist
+- outreach execution plan
+- Stage-4 success criteria
+- Kaggle 100M+ training pilot plan
+- 100M+ static feasibility estimator
+
+Kaggle feasibility decision:
+
+- A 100M+ TAC pilot is feasible as a bounded Kaggle experiment.
+- The recommended pilot shape is approximately 112M TAC parameters:
+  vocab_size 8192, d_model 512, n_heads 8, n_layers 8, n_programs 24,
+  seq_len 512, attention_window_size 128.
+- The pilot is not a TAC v0.2 validation. It only tests whether the model shape
+  can initialize, train, checkpoint, resume, and produce healthy telemetry on
+  Kaggle.
+- TAC v0.2 validation still requires carried-state, reset-state, vanilla,
+  program-knockout, compression, and real-repository workflow controls.
+
+Decision:
+
+- Proceed with demo and outreach before launching the full 100M+ training run.
+- Use `experiments/estimate_tac_v02_100m_kaggle.py` to regenerate the launch
+  shape and command.

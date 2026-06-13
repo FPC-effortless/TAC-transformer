@@ -1,0 +1,139 @@
+{
+  "schema": "tac_v02_100m_kaggle_feasibility.v1",
+  "method": "static_parameter_estimate",
+  "target": {
+    "min_params": 100000000,
+    "max_params": 160000000,
+    "claim_boundary": "Feasibility means the model shape reaches 100M+ parameters and can be launched as a bounded Kaggle pilot. It is not evidence that TAC mechanisms survive scale."
+  },
+  "recommended": {
+    "vocab_size": 8192,
+    "d_model": 512,
+    "n_heads": 8,
+    "n_layers": 8,
+    "n_programs": 24,
+    "seq_len": 512,
+    "attention_window_size": 128,
+    "tac_params": 112173136,
+    "parameter_matched_vanilla_params": 111119232,
+    "parameter_matched_vanilla_d_model": 896
+  },
+  "candidate_count": 21,
+  "top_candidates": [
+    {
+      "vocab_size": 8192,
+      "d_model": 512,
+      "n_heads": 8,
+      "n_layers": 8,
+      "n_programs": 24,
+      "seq_len": 512,
+      "attention_window_size": 128,
+      "tac_params": 112173136,
+      "parameter_matched_vanilla_params": 111119232,
+      "parameter_matched_vanilla_d_model": 896
+    },
+    {
+      "vocab_size": 16000,
+      "d_model": 448,
+      "n_heads": 7,
+      "n_layers": 10,
+      "n_programs": 24,
+      "seq_len": 512,
+      "attention_window_size": 128,
+      "tac_params": 112365476,
+      "parameter_matched_vanilla_params": 44217408,
+      "parameter_matched_vanilla_d_model": 448
+    },
+    {
+      "vocab_size": 12000,
+      "d_model": 576,
+      "n_heads": 9,
+      "n_layers": 6,
+      "n_programs": 24,
+      "seq_len": 512,
+      "attention_window_size": 128,
+      "tac_params": 112451580,
+      "parameter_matched_vanilla_params": 43511232,
+      "parameter_matched_vanilla_d_model": 576
+    },
+    {
+      "vocab_size": 12000,
+      "d_model": 448,
+      "n_heads": 7,
+      "n_layers": 10,
+      "n_programs": 24,
+      "seq_len": 512,
+      "attention_window_size": 128,
+      "tac_params": 108781476,
+      "parameter_matched_vanilla_params": 40633408,
+      "parameter_matched_vanilla_d_model": 448
+    },
+    {
+      "vocab_size": 8192,
+      "d_model": 576,
+      "n_heads": 9,
+      "n_layers": 6,
+      "n_programs": 24,
+      "seq_len": 512,
+      "attention_window_size": 128,
+      "tac_params": 108064764,
+      "parameter_matched_vanilla_params": 39124416,
+      "parameter_matched_vanilla_d_model": 576
+    },
+    {
+      "vocab_size": 12000,
+      "d_model": 512,
+      "n_heads": 8,
+      "n_layers": 8,
+      "n_programs": 24,
+      "seq_len": 512,
+      "attention_window_size": 128,
+      "tac_params": 116072528,
+      "parameter_matched_vanilla_params": 117943168,
+      "parameter_matched_vanilla_d_model": 896
+    },
+    {
+      "vocab_size": 16000,
+      "d_model": 576,
+      "n_heads": 9,
+      "n_layers": 6,
+      "n_programs": 24,
+      "seq_len": 512,
+      "attention_window_size": 128,
+      "tac_params": 117059580,
+      "parameter_matched_vanilla_params": 48119232,
+      "parameter_matched_vanilla_d_model": 576
+    },
+    {
+      "vocab_size": 8192,
+      "d_model": 448,
+      "n_heads": 7,
+      "n_layers": 10,
+      "n_programs": 24,
+      "seq_len": 512,
+      "attention_window_size": 128,
+      "tac_params": 105369508,
+      "parameter_matched_vanilla_params": 37221440,
+      "parameter_matched_vanilla_d_model": 448
+    }
+  ],
+  "kaggle_pilot": {
+    "recommended_first_run_steps": 1000,
+    "batch_size": 1,
+    "grad_accum_steps": 32,
+    "effective_batch_sequences": 32,
+    "eval_every": 250,
+    "checkpoint_every": 250,
+    "precision": "fp16",
+    "resume_required_for_long_runs": true,
+    "run_vanilla_control": true,
+    "run_reset_state_control": true,
+    "run_program_knockout_control": true
+  },
+  "launch_command": "!python kaggle/train_best_tac_agentic.py \\\n  --preset kaggle_fast_tac \\\n  --scale smoke \\\n  --vocab-size 8192 \\\n  --d-model 512 \\\n  --n-heads 8 \\\n  --n-layers 8 \\\n  --n-programs 24 \\\n  --seq-len 512 \\\n  --attention-window-size 128 \\\n  --steps 1000 \\\n  --batch-size 1 \\\n  --grad-accum-steps 32 \\\n  --eval-every 250 \\\n  --eval-batches 2 \\\n  --checkpoint-every 250 \\\n  --precision fp16 \\\n  --device auto \\\n  --max-seconds 21600 \\\n  --stop-buffer-seconds 1200 \\\n  --skip-end-specialization-on-time-stop \\\n  --output-dir /kaggle/working/tac_v02_100m_pilot",
+  "decision": {
+    "status": "feasible_for_kaggle_pilot",
+    "can_train_100m_plus_on_kaggle": true,
+    "next_step": "Run the pilot command on Kaggle, inspect memory/throughput and loss stability, then launch matched TAC/reset/vanilla controls only if the pilot is healthy."
+  }
+}
