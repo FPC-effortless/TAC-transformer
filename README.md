@@ -56,6 +56,16 @@ TAC-273 is intentionally recorded as a not-yet-validated frontier result. It
 passed root-cause set, regression avoidance, repair-step budget, and state
 continuity gates, but missed chain completion at `0.6335 < 0.70`.
 
+Latest result:
+
+> TAC-274 validated interaction-aware repair planning.
+
+TAC-273 showed that TAC could identify root causes, preserve state continuity,
+and avoid regressions, but failed full interacting chain completion. TAC-274
+introduced dependency-graph planning, patch-order prediction, and interaction
+tracking. It improved chain completion from `0.6335` to `0.7306` while
+maintaining `0.9557` regression avoidance.
+
 Expected public claim:
 
 > TAC is an experimental persistent-state architecture for long-horizon AI

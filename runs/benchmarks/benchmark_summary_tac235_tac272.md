@@ -1,4 +1,4 @@
-# TAC-235 Through TAC-272 Benchmark Summary
+# TAC-235 Through TAC-274 Benchmark Summary
 
 | Stage | Result | Key Metric | Interpretation |
 |---|---:|---:|---|
@@ -17,6 +17,8 @@
 | TAC-270 | validated | no-restore repair score 0.9635 | Multi-file sandbox repair works without full-file restoration. |
 | TAC-271 | not_validated | first-pass disambiguation 0.5583 | Ambiguity breaks first-pass causal fix choice. |
 | TAC-272 | validated | first-pass disambiguation 0.8417 | Causal-fix scoring improves ambiguous repair selection. |
+| TAC-273 | not_validated | chain completion 0.6335 | Interacting multi-bug repair chains break completion, while root-cause set, state continuity, and regression avoidance pass. |
+| TAC-274 | validated | chain completion 0.7306 | Interaction-aware dependency planning improves chain completion and maintains regression avoidance 0.9557. |
 
 Public v0.1 claim:
 

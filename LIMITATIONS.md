@@ -20,10 +20,11 @@ Main benchmark boundaries:
 - Most stages are local-CPU bounded experiments.
 - Repair benchmarks use copied sandbox files, not live repository mutation.
 - TAC-270 removes full-file restoration, but the bug classes remain bounded.
-- TAC-272 improves causal fix choice under injected ambiguity, but does not yet test simultaneous independent bugs or long repair chains.
+- TAC-272 improves causal fix choice under injected ambiguity.
+- TAC-273 exposes interacting repair-chain completion as a hard frontier.
+- TAC-274 improves bounded interaction-aware repair planning, but does not yet test unrestricted live-repository chains.
 - Kaggle validation is a reproducibility check for benchmark metrics, not an external product evaluation.
 
 Current open frontier:
 
-> causal judgment under ambiguity at larger scale.
-
+> long-horizon repair planning in real repositories at larger scale.
