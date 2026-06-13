@@ -23,6 +23,8 @@ Start here:
 - [docs/tac_v0_1_demo_recording_checklist.md](docs/tac_v0_1_demo_recording_checklist.md) is the demo recording checklist.
 - [docs/tac_v0_1_research_outreach.md](docs/tac_v0_1_research_outreach.md) is the research-feedback outreach plan.
 - [docs/tac_v0_1_outreach_execution.md](docs/tac_v0_1_outreach_execution.md) is the outreach execution plan.
+- [docs/tac_v0_1_outreach_targets.md](docs/tac_v0_1_outreach_targets.md) lists first-pass research, investor, accelerator, and strategic outreach targets.
+- [docs/tac_v0_1_outreach_message_pack.md](docs/tac_v0_1_outreach_message_pack.md) contains ready-to-send outreach drafts.
 - [docs/tac_v0_2_stage4_roadmap.md](docs/tac_v0_2_stage4_roadmap.md) is the proposed scaling roadmap.
 - [docs/tac_v0_2_success_criteria.md](docs/tac_v0_2_success_criteria.md) defines the Stage-4 validation gates.
 - [docs/tac_v0_2_kaggle_100m_training_plan.md](docs/tac_v0_2_kaggle_100m_training_plan.md) is the Kaggle 100M+ pilot plan.
