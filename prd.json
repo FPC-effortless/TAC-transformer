@@ -3371,6 +3371,21 @@
         "Validates only when first_pass_root_cause_set is at least 0.65, chain_completion is at least 0.70, regression_avoidance is at least 0.90, average_repair_steps is below the configured threshold, and state_continuity is at least 0.70.",
         "Writes runs/benchmarks/tac273_multi_bug_long_repair_chain/tac273_multi_bug_long_repair_chain.json by default and supports --smoke."
       ]
+    },
+    {
+      "id": "TAC-274",
+      "title": "Interaction-aware repair planning",
+      "status": "pending",
+      "acceptance": [
+        "Adds experiments/benchmark_tac274_interaction_aware_repair_planning.py with run_tac274_interaction_aware_repair_planning returning schema, method, per_seed, metrics, decision, and artifact_path.",
+        "Builds a dependency graph between detected bugs before applying fixes.",
+        "Predicts patch order before applying repairs and tracks whether each patch creates, exposes, or resolves another failure.",
+        "Penalizes premature local fixes that block later chain completion.",
+        "Compares against the TAC-273 chain-completion baseline.",
+        "Reports dependency_graph_accuracy, patch_order_accuracy, interaction_tracking_accuracy, premature_fix_avoidance, root_cause_set, chain_completion, regression_avoidance, state_continuity, average_repair_steps, improvement_over_tac273, and interaction_aware_repair_score.",
+        "Validates only when chain_completion is at least 0.70, regression_avoidance is at least 0.90, state_continuity is at least 0.70, root_cause_set is at least 0.65, and improvement_over_TAC273 is at least +0.05.",
+        "Writes runs/benchmarks/tac274_interaction_aware_repair_planning/tac274_interaction_aware_repair_planning.json by default and supports --smoke."
+      ]
     }
   ]
 }

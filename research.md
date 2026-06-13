@@ -12870,3 +12870,43 @@ Interpretation:
   that multiple interacting bugs across longer chains still break completion.
 - The new boundary is not state collapse or regression avoidance. It is chain
   completion under interacting repairs.
+
+## 2026-06-13 - TAC-274 Interaction-Aware Repair Planning
+
+TAC-274 directly targets the TAC-273 failure mode. TAC-273 showed that
+multi-bug repair chains did not collapse broadly: root-cause set, regression
+avoidance, repair-step budget, and state continuity passed. The missed gate was
+chain completion. TAC-274 therefore adds an explicit interaction-aware planning
+step before patching.
+
+The benchmark models:
+
+- dependency graphs between detected bugs
+- predicted patch order before applying fixes
+- whether each patch creates, exposes, or resolves another failure
+- premature local fixes that block later chain completion
+- improvement over the TAC-273 chain-completion baseline
+
+Full local-CPU TAC-274 run:
+
+- TAC-274 is validated.
+- Dependency graph accuracy is 0.7666.
+- Patch order accuracy is 0.7393.
+- Interaction tracking accuracy is 0.7505.
+- Premature fix avoidance is 0.7346.
+- Root-cause set is 0.7861.
+- Chain completion is 0.7306.
+- Regression avoidance is 0.9557.
+- State continuity is 0.7669.
+- Average repair steps is 6.2956.
+- Improvement over TAC-273 is +0.0972.
+- Interaction-aware repair score is 0.7669.
+
+Interpretation:
+
+- TAC-274 validates the specific hypothesis that modeling bug interactions
+  before patching improves chain completion.
+- The improvement over TAC-273 is substantial under the local bounded benchmark:
+  0.7306 versus 0.6335 chain completion.
+- The boundary remains bounded simulation. TAC-274 does not yet prove
+  unrestricted live repository repair or long autonomous project execution.

@@ -46,6 +46,16 @@ Kaggle validation:
 - `execution_environment`: `kaggle`
 - `validated_on_kaggle`: true for TAC-251, TAC-252, TAC-267, TAC-270, and TAC-272
 
+Current frontier:
+
+> TAC v0.1 is public. Kaggle replication passed for the core validation set.
+> TAC-273 exposed the next hard frontier: completing interacting multi-bug
+> repair chains.
+
+TAC-273 is intentionally recorded as a not-yet-validated frontier result. It
+passed root-cause set, regression avoidance, repair-step budget, and state
+continuity gates, but missed chain completion at `0.6335 < 0.70`.
+
 Expected public claim:
 
 > TAC is an experimental persistent-state architecture for long-horizon AI
