@@ -206,6 +206,18 @@ from .agentic_controller import (
     build_agentic_policy_features_from_tac_output,
     run_agentic_policy_controller_from_tac_output,
 )
+from .structure_types import (
+    LifecyclePhase,
+    StructureFamily,
+    StructureLifecycleStats,
+    StructureObject,
+)
+from .structure_memory import (
+    StructureMemoryModule,
+    StructureMemoryRead,
+    StructureMemoryState,
+    StructureMemoryWrite,
+)
 
 __all__ = [
     "AUTHORITY_CALIBRATED_FAST_PATH_INDEX",
@@ -393,4 +405,12 @@ __all__ = [
     "trajectory_to_training_record",
     "value_prediction_loss",
     "verifier_reward_from_authority_report",
+    "LifecyclePhase",
+    "StructureFamily",
+    "StructureLifecycleStats",
+    "StructureObject",
+    "StructureMemoryModule",
+    "StructureMemoryRead",
+    "StructureMemoryState",
+    "StructureMemoryWrite",
 ]
