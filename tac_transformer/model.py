@@ -108,6 +108,11 @@ class TACConfig:
     content_reconsolidate: bool = False
     content_reconsolidate_rate: float = 0.1
     detach_identity_state: bool = True
+    n_structure_families: int = 0
+    n_structure_slots: int = 16
+    structure_routing_type: str = "legacy"
+    family_route_loss_weight: float = 0.0
+    specialist_route_loss_weight: float = 0.0
 
 
 @dataclass
@@ -477,6 +482,18 @@ class IdentityFieldLayer(nn.Module):
             "semantic_route_suppressed_programs",
             allow_empty=True,
         )
+        if config.n_structure_families < 0:
+            raise ValueError("n_structure_families must be non-negative")
+        if config.n_structure_slots < 1:
+            raise ValueError("n_structure_slots must be at least 1")
+        if config.structure_routing_type not in {"legacy", "two_level"}:
+            raise ValueError(
+                "structure_routing_type must be 'legacy' or 'two_level'"
+            )
+        if config.family_route_loss_weight < 0.0:
+            raise ValueError("family_route_loss_weight must be non-negative")
+        if config.specialist_route_loss_weight < 0.0:
+            raise ValueError("specialist_route_loss_weight must be non-negative")
 
         self.program_embeddings = nn.Parameter(
             torch.empty(config.n_programs, config.d_model)

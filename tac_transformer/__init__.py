@@ -218,6 +218,16 @@ from .structure_memory import (
     StructureMemoryState,
     StructureMemoryWrite,
 )
+from .concept_volumes import (
+    ConceptVolumeEncoder,
+    ConceptVolumeOutput,
+)
+from .structure_routing import (
+    SpecialistRouter,
+    StructureFamilyRouter,
+    TwoLevelStructureRoute,
+    TwoLevelStructureRouter,
+)
 
 __all__ = [
     "AUTHORITY_CALIBRATED_FAST_PATH_INDEX",
@@ -413,4 +423,10 @@ __all__ = [
     "StructureMemoryRead",
     "StructureMemoryState",
     "StructureMemoryWrite",
+    "ConceptVolumeEncoder",
+    "ConceptVolumeOutput",
+    "SpecialistRouter",
+    "StructureFamilyRouter",
+    "TwoLevelStructureRoute",
+    "TwoLevelStructureRouter",
 ]
