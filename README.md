@@ -1,5 +1,33 @@
 # TAC-Transformer Identity Field Lab
 
+## TAC-SIE MVP002 / EXP009-Ready Rebuild
+
+This branch adds a clean TAC-SIE research stack under `tac_sie/` for the
+validated minimal path:
+
+```text
+Preserve -> Retrieve -> Execute
+```
+
+It intentionally does not rebuild the broad early TAC-SIE benchmark. The new
+package focuses on IdentityState carry, addressable key/value binding memory,
+orthogonality and query-key alignment losses, and a pretrained frozen modular
+addition executor for retrieved-rule execution.
+
+Focused validation commands:
+
+```bash
+python -m pytest tests/test_memory_shapes.py tests/test_key_separation_loss.py tests/test_query_key_alignment.py tests/test_executor_pretrain.py tests/test_exp009_smoke.py
+python experiments/exp006c_binding_capacity.py
+python experiments/exp008e_pretrained_executor.py
+python experiments/exp009_retrieved_rule_transfer.py
+```
+
+Boundary: this validates preservation, retrieval, and execution against compact
+controlled tasks. It does not claim hidden rule discovery, multi-rule
+composition, verifier-guided repair, lifecycle evolution, or broad TAC-SIE
+superiority over transformers.
+
 ## TAC v0.1 Public Research Package
 
 TAC is an experimental persistent-state architecture for long-horizon AI agents,

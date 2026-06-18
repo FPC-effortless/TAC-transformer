@@ -13389,3 +13389,34 @@ locally before scaling:
 TAC-279 validates these mechanics as deterministic local primitives. It does not
 claim a trained checkpoint result; it prepares the next structure-LM and
 structure-aware coding experiments to use safer routing and update semantics.
+
+## 2026-06-18 - TAC-SIE MVP002 / EXP009-Ready Rebuild
+
+Rebuilt the minimal TAC-SIE research branch around the validated path rather
+than the earlier broad EXP001-style benchmark:
+
+```text
+IdentityState preservation -> addressable key/value retrieval -> frozen executor
+```
+
+Implemented `tac_sie/` with config, typed IdentityState, cosine-addressed
+memory reads, deterministic slot writes, BindingMemoryIO projections,
+key-orthogonality loss, query-key alignment loss, offset-vector distillation,
+AdditionExecutor pretraining/freezing, and the TACSIEModel wrapper. Added
+experiment entrypoints for EXP005E, EXP005H, EXP006C, EXP007, EXP008E, and
+EXP009.
+
+CPU smoke result on 2026-06-18:
+
+- Focused pytest: 5 passed.
+- Compact EXP006C with 3 bindings and 80 train steps: carry 1.0, reset 0.1133,
+  shuffle 0.1914, offset retrieval 1.0.
+- Compact EXP008E with 80 memory steps: carry 1.0, oracle executor 1.0, offset
+  retrieval 1.0.
+- Compact EXP009 with 80 memory steps: known rule 1.0, new rule 1.0,
+  same-query counterfactual 1.0.
+
+Boundary: the smoke proves the rebuilt code path executes and can solve compact
+controlled cases on CPU. Full success-gate runs over the longer EXP006C
+2/3/4/5/6 capacity sweep and EXP009 split matrix remain the next measurement
+step before making stronger recovered-result claims.

@@ -3585,6 +3585,19 @@
         "Validates only when structure-routed repair beats baseline repair, handles transfer and multi-file cases, and drops under structure knockout.",
         "Writes runs/benchmarks/tacv03b_structure_aware_coding/tacv03b_structure_aware_coding.json by default and supports --smoke."
       ]
+    },
+    {
+      "id": "TAC-SIE-MVP002",
+      "title": "EXP009-ready preserve-retrieve-execute rebuild",
+      "status": "in_progress",
+      "acceptance": [
+        "Adds a clean tac_sie package with TACSIEConfig, IdentityState, addressable key/value memory, orthogonality loss, query-key alignment loss, AdditionExecutor, and TACSIEModel.",
+        "Pretrains and freezes the modular addition executor before memory training.",
+        "Provides focused experiment runners for EXP005E, EXP005H, EXP006C, EXP007, EXP008E, and EXP009.",
+        "Reports carry, reset, shuffle, oracle executor, retrieved offset, slot attention, key cosine, attention entropy, and same-query counterfactual metrics where applicable.",
+        "Adds smoke/unit tests for memory shapes, key separation, query-key alignment, executor pretraining, and EXP009 metrics.",
+        "Documents that this rebuild validates only preservation, retrieval, and execution with a pretrained executor, not hidden rule discovery or broad transformer-beating TAC-SIE."
+      ]
     }
   ]
 }
