@@ -21,12 +21,18 @@ python -m pytest tests/test_memory_shapes.py tests/test_key_separation_loss.py t
 python experiments/exp006c_binding_capacity.py
 python experiments/exp008e_pretrained_executor.py
 python experiments/exp009_retrieved_rule_transfer.py
+python experiments/exp009b_retrieved_rule_transfer_robustness.py
 ```
 
 Boundary: this validates preservation, retrieval, and execution against compact
 controlled tasks. It does not claim hidden rule discovery, multi-rule
 composition, verifier-guided repair, lifecycle evolution, or broad TAC-SIE
 superiority over transformers.
+
+EXP009 default passes as a clean single-binding retrieved-rule transfer test.
+EXP009B is the robustness gate; the first full 240-row run did not validate
+multi-slot new-rule robustness because new-rule carry, offset retrieval, and
+correct-slot attention fell below gate.
 
 ## TAC v0.1 Public Research Package
 

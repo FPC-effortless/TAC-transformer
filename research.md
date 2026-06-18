@@ -13420,3 +13420,47 @@ Boundary: the smoke proves the rebuilt code path executes and can solve compact
 controlled cases on CPU. Full success-gate runs over the longer EXP006C
 2/3/4/5/6 capacity sweep and EXP009 split matrix remain the next measurement
 step before making stronger recovered-result claims.
+
+## 2026-06-18 - EXP009B Retrieved Rule Transfer Robustness Gate
+
+Ran the requested EXP009B leak-check matrix after the clean EXP009 default pass.
+The matrix covered seeds 0-9, memory slots 2/4/8, offsets 2/5, known and new
+rule-token conditions, and carry/reset/shuffle/no-store/wrong-state controls.
+
+Artifact:
+
+- `outputs/exp009/exp009b_robustness_full.json`
+
+Aggregate result:
+
+- Rows: 240.
+- carry_accuracy: 0.8476.
+- known_rule_accuracy: 0.9987.
+- new_rule_accuracy: 0.7972.
+- same_query_counterfactual_accuracy: 1.0.
+- reset_accuracy: 0.3530.
+- shuffle_accuracy: 0.3537.
+- no_store_accuracy: 0.3530.
+- oracle_k_accuracy: 1.0.
+- offset_retrieval_accuracy: 0.8530.
+- correct_slot_attention: 0.4408.
+- avg_key_cosine: 0.2339.
+- Gate decision: not validated.
+
+Interpretation:
+
+The original EXP009 remains a clean single-binding retrieved-rule transfer pass.
+EXP009B shows the current rebuild is not yet robust under multi-slot new-rule
+leak controls. Known rules stay essentially perfect, and reset/shuffle/no-store
+fall near chance for each offset regime, but new-rule/new-assignment transfer
+and correct-slot attention are below the robustness gate. This points to an
+addressing/generalization failure under multi-slot transfer, not an executor
+failure, because oracle executor accuracy remains 1.0.
+
+Important control caveat:
+
+The `new_rule_same_offset` condition intentionally gives all visible stored
+rules the same offset, so wrong-rule and random-query controls can score high
+there without implying a leak. The decisive failure is in `new_rule` and
+`new_rule_new_assignment`, especially at 4-slot and 8-slot settings where
+correct-slot attention drops below 0.30.
