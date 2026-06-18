@@ -58,7 +58,8 @@ class StructureMemoryModule(nn.Module):
 
     def read(self, query_vector: Tensor) -> StructureMemoryRead:
         keys = F.normalize(self.key_bank, dim=-1)
-        q = F.normalize(query_vector.unsqueeze(0) if query_vector.dim() == 1 else query_vector, dim=-1)
+        q_vec = query_vector.mean(0) if query_vector.dim() > 1 else query_vector
+        q = F.normalize(q_vec.unsqueeze(0), dim=-1)
         sims = (q @ keys.T).squeeze(0)
 
         for slot_id in range(self.n_structure_slots):
@@ -68,7 +69,7 @@ class StructureMemoryModule(nn.Module):
         best_idx = int(sims.argmax(dim=-1).item())
         best_sim = float(sims[..., best_idx].item())
 
-        gate_val = float(torch.sigmoid(self.read_gate(query_vector.mean(0) if query_vector.dim() > 1 else query_vector)).item())
+        gate_val = float(torch.sigmoid(self.read_gate(q_vec)).item())
 
         obj = StructureObject(
             structure_id=best_idx,
