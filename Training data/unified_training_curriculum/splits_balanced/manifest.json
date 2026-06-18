@@ -1,0 +1,64 @@
+{
+  "purpose": "Balanced TAC training view with per-source cap; validation still uses ../validation files.",
+  "max_train_records_per_dataset": 35000,
+  "total_train_records": 150902,
+  "file_counts": {
+    "unified_cpt.jsonl": {
+      "read": 484188,
+      "written": 82702
+    },
+    "unified_sft_messages.jsonl": {
+      "read": 33191,
+      "written": 33191
+    },
+    "unified_reasoning_traces.jsonl": {
+      "read": 31838,
+      "written": 31838
+    },
+    "unified_preference_pairs.jsonl": {
+      "read": 3171,
+      "written": 3171
+    }
+  },
+  "dataset_counts": {
+    "distillation_datasets_70k": 35000,
+    "prepared_corpus_agentic_hard": 35000,
+    "enriched_sudoku_dataset": 20632,
+    "enriched_transcripts_llm_dataset": 20567,
+    "Jackrong__Claude-opus-4.6-TraceInversion-9000x": 16432,
+    "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k": 8274,
+    "distillation_datasets": 6636,
+    "llm-distillation-spec": 5152,
+    "openai__gsm8k": 2077,
+    "enriched_new_folder_llm_dataset": 632,
+    "SupraLabs__SupraThink-Dataset-500x": 462,
+    "ReasonCore__open-spatial-reasoning": 38
+  },
+  "max_dataset_share": 0.2319386091635631,
+  "dataset_kind_counts": {
+    "Jackrong__Claude-opus-4.6-TraceInversion-9000x::unified_reasoning_traces.jsonl": 8216,
+    "Jackrong__Claude-opus-4.6-TraceInversion-9000x::unified_sft_messages.jsonl": 8216,
+    "ReasonCore__open-spatial-reasoning::unified_sft_messages.jsonl": 38,
+    "SupraLabs__SupraThink-Dataset-500x::unified_sft_messages.jsonl": 462,
+    "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k::unified_sft_messages.jsonl": 8274,
+    "distillation_datasets::unified_cpt.jsonl": 6616,
+    "distillation_datasets::unified_preference_pairs.jsonl": 20,
+    "distillation_datasets_70k::unified_cpt.jsonl": 35000,
+    "enriched_new_folder_llm_dataset::unified_cpt.jsonl": 185,
+    "enriched_new_folder_llm_dataset::unified_preference_pairs.jsonl": 86,
+    "enriched_new_folder_llm_dataset::unified_reasoning_traces.jsonl": 93,
+    "enriched_new_folder_llm_dataset::unified_sft_messages.jsonl": 268,
+    "enriched_sudoku_dataset::unified_cpt.jsonl": 2,
+    "enriched_sudoku_dataset::unified_reasoning_traces.jsonl": 20576,
+    "enriched_sudoku_dataset::unified_sft_messages.jsonl": 54,
+    "enriched_transcripts_llm_dataset::unified_cpt.jsonl": 5889,
+    "enriched_transcripts_llm_dataset::unified_preference_pairs.jsonl": 2943,
+    "enriched_transcripts_llm_dataset::unified_reasoning_traces.jsonl": 2953,
+    "enriched_transcripts_llm_dataset::unified_sft_messages.jsonl": 8782,
+    "llm-distillation-spec::unified_cpt.jsonl": 10,
+    "llm-distillation-spec::unified_preference_pairs.jsonl": 122,
+    "llm-distillation-spec::unified_sft_messages.jsonl": 5020,
+    "openai__gsm8k::unified_sft_messages.jsonl": 2077,
+    "prepared_corpus_agentic_hard::unified_cpt.jsonl": 35000
+  }
+}

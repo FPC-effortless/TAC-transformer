@@ -61,10 +61,20 @@ class TACConfig:
     original_context_length: Optional[int] = None
     target_context_length: Optional[int] = None
     program_compute_type: str = "embedding"
+    program_expert_rank: Optional[int] = None
     routing_type: str = "energy"
     routing_top_k: int = 1
+    program_activation_type: str = "sigmoid"
+    decision_continuity_strength: float = 1.0
+    decision_continuity_decay: float = 0.8
     state_update_type: str = "fixed"
     memory_write_type: str = "standard"
+    memory_system_type: str = "flat"
+    memory_retention_rate: float = 0.85
+    memory_consolidation_rate: float = 0.25
+    procedural_memory_rate: float = 0.20
+    memory_bridge_type: str = "none"
+    memory_bridge_weight: float = 1.0
     memory_tier_type: str = "flat"
     memory_lookup_type: str = "none"
     memory_lookup_slots: int = 64
@@ -100,6 +110,7 @@ class TACConfig:
     content_cue_separation_weight: float = 0.0
     content_gate_entropy_weight: float = 0.0
     routing_load_balance_weight: float = 0.0
+    decision_continuity_loss_weight: float = 0.05
     semantic_route_allowed_programs: Optional[tuple[int, ...]] = None
     semantic_route_suppressed_programs: Optional[tuple[int, ...]] = None
     authority_trusted_threshold: float = 0.95
@@ -108,12 +119,30 @@ class TACConfig:
     content_reconsolidate: bool = False
     content_reconsolidate_rate: float = 0.1
     detach_identity_state: bool = True
+    # run5b_plus: TAC-218 decision memory (3D shape)
+    program_embed_dim: Optional[int] = None
+    # run5b_plus: EBM data energy head
+    ebm_head_hidden_dim: int = 128
+    # run5b_plus: identity compression losses
+    activation_l1_weight: float = 0.0
+    identity_norm_floor_weight: float = 0.0
+    identity_norm_floor_threshold: float = 0.13
+    # run5b_plus: hybrid sliding window — token IDs that always get global attention
+    global_attention_token_ids: Optional[tuple[int, ...]] = None
+    lm_readout_type: str = "hidden"
+    tac_active_layer_start: int = 0
 
 
 @dataclass
 class IdentityState:
     stability: Tensor
     program_memory: Tensor
+    working_state: Optional[Tensor] = None
+    episodic_state: Optional[Tensor] = None
+    semantic_state: Optional[Tensor] = None
+    procedural_state: Optional[Tensor] = None
+    memory_confidence: Optional[Tensor] = None
+    decision_memory: Optional[Tensor] = None
     stable_program_memory: Optional[Tensor] = None
     archival_program_memory: Optional[Tensor] = None
     program_age: Optional[Tensor] = None
@@ -126,6 +155,14 @@ class IdentityState:
     content_mask: Optional[Tensor] = None
     content_cue_token_ids: Optional[Tensor] = None
     content_value_token_ids: Optional[Tensor] = None
+    # run5b_plus: 3D decision memory for TAC-218 (shape: [batch, n_programs, program_embed_dim])
+    decision_memory_ebm: Optional[Tensor] = None
+
+
+def _program_expert_rank(config: TACConfig) -> int:
+    if config.program_expert_rank is not None:
+        return int(config.program_expert_rank)
+    return max(1, config.d_model // 4)
 
 
 @dataclass
@@ -178,6 +215,8 @@ class TACAuxiliaryOutput:
     token_authority_logits: Optional[Tensor] = None
     token_authority_probs: Optional[Tensor] = None
     token_verifier_required: Optional[Tensor] = None
+    # run5b_plus: scalar EBM energy per token [batch, seq]
+    data_energy: Optional[Tensor] = None
 
 
 @dataclass
@@ -358,20 +397,91 @@ class XLSTMStyleMixer(nn.Module):
         return self.dropout(self.out_proj(torch.stack(outputs, dim=1)))
 
 
+class DecisionContinuityHead(nn.Module):
+    """TAC-218: Projects 3D decision_memory_ebm into routing logit space.
+
+    decision_memory_ebm: [batch, n_programs, program_embed_dim]
+    Collapses program dim via mean → linear projection → routing logit space [batch, n_programs].
+    Shape contract: prev_projected.shape == curr_routing_logits.shape at runtime.
+    """
+
+    def __init__(self, program_embed_dim: int, n_programs: int):
+        super().__init__()
+        self.proj = nn.Linear(program_embed_dim, n_programs, bias=False)
+
+    def forward(
+        self,
+        prev_decision_memory_ebm: Tensor,
+        curr_routing_logits: Tensor,
+    ) -> tuple[Tensor, Tensor]:
+        # prev_decision_memory_ebm: [batch, n_programs, program_embed_dim]
+        # curr_routing_logits:      [batch, n_programs]
+        prev_summary = prev_decision_memory_ebm.mean(dim=1)   # [batch, program_embed_dim]
+        prev_projected = self.proj(prev_summary)               # [batch, n_programs]
+        assert prev_projected.shape == curr_routing_logits.shape, (
+            f"DecisionContinuityHead shape mismatch: "
+            f"prev_projected {prev_projected.shape} vs "
+            f"curr_routing_logits {curr_routing_logits.shape}"
+        )
+        prev_dist = F.softmax(prev_projected, dim=-1)
+        curr_dist = F.softmax(curr_routing_logits, dim=-1)
+        return prev_dist, curr_dist
+
+
+class DataEnergyHead(nn.Module):
+    """EBM head: assigns a scalar energy to each (hidden, identity) pair.
+
+    Lower energy = model believes the pair is a valid (clean) example.
+    Training: E(clean) < E(corrupt) + margin via hinge loss.
+    CRITICAL: always call with hidden_state.detach() and selected_identity.detach()
+    to prevent the contrastive loss from shaping backbone representations.
+    """
+
+    def __init__(self, d_model: int, program_embed_dim: int, hidden_dim: int = 128):
+        super().__init__()
+        self.proj = nn.Sequential(
+            nn.Linear(d_model + program_embed_dim, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, 1),
+        )
+
+    def forward(self, hidden_state: Tensor, selected_identity_state: Tensor) -> Tensor:
+        # hidden_state:            [batch, seq, d_model]
+        # selected_identity_state: [batch, seq, program_embed_dim]
+        features = torch.cat([hidden_state, selected_identity_state], dim=-1)
+        return self.proj(features).squeeze(-1)  # [batch, seq]
+
+
+def _validate_program_embed_dim(config: TACConfig) -> None:
+    if config.program_embed_dim is None:
+        return
+    if config.program_embed_dim < 1:
+        raise ValueError("program_embed_dim must be positive when set")
+    if config.program_embed_dim > config.d_model:
+        raise ValueError("program_embed_dim must be <= d_model")
+
+
 class IdentityFieldLayer(nn.Module):
     """Persistent executable program layer that runs beside attention."""
 
     def __init__(self, config: TACConfig):
         super().__init__()
         self.config = config
+        _validate_program_embed_dim(config)
         if config.program_compute_type not in {
             "embedding",
             "linear_expert",
             "sparse_linear_expert",
+            "low_rank_linear_expert",
         }:
             raise ValueError(
-                "program_compute_type must be 'embedding', 'linear_expert', or 'sparse_linear_expert'"
+                "program_compute_type must be 'embedding', 'linear_expert', 'sparse_linear_expert', or 'low_rank_linear_expert'"
             )
+        if config.program_expert_rank is not None:
+            if config.program_expert_rank < 1:
+                raise ValueError("program_expert_rank must be positive when set")
+            if config.program_expert_rank > config.d_model:
+                raise ValueError("program_expert_rank must be <= d_model")
         if config.routing_type not in {
             "energy",
             "expert_choice",
@@ -387,12 +497,32 @@ class IdentityFieldLayer(nn.Module):
             )
         if config.routing_top_k < 1:
             raise ValueError("routing_top_k must be at least 1")
+        if config.routing_top_k > config.n_programs:
+            raise ValueError("routing_top_k must be <= n_programs")
+        if config.decision_continuity_strength < 0.0:
+            raise ValueError("decision_continuity_strength must be non-negative")
+        if not 0.0 <= config.decision_continuity_decay <= 1.0:
+            raise ValueError("decision_continuity_decay must be between 0 and 1")
+        if config.program_activation_type not in {"sigmoid", "relu", "softplus"}:
+            raise ValueError(
+                "program_activation_type must be 'sigmoid', 'relu', or 'softplus'"
+            )
         if config.state_update_type not in {"fixed", "gated"}:
             raise ValueError("state_update_type must be 'fixed' or 'gated'")
-        if config.memory_write_type not in {"standard", "novelty_gated"}:
+        if config.memory_write_type not in {"standard", "novelty_gated", "hebbian_outer"}:
             raise ValueError(
-                "memory_write_type must be 'standard' or 'novelty_gated'"
+                "memory_write_type must be 'standard', 'novelty_gated', or 'hebbian_outer'"
             )
+        if config.memory_system_type not in {"flat", "multi_timescale"}:
+            raise ValueError(
+                "memory_system_type must be 'flat' or 'multi_timescale'"
+            )
+        if not 0.0 <= config.memory_retention_rate <= 1.0:
+            raise ValueError("memory_retention_rate must be between 0 and 1")
+        if not 0.0 <= config.memory_consolidation_rate <= 1.0:
+            raise ValueError("memory_consolidation_rate must be between 0 and 1")
+        if not 0.0 <= config.procedural_memory_rate <= 1.0:
+            raise ValueError("procedural_memory_rate must be between 0 and 1")
         if config.memory_tier_type not in {"flat", "hierarchical"}:
             raise ValueError("memory_tier_type must be 'flat' or 'hierarchical'")
         if config.memory_lookup_type not in {"none", "product_key"}:
@@ -461,6 +591,8 @@ class IdentityFieldLayer(nn.Module):
             raise ValueError("content_gate_entropy_weight must be non-negative")
         if config.routing_load_balance_weight < 0.0:
             raise ValueError("routing_load_balance_weight must be non-negative")
+        if config.decision_continuity_loss_weight < 0.0:
+            raise ValueError("decision_continuity_loss_weight must be non-negative")
         if not 0.0 <= config.authority_trusted_threshold <= 1.0:
             raise ValueError("authority_trusted_threshold must be between 0 and 1")
         if not 0.0 <= config.content_reconsolidate_rate <= 1.0:
@@ -527,8 +659,26 @@ class IdentityFieldLayer(nn.Module):
                 torch.zeros(config.n_programs, config.d_model)
             )
             nn.init.xavier_uniform_(self.program_expert_weight)
+            self.program_expert_down = None
+            self.program_expert_up = None
+        elif config.program_compute_type == "low_rank_linear_expert":
+            expert_rank = _program_expert_rank(config)
+            self.program_expert_weight = None
+            self.program_expert_down = nn.Parameter(
+                torch.empty(config.n_programs, config.d_model, expert_rank)
+            )
+            self.program_expert_up = nn.Parameter(
+                torch.empty(config.n_programs, expert_rank, config.d_model)
+            )
+            self.program_expert_bias = nn.Parameter(
+                torch.zeros(config.n_programs, config.d_model)
+            )
+            nn.init.xavier_uniform_(self.program_expert_down)
+            nn.init.xavier_uniform_(self.program_expert_up)
         else:
             self.program_expert_weight = None
+            self.program_expert_down = None
+            self.program_expert_up = None
             self.program_expert_bias = None
         if config.coalition_context_type in {
             "program_memory",
@@ -621,6 +771,15 @@ class IdentityFieldLayer(nn.Module):
         else:
             self.content_read_synthesis = None
             self.content_read_synthesis_gate = None
+        # run5b_plus: TAC-218 decision continuity head (only when program_embed_dim is set)
+        if config.program_embed_dim is not None:
+            self.decision_continuity_head: Optional[DecisionContinuityHead] = (
+                DecisionContinuityHead(config.program_embed_dim, config.n_programs)
+            )
+        else:
+            self.decision_continuity_head = None
+        # Mutable state for adaptive L1 (updated from training loop every 500 steps)
+        self._last_norm_floor_fire_rate: float = 0.0
 
     @property
     def energy_costs(self) -> Tensor:
@@ -668,6 +827,10 @@ class IdentityFieldLayer(nn.Module):
                 device=hidden.device,
                 dtype=hidden.dtype,
             )
+            previous_working_state = torch.zeros_like(previous_memory)
+            previous_episodic_state = torch.zeros_like(previous_memory)
+            previous_semantic_state = torch.zeros_like(previous_memory)
+            previous_procedural_state = torch.zeros_like(previous_memory)
             previous_stable_memory = torch.zeros_like(previous_memory)
             previous_archival_memory = torch.zeros_like(previous_memory)
             previous_program_age = torch.zeros(
@@ -677,6 +840,8 @@ class IdentityFieldLayer(nn.Module):
                 dtype=hidden.dtype,
             )
             previous_write_frequency = torch.zeros_like(previous_program_age)
+            previous_memory_confidence = torch.zeros_like(previous_program_age)
+            previous_decision_memory = torch.zeros_like(previous_program_age)
             previous_engram_patterns = torch.zeros(
                 batch_size,
                 self.config.pattern_store_size,
@@ -711,9 +876,36 @@ class IdentityFieldLayer(nn.Module):
                 device=hidden.device,
                 dtype=hidden.dtype,
             )
+            # run5b_plus: 3D decision memory (zeros when no prior state)
+            if self.config.program_embed_dim is not None:
+                previous_decision_memory_ebm: Optional[Tensor] = torch.zeros(
+                    batch_size,
+                    self.config.n_programs,
+                    self.config.program_embed_dim,
+                    device=hidden.device,
+                    dtype=hidden.dtype,
+                )
+            else:
+                previous_decision_memory_ebm = None
         else:
             previous_stability = previous_state.stability.to(hidden.device)
             previous_memory = previous_state.program_memory.to(hidden.device)
+            previous_working_state = self._state_memory_or_zeros(
+                previous_state.working_state,
+                previous_memory,
+            )
+            previous_episodic_state = self._state_memory_or_zeros(
+                previous_state.episodic_state,
+                previous_memory,
+            )
+            previous_semantic_state = self._state_memory_or_zeros(
+                previous_state.semantic_state,
+                previous_memory,
+            )
+            previous_procedural_state = self._state_memory_or_zeros(
+                previous_state.procedural_state,
+                previous_memory,
+            )
             previous_stable_memory = self._state_memory_or_zeros(
                 previous_state.stable_program_memory,
                 previous_memory,
@@ -728,6 +920,14 @@ class IdentityFieldLayer(nn.Module):
             )
             previous_write_frequency = self._state_age_or_zeros(
                 previous_state.program_write_frequency,
+                previous_stability,
+            )
+            previous_memory_confidence = self._state_age_or_zeros(
+                previous_state.memory_confidence,
+                previous_stability,
+            )
+            previous_decision_memory = self._state_age_or_zeros(
+                previous_state.decision_memory,
                 previous_stability,
             )
             previous_engram_patterns = self._state_pattern_store_or_zeros(
@@ -768,9 +968,29 @@ class IdentityFieldLayer(nn.Module):
                 hidden.device,
                 hidden.dtype,
             )
+            # run5b_plus: restore 3D decision memory from state
+            if self.config.program_embed_dim is not None:
+                if (
+                    previous_state.decision_memory_ebm is not None
+                    and previous_state.decision_memory_ebm.shape
+                    == (batch_size, self.config.n_programs, self.config.program_embed_dim)
+                ):
+                    previous_decision_memory_ebm = previous_state.decision_memory_ebm.to(
+                        hidden.device
+                    )
+                else:
+                    previous_decision_memory_ebm = torch.zeros(
+                        batch_size,
+                        self.config.n_programs,
+                        self.config.program_embed_dim,
+                        device=hidden.device,
+                        dtype=hidden.dtype,
+                    )
+            else:
+                previous_decision_memory_ebm = None
 
         if self.config.causal:
-            activations_by_token = torch.sigmoid(program_logits)
+            activations_by_token = self._program_activations(program_logits)
             stability_by_token = []
             running_stability = previous_stability
             stability_gates = self._stability_gates(hidden)
@@ -788,7 +1008,7 @@ class IdentityFieldLayer(nn.Module):
             stability = token_stability[:, -1, :]
             stability_for_tokens = token_stability
         else:
-            activations = torch.sigmoid(program_logits.mean(dim=1))
+            activations = self._program_activations(program_logits.mean(dim=1))
             stability = self._blend_state(
                 previous_stability,
                 activations,
@@ -808,9 +1028,18 @@ class IdentityFieldLayer(nn.Module):
         ).clamp(0.0, 1.0)
 
         if self.config.causal:
+            decision_memory_for_tokens = previous_decision_memory[:, None, :].expand(
+                -1,
+                seq_len,
+                -1,
+            )
             selected_by_token = self._route_programs(
                 stability_for_tokens.reshape(batch_size * seq_len, self.config.n_programs),
                 activations=activations_by_token.reshape(
+                    batch_size * seq_len,
+                    self.config.n_programs,
+                ),
+                decision_memory=decision_memory_for_tokens.reshape(
                     batch_size * seq_len,
                     self.config.n_programs,
                 ),
@@ -837,7 +1066,11 @@ class IdentityFieldLayer(nn.Module):
                 seq_len,
             )
         else:
-            selected_program_mask = self._route_programs(stability, activations=activations)
+            selected_program_mask = self._route_programs(
+                stability,
+                activations=activations,
+                decision_memory=previous_decision_memory,
+            )
             used_energy = self._used_route_energy(selected_program_mask)
             selected_weights = activations * selected_program_mask
             token_activations = activations[:, None, :].expand(-1, seq_len, -1)
@@ -892,6 +1125,13 @@ class IdentityFieldLayer(nn.Module):
             previous_stable_memory,
             previous_archival_memory,
         )
+        read_memory_source = self._multi_timescale_read_memory_source(
+            read_memory_source,
+            previous_working_state,
+            previous_episodic_state,
+            previous_semantic_state,
+            previous_procedural_state,
+        )
         program_context = self._compute_program_context(
             hidden,
             selected_weights,
@@ -928,11 +1168,23 @@ class IdentityFieldLayer(nn.Module):
                 previous_program_age,
                 previous_write_frequency,
             )
-            program_memory = self._blend_memory(
-                previous_memory,
-                candidate_memory,
-                write_gate,
-            )
+            if self.config.memory_write_type == "hebbian_outer":
+                program_memory = self._hebbian_outer_memory_update(
+                    previous_memory,
+                    raw_candidate_memory,
+                    routed_weights,
+                    write_gate,
+                )
+                hebbian_write_strength = (
+                    program_memory - previous_memory * self.config.state_decay
+                ).norm(dim=-1).mean()
+            else:
+                program_memory = self._blend_memory(
+                    previous_memory,
+                    candidate_memory,
+                    write_gate,
+                )
+                hebbian_write_strength = hidden.new_zeros(())
             program_memory, reconsolidate_gate = self._reconsolidate_memory(
                 program_memory,
                 read_memory_source,
@@ -944,6 +1196,24 @@ class IdentityFieldLayer(nn.Module):
                 program_memory,
                 previous_stable_memory,
                 previous_archival_memory,
+            )
+            (
+                working_state,
+                episodic_state,
+                semantic_state,
+                procedural_state,
+                memory_confidence,
+            ) = self._update_multi_timescale_memory(
+                previous_working_state,
+                previous_episodic_state,
+                previous_semantic_state,
+                previous_procedural_state,
+                previous_memory_confidence,
+                candidate_memory,
+                program_memory,
+                write_gate,
+                selected_program_mask,
+                activations,
             )
             program_age = self._update_program_age(previous_program_age, write_gate)
             program_write_frequency = self._update_program_write_frequency(
@@ -961,11 +1231,37 @@ class IdentityFieldLayer(nn.Module):
             write_gate = previous_program_age.new_zeros(previous_program_age.shape)
             allocation_mask = write_gate
             program_memory = previous_memory
+            hebbian_write_strength = hidden.new_zeros(())
             reconsolidate_gate = hidden.new_zeros(batch_size, self.config.n_programs)
             stable_program_memory = (
                 previous_state.stable_program_memory.to(hidden.device)
                 if previous_state is not None
                 and previous_state.stable_program_memory is not None
+                else None
+            )
+            working_state = (
+                previous_working_state
+                if self.config.memory_system_type == "multi_timescale"
+                else None
+            )
+            episodic_state = (
+                previous_episodic_state
+                if self.config.memory_system_type == "multi_timescale"
+                else None
+            )
+            semantic_state = (
+                previous_semantic_state
+                if self.config.memory_system_type == "multi_timescale"
+                else None
+            )
+            procedural_state = (
+                previous_procedural_state
+                if self.config.memory_system_type == "multi_timescale"
+                else None
+            )
+            memory_confidence = (
+                previous_memory_confidence
+                if self.config.memory_system_type == "multi_timescale"
                 else None
             )
             archival_program_memory = (
@@ -1020,7 +1316,78 @@ class IdentityFieldLayer(nn.Module):
             content_values = previous_content_values
             content_mask = previous_content_mask
 
+        decision_memory = (
+            self._update_decision_memory(
+                previous_decision_memory,
+                token_selected_program_mask,
+            )
+            if update_identity_state
+            else previous_decision_memory
+        )
+
+        # run5b_plus: update 3D decision memory with selected program embeddings
+        # decision_memory_ebm accumulates a weighted sum of program embeddings for the
+        # programs selected this sequence; decay controls how quickly old choices fade.
+        if self.config.program_embed_dim is not None and previous_decision_memory_ebm is not None:
+            decision_distribution = self._decision_distribution(selected_weights)
+            selected_emb_by_program = (
+                decision_distribution[..., None] * self._program_identity_embeddings()[None, :, :]
+            )
+            if update_identity_state:
+                decay = self.config.decision_continuity_decay
+                decision_memory_ebm: Optional[Tensor] = (
+                    decay * previous_decision_memory_ebm
+                    + (1.0 - decay) * selected_emb_by_program
+                )
+            else:
+                decision_memory_ebm = previous_decision_memory_ebm
+        else:
+            decision_memory_ebm = None
+
         if collect_auxiliary:
+            decision_continuity_loss = self._decision_continuity_loss(
+                token_selected_program_mask,
+                previous_decision_memory,
+            )
+            # run5b_plus: EBM decision continuity loss (TAC-218)
+            if (
+                self.decision_continuity_head is not None
+                and previous_decision_memory_ebm is not None
+                and bool((previous_decision_memory_ebm.abs().sum(dim=(1, 2)) > 1e-6).any())
+            ):
+                prev_dist, curr_dist = self.decision_continuity_head(
+                    previous_decision_memory_ebm,
+                    program_logits[:, -1, :] if program_logits.ndim == 3 else program_logits,
+                )
+                ebm_agreement = F.cosine_similarity(prev_dist, curr_dist, dim=-1).mean()
+                ebm_decision_continuity_loss = -ebm_agreement
+            else:
+                ebm_decision_continuity_loss = hidden.new_zeros(())
+                ebm_agreement = hidden.new_zeros(())
+
+            # run5b_plus: compression losses (identity layers only, NOT backbone)
+            # Compute selected identity state norm for this sequence
+            selected_identity_state = torch.matmul(
+                token_selected_program_mask,      # [batch, seq, n_programs]
+                self._program_identity_embeddings(),
+            )  # [batch, seq, program_embed_dim or d_model]
+            activation_l1_loss = (
+                selected_identity_state.abs().mean()
+                if self.config.activation_l1_weight > 0.0
+                else hidden.new_zeros(())
+            )
+            selected_norm = selected_identity_state.norm(dim=-1)  # [batch, seq]
+            norm_floor_penalty = (
+                F.relu(self.config.identity_norm_floor_threshold - selected_norm).mean()
+                if self.config.identity_norm_floor_weight > 0.0
+                else hidden.new_zeros(())
+            )
+            # Track fire rate for adaptive L1 adjustment (non-differentiable metric)
+            norm_floor_fire_rate = float(
+                (selected_norm < self.config.identity_norm_floor_threshold).float().mean().item()
+            )
+            self._last_norm_floor_fire_rate = norm_floor_fire_rate
+
             losses = {
                 "coherence": (1.0 - coherence).pow(2).mean(),
                 "program_reuse": (1.0 - activations).mean(),
@@ -1034,10 +1401,24 @@ class IdentityFieldLayer(nn.Module):
                 "routing_load_balance": self._routing_load_balance_loss(
                     token_selected_program_mask,
                 ),
+                "decision_continuity": decision_continuity_loss,
+                # run5b_plus losses
+                "ebm_decision_continuity": ebm_decision_continuity_loss,
+                "activation_l1": activation_l1_loss,
+                "identity_norm_floor": norm_floor_penalty,
             }
             if collect_metrics:
                 metrics = self._compute_metrics(selected_program_mask, selected_weights)
                 metrics["routing_load_balance"] = losses["routing_load_balance"]
+                metrics["decision_continuity_agreement"] = (
+                    self._decision_continuity_agreement(
+                        token_selected_program_mask,
+                        previous_decision_memory,
+                    )
+                )
+                metrics["decision_continuity_memory_mass"] = (
+                    self._decision_continuity_memory_mass(previous_decision_memory)
+                )
                 metrics["program_memory_cosine"] = self._program_memory_cosine_metric(
                     program_memory,
                 )
@@ -1078,6 +1459,36 @@ class IdentityFieldLayer(nn.Module):
                         selected_program_mask,
                     )
                 )
+                # run5b_plus metrics
+                metrics["ebm_decision_agreement"] = ebm_agreement
+                metrics["activation_l1_weight"] = hidden.new_tensor(
+                    float(self.config.activation_l1_weight)
+                )
+                metrics["norm_floor_fire_rate"] = hidden.new_tensor(norm_floor_fire_rate)
+                metrics["selected_identity_state_norm"] = selected_norm.mean()
+                metrics["activation_density"] = (
+                    token_activations > 1e-6
+                ).float().mean()
+                metrics["hebbian_write_strength"] = hebbian_write_strength
+                metrics["multi_timescale_memory_mass"] = (
+                    self._multi_timescale_memory_mass(
+                        working_state,
+                        episodic_state,
+                        semantic_state,
+                        procedural_state,
+                        hidden,
+                    )
+                )
+                metrics["memory_confidence"] = (
+                    memory_confidence.mean()
+                    if memory_confidence is not None
+                    else hidden.new_zeros(())
+                )
+                metrics["decision_memory_ebm_mass"] = (
+                    decision_memory_ebm.norm(dim=-1).mean()
+                    if decision_memory_ebm is not None
+                    else hidden.new_zeros(())
+                )
             else:
                 metrics = self._minimal_metrics(selected_program_mask, hidden.new_zeros(()))
         else:
@@ -1090,6 +1501,11 @@ class IdentityFieldLayer(nn.Module):
                 "content_cue_separation": zero,
                 "content_gate_entropy": zero,
                 "routing_load_balance": zero,
+                "decision_continuity": zero,
+                # run5b_plus (zero when not collecting auxiliary)
+                "ebm_decision_continuity": zero,
+                "activation_l1": zero,
+                "identity_norm_floor": zero,
             }
             metrics = self._minimal_metrics(selected_program_mask, zero)
 
@@ -1105,6 +1521,13 @@ class IdentityFieldLayer(nn.Module):
             state=self._make_identity_state(
                 state_stability,
                 program_memory,
+                decision_memory,
+                decision_memory_ebm,
+                working_state,
+                episodic_state,
+                semantic_state,
+                procedural_state,
+                memory_confidence,
                 stable_program_memory,
                 archival_program_memory,
                 program_age,
@@ -1156,6 +1579,8 @@ class IdentityFieldLayer(nn.Module):
             "sequence_mixer_type": selected_program_mask.new_tensor(
                 float(_sequence_mixer_type_id(self.config.sequence_mixer_type))
             ),
+            "decision_continuity_agreement": zero,
+            "decision_continuity_memory_mass": zero,
             "program_memory_cosine": zero,
             "program_ortho": zero,
             "memory_reconsolidation_gate": zero,
@@ -1176,6 +1601,11 @@ class IdentityFieldLayer(nn.Module):
             "content_reconsolidation_gate": zero,
             "identity_sparse_density": zero,
         }
+
+    def _program_identity_embeddings(self) -> Tensor:
+        if self.config.program_embed_dim is None:
+            return self.program_embeddings
+        return self.program_embeddings[:, : self.config.program_embed_dim]
 
     def _reshape_token_authority(
         self,
@@ -1238,10 +1668,177 @@ class IdentityFieldLayer(nn.Module):
             "authority_active_programs": selected_program_mask.float().sum(dim=-1).mean(),
         }
 
+    def _update_decision_memory(
+        self,
+        previous_decision_memory: Tensor,
+        token_selected_program_mask: Tensor,
+    ) -> Tensor:
+        current = self._decision_distribution(token_selected_program_mask)
+        if self.config.decision_continuity_decay <= 0.0:
+            return current
+        return (
+            self.config.decision_continuity_decay * previous_decision_memory
+            + (1.0 - self.config.decision_continuity_decay) * current
+        )
+
+    def _decision_distribution(self, token_selected_program_mask: Tensor) -> Tensor:
+        selected = token_selected_program_mask.clamp_min(0.0)
+        if selected.dim() == 3:
+            selected = selected.mean(dim=1)
+        return selected / selected.sum(dim=-1, keepdim=True).clamp_min(1e-6)
+
+    def _decision_continuity_loss(
+        self,
+        token_selected_program_mask: Tensor,
+        previous_decision_memory: Tensor,
+    ) -> Tensor:
+        active = previous_decision_memory.sum(dim=-1) > 1e-6
+        if not bool(active.any()):
+            return token_selected_program_mask.new_zeros(())
+        current = self._decision_distribution(token_selected_program_mask)
+        previous = previous_decision_memory / previous_decision_memory.sum(
+            dim=-1,
+            keepdim=True,
+        ).clamp_min(1e-6)
+        overlap = torch.minimum(current, previous).sum(dim=-1)
+        return (1.0 - overlap[active]).mean()
+
+    def _decision_continuity_agreement(
+        self,
+        token_selected_program_mask: Tensor,
+        previous_decision_memory: Tensor,
+    ) -> Tensor:
+        active = previous_decision_memory.sum(dim=-1) > 1e-6
+        if not bool(active.any()):
+            return token_selected_program_mask.new_zeros(())
+        current = self._decision_distribution(token_selected_program_mask)
+        previous = previous_decision_memory / previous_decision_memory.sum(
+            dim=-1,
+            keepdim=True,
+        ).clamp_min(1e-6)
+        return torch.minimum(current, previous).sum(dim=-1)[active].mean()
+
+    def _decision_continuity_memory_mass(
+        self,
+        previous_decision_memory: Tensor,
+    ) -> Tensor:
+        return previous_decision_memory.sum(dim=-1).mean()
+
+    def _multi_timescale_read_memory_source(
+        self,
+        base_memory: Tensor,
+        working_state: Tensor,
+        episodic_state: Tensor,
+        semantic_state: Tensor,
+        procedural_state: Tensor,
+    ) -> Tensor:
+        if self.config.memory_system_type != "multi_timescale":
+            return base_memory
+        return (
+            0.35 * base_memory
+            + 0.20 * working_state
+            + 0.20 * episodic_state
+            + 0.15 * semantic_state
+            + 0.10 * procedural_state
+        )
+
+    def _update_multi_timescale_memory(
+        self,
+        previous_working_state: Tensor,
+        previous_episodic_state: Tensor,
+        previous_semantic_state: Tensor,
+        previous_procedural_state: Tensor,
+        previous_memory_confidence: Tensor,
+        candidate_memory: Tensor,
+        program_memory: Tensor,
+        write_gate: Tensor,
+        selected_program_mask: Tensor,
+        activations: Tensor,
+    ) -> tuple[
+        Optional[Tensor],
+        Optional[Tensor],
+        Optional[Tensor],
+        Optional[Tensor],
+        Optional[Tensor],
+    ]:
+        if self.config.memory_system_type != "multi_timescale":
+            return None, None, None, None, None
+        importance = (selected_program_mask * activations).clamp(0.0, 1.0)
+        write = write_gate.clamp(0.0, 1.0)
+        retain = self.config.memory_retention_rate + (
+            1.0 - self.config.memory_retention_rate
+        ) * importance
+        retain = retain.clamp(0.0, 1.0)
+
+        working_state = candidate_memory
+        episodic_state = (
+            retain[:, :, None] * previous_episodic_state
+            + write[:, :, None] * program_memory
+        )
+        consolidation_gate = (
+            self.config.memory_consolidation_rate * importance
+        ).clamp(0.0, 1.0)
+        semantic_state = (
+            (1.0 - consolidation_gate[:, :, None]) * previous_semantic_state
+            + consolidation_gate[:, :, None] * episodic_state
+        )
+        procedural_value = self.program_embeddings[None, :, :].expand_as(
+            previous_procedural_state
+        )
+        procedural_gate = (
+            self.config.procedural_memory_rate * importance
+        ).clamp(0.0, 1.0)
+        procedural_state = (
+            (1.0 - procedural_gate[:, :, None]) * previous_procedural_state
+            + procedural_gate[:, :, None] * procedural_value
+        )
+        memory_confidence = (
+            retain * previous_memory_confidence
+            + (1.0 - retain) * importance
+        ).clamp(0.0, 1.0)
+        return (
+            working_state,
+            episodic_state,
+            semantic_state,
+            procedural_state,
+            memory_confidence,
+        )
+
+    def _multi_timescale_memory_mass(
+        self,
+        working_state: Optional[Tensor],
+        episodic_state: Optional[Tensor],
+        semantic_state: Optional[Tensor],
+        procedural_state: Optional[Tensor],
+        reference: Tensor,
+    ) -> Tensor:
+        if (
+            working_state is None
+            or episodic_state is None
+            or semantic_state is None
+            or procedural_state is None
+        ):
+            return reference.new_zeros(())
+        return torch.stack(
+            [
+                working_state.norm(dim=-1).mean(),
+                episodic_state.norm(dim=-1).mean(),
+                semantic_state.norm(dim=-1).mean(),
+                procedural_state.norm(dim=-1).mean(),
+            ]
+        ).mean()
+
     def _make_identity_state(
         self,
         stability: Tensor,
         program_memory: Tensor,
+        decision_memory: Tensor,
+        decision_memory_ebm: Optional[Tensor],
+        working_state: Optional[Tensor],
+        episodic_state: Optional[Tensor],
+        semantic_state: Optional[Tensor],
+        procedural_state: Optional[Tensor],
+        memory_confidence: Optional[Tensor],
         stable_program_memory: Optional[Tensor],
         archival_program_memory: Optional[Tensor],
         program_age: Optional[Tensor],
@@ -1259,6 +1856,29 @@ class IdentityFieldLayer(nn.Module):
             return IdentityState(
                 stability=stability.detach(),
                 program_memory=program_memory.detach(),
+                working_state=(
+                    working_state.detach() if working_state is not None else None
+                ),
+                episodic_state=(
+                    episodic_state.detach() if episodic_state is not None else None
+                ),
+                semantic_state=(
+                    semantic_state.detach() if semantic_state is not None else None
+                ),
+                procedural_state=(
+                    procedural_state.detach() if procedural_state is not None else None
+                ),
+                memory_confidence=(
+                    memory_confidence.detach()
+                    if memory_confidence is not None
+                    else None
+                ),
+                decision_memory=decision_memory.detach(),
+                decision_memory_ebm=(
+                    decision_memory_ebm.detach()
+                    if decision_memory_ebm is not None
+                    else None
+                ),
                 stable_program_memory=(
                     stable_program_memory.detach()
                     if stable_program_memory is not None
@@ -1309,6 +1929,13 @@ class IdentityFieldLayer(nn.Module):
         return IdentityState(
             stability=stability,
             program_memory=program_memory,
+            working_state=working_state,
+            episodic_state=episodic_state,
+            semantic_state=semantic_state,
+            procedural_state=procedural_state,
+            memory_confidence=memory_confidence,
+            decision_memory=decision_memory,
+            decision_memory_ebm=decision_memory_ebm,
             stable_program_memory=stable_program_memory,
             archival_program_memory=archival_program_memory,
             program_age=program_age,
@@ -1448,6 +2075,13 @@ class IdentityFieldLayer(nn.Module):
             torch.cat([hidden_context, program_context], dim=-1)
         )
 
+    def _program_activations(self, program_logits: Tensor) -> Tensor:
+        if self.config.program_activation_type == "relu":
+            return F.relu(program_logits)
+        if self.config.program_activation_type == "softplus":
+            return F.softplus(program_logits)
+        return torch.sigmoid(program_logits)
+
     def _memory_write_gate(
         self,
         hidden: Tensor,
@@ -1471,6 +2105,20 @@ class IdentityFieldLayer(nn.Module):
         update_gate: Tensor,
     ) -> Tensor:
         return (1.0 - update_gate[:, :, None]) * previous + update_gate[:, :, None] * candidate
+
+    def _hebbian_outer_memory_update(
+        self,
+        previous: Tensor,
+        value_state: Tensor,
+        routed_weights: Tensor,
+        update_gate: Tensor,
+    ) -> Tensor:
+        key_state = self._chunk_route_pattern(routed_weights)
+        hebbian_delta = key_state[:, :, None] * value_state
+        return (
+            self.config.state_decay * previous
+            + update_gate[:, :, None] * hebbian_delta
+        )
 
     def _allocate_memory_write_gate(
         self,
@@ -1736,7 +2384,7 @@ class IdentityFieldLayer(nn.Module):
         selected_program_mask: Tensor,
         selected_weights: Tensor,
     ) -> dict[str, Tensor]:
-        if self.program_expert_weight is None:
+        if self.config.program_compute_type == "embedding":
             zero = selected_program_mask.new_zeros(())
             return {
                 "active_expert_parameters": zero,
@@ -1765,7 +2413,15 @@ class IdentityFieldLayer(nn.Module):
                 ),
             }
 
-        expert_parameters_per_program = self.config.d_model * self.config.d_model + self.config.d_model
+        if self.config.program_compute_type == "low_rank_linear_expert":
+            expert_rank = _program_expert_rank(self.config)
+            expert_parameters_per_program = (
+                2 * self.config.d_model * expert_rank + self.config.d_model
+            )
+        else:
+            expert_parameters_per_program = (
+                self.config.d_model * self.config.d_model + self.config.d_model
+            )
         total_expert_parameters = selected_program_mask.new_tensor(
             float(self.config.n_programs * expert_parameters_per_program)
         )
@@ -1799,22 +2455,63 @@ class IdentityFieldLayer(nn.Module):
             ),
         }
 
-    def _route_programs(self, stability: Tensor, activations: Optional[Tensor] = None) -> Tensor:
+    def _route_programs(
+        self,
+        stability: Tensor,
+        activations: Optional[Tensor] = None,
+        decision_memory: Optional[Tensor] = None,
+    ) -> Tensor:
+        conditioned_stability = self._condition_route_signal(
+            stability,
+            decision_memory,
+        )
+        conditioned_activations = (
+            self._condition_route_signal(activations, decision_memory)
+            if activations is not None
+            else None
+        )
         if self.config.routing_type == "expert_choice":
-            return self._expert_choice_route(stability)
+            return self._expert_choice_route(conditioned_stability)
         if self.config.routing_type == "base":
-            return self._base_route(stability)
+            return self._base_route(conditioned_stability)
         if self.config.routing_type == "hash":
-            return self._hash_route(stability)
+            return self._hash_route(conditioned_stability)
         if self.config.routing_type == "sparse_ensemble":
-            return self._sparse_ensemble_route(stability)
+            return self._sparse_ensemble_route(conditioned_stability)
         if self.config.routing_type == "base_semantic":
-            return self._base_semantic_route(stability, activations)
+            return self._base_semantic_route(
+                conditioned_stability,
+                conditioned_activations,
+            )
         if self.config.routing_type == "base_semantic_soft":
-            return self._base_semantic_soft_route(stability, activations)
+            return self._base_semantic_soft_route(
+                conditioned_stability,
+                conditioned_activations,
+            )
         if self.config.routing_type == "authority_gated":
-            return self._authority_gated_route(stability, activations)
-        return self._energy_route(stability)
+            return self._authority_gated_route(
+                conditioned_stability,
+                conditioned_activations,
+            )
+        return self._energy_route(conditioned_stability)
+
+    def _condition_route_signal(
+        self,
+        signal: Tensor,
+        decision_memory: Optional[Tensor],
+    ) -> Tensor:
+        if (
+            decision_memory is None
+            or self.config.decision_continuity_strength <= 0.0
+        ):
+            return signal
+        memory = decision_memory.to(device=signal.device, dtype=signal.dtype)
+        active = memory.sum(dim=-1, keepdim=True) > 1e-6
+        if not bool(active.any()):
+            return signal
+        normalized = memory / memory.sum(dim=-1, keepdim=True).clamp_min(1e-6)
+        biased = signal + self.config.decision_continuity_strength * normalized
+        return torch.where(active, biased, signal)
 
     def _authority_gated_route(
         self,
@@ -2311,11 +3008,22 @@ class IdentityFieldLayer(nn.Module):
             )
             return context + coalition_context + self._lookup_sparse_memory(hidden)
 
-        if self.config.program_compute_type not in {"linear_expert", "sparse_linear_expert"}:
+        if self.config.program_compute_type not in {
+            "linear_expert",
+            "sparse_linear_expert",
+            "low_rank_linear_expert",
+        }:
             raise ValueError(
-                "program_compute_type must be 'embedding', 'linear_expert', or 'sparse_linear_expert'"
+                "program_compute_type must be 'embedding', 'linear_expert', 'sparse_linear_expert', or 'low_rank_linear_expert'"
             )
-        if self.program_expert_weight is None or self.program_expert_bias is None:
+        if self.config.program_compute_type == "low_rank_linear_expert":
+            if (
+                self.program_expert_down is None
+                or self.program_expert_up is None
+                or self.program_expert_bias is None
+            ):
+                raise RuntimeError("low-rank linear expert parameters are not initialized")
+        elif self.program_expert_weight is None or self.program_expert_bias is None:
             raise RuntimeError("linear expert parameters are not initialized")
 
         if self.config.program_compute_type == "sparse_linear_expert":
@@ -2349,12 +3057,9 @@ class IdentityFieldLayer(nn.Module):
             )
             if program_specific_context is not None:
                 hidden_for_experts = hidden[:, :, None, :] + program_specific_context
-                expert_outputs = torch.einsum(
-                    "bspd,pdf->bspf",
-                    hidden_for_experts,
-                    self.program_expert_weight,
+                expert_outputs = self._program_axis_expert_outputs_for_sequence(
+                    hidden_for_experts
                 )
-                expert_outputs = expert_outputs + self.program_expert_bias[None, None, :, :]
                 program_context = (expert_outputs * routed_weights[..., None]).sum(dim=-2)
                 context = program_context + self._read_program_memory(
                     hidden,
@@ -2374,12 +3079,9 @@ class IdentityFieldLayer(nn.Module):
                 routed_weights,
                 previous_memory,
             )
-            expert_outputs = torch.einsum(
-                "bsd,pdf->bspf",
-                hidden_for_experts,
-                self.program_expert_weight,
+            expert_outputs = self._all_program_expert_outputs_for_sequence(
+                hidden_for_experts
             )
-            expert_outputs = expert_outputs + self.program_expert_bias[None, None, :, :]
             program_context = (expert_outputs * routed_weights[..., None]).sum(dim=-2)
             context = program_context + self._read_program_memory(
                 hidden,
@@ -2402,10 +3104,8 @@ class IdentityFieldLayer(nn.Module):
         )
         if program_specific_context is not None:
             pooled_hidden_for_experts = pooled_hidden[:, None, :] + program_specific_context
-            expert_outputs = torch.einsum(
-                "bpd,pdf->bpf",
-                pooled_hidden_for_experts,
-                self.program_expert_weight,
+            expert_outputs = self._program_axis_expert_outputs_for_batch(
+                pooled_hidden_for_experts
             )
         else:
             pooled_hidden = self._apply_coalition_context(
@@ -2413,12 +3113,7 @@ class IdentityFieldLayer(nn.Module):
                 routed_weights,
                 previous_memory,
             )
-            expert_outputs = torch.einsum(
-                "bd,pdf->bpf",
-                pooled_hidden,
-                self.program_expert_weight,
-            )
-        expert_outputs = expert_outputs + self.program_expert_bias[None, :, :]
+            expert_outputs = self._all_program_expert_outputs_for_batch(pooled_hidden)
         program_context = (expert_outputs * routed_weights[..., None]).sum(dim=-2)
         context = program_context + self._read_program_memory(
             hidden,
@@ -2432,6 +3127,94 @@ class IdentityFieldLayer(nn.Module):
             previous_content_mask,
         )
         return context + self._lookup_sparse_memory(hidden)
+
+    def _program_axis_expert_outputs_for_sequence(self, hidden_for_experts: Tensor) -> Tensor:
+        if self.config.program_compute_type == "low_rank_linear_expert":
+            if self.program_expert_down is None or self.program_expert_up is None:
+                raise RuntimeError("low-rank linear expert parameters are not initialized")
+            reduced = torch.einsum(
+                "bspd,pdr->bspr",
+                hidden_for_experts,
+                self.program_expert_down,
+            )
+            outputs = torch.einsum("bspr,prf->bspf", reduced, self.program_expert_up)
+        else:
+            if self.program_expert_weight is None:
+                raise RuntimeError("linear expert parameters are not initialized")
+            outputs = torch.einsum(
+                "bspd,pdf->bspf",
+                hidden_for_experts,
+                self.program_expert_weight,
+            )
+        if self.program_expert_bias is None:
+            raise RuntimeError("linear expert bias is not initialized")
+        return outputs + self.program_expert_bias[None, None, :, :]
+
+    def _all_program_expert_outputs_for_sequence(self, hidden_for_experts: Tensor) -> Tensor:
+        if self.config.program_compute_type == "low_rank_linear_expert":
+            if self.program_expert_down is None or self.program_expert_up is None:
+                raise RuntimeError("low-rank linear expert parameters are not initialized")
+            reduced = torch.einsum(
+                "bsd,pdr->bspr",
+                hidden_for_experts,
+                self.program_expert_down,
+            )
+            outputs = torch.einsum("bspr,prf->bspf", reduced, self.program_expert_up)
+        else:
+            if self.program_expert_weight is None:
+                raise RuntimeError("linear expert parameters are not initialized")
+            outputs = torch.einsum(
+                "bsd,pdf->bspf",
+                hidden_for_experts,
+                self.program_expert_weight,
+            )
+        if self.program_expert_bias is None:
+            raise RuntimeError("linear expert bias is not initialized")
+        return outputs + self.program_expert_bias[None, None, :, :]
+
+    def _program_axis_expert_outputs_for_batch(self, hidden_for_experts: Tensor) -> Tensor:
+        if self.config.program_compute_type == "low_rank_linear_expert":
+            if self.program_expert_down is None or self.program_expert_up is None:
+                raise RuntimeError("low-rank linear expert parameters are not initialized")
+            reduced = torch.einsum(
+                "bpd,pdr->bpr",
+                hidden_for_experts,
+                self.program_expert_down,
+            )
+            outputs = torch.einsum("bpr,prf->bpf", reduced, self.program_expert_up)
+        else:
+            if self.program_expert_weight is None:
+                raise RuntimeError("linear expert parameters are not initialized")
+            outputs = torch.einsum(
+                "bpd,pdf->bpf",
+                hidden_for_experts,
+                self.program_expert_weight,
+            )
+        if self.program_expert_bias is None:
+            raise RuntimeError("linear expert bias is not initialized")
+        return outputs + self.program_expert_bias[None, :, :]
+
+    def _all_program_expert_outputs_for_batch(self, hidden_for_experts: Tensor) -> Tensor:
+        if self.config.program_compute_type == "low_rank_linear_expert":
+            if self.program_expert_down is None or self.program_expert_up is None:
+                raise RuntimeError("low-rank linear expert parameters are not initialized")
+            reduced = torch.einsum(
+                "bd,pdr->bpr",
+                hidden_for_experts,
+                self.program_expert_down,
+            )
+            outputs = torch.einsum("bpr,prf->bpf", reduced, self.program_expert_up)
+        else:
+            if self.program_expert_weight is None:
+                raise RuntimeError("linear expert parameters are not initialized")
+            outputs = torch.einsum(
+                "bd,pdf->bpf",
+                hidden_for_experts,
+                self.program_expert_weight,
+            )
+        if self.program_expert_bias is None:
+            raise RuntimeError("linear expert bias is not initialized")
+        return outputs + self.program_expert_bias[None, :, :]
 
     def _apply_coalition_context(
         self,
@@ -3073,6 +3856,8 @@ class IdentityAugmentedSelfAttention(nn.Module):
         identity_context: Optional[Tensor] = None,
         identity_sparse_mask: Optional[Tensor] = None,
         beta: float = 1.0,
+        # run5b_plus: hybrid sliding window mask, [seq] or [batch, seq].
+        global_token_mask: Optional[Tensor] = None,
     ) -> AttentionOutput:
         batch_size, seq_len, _ = hidden.shape
         query = self.query(hidden)
@@ -3118,6 +3903,7 @@ class IdentityAugmentedSelfAttention(nn.Module):
             self.attention_window_size is not None
             and compressed_memory is None
             and self.causal
+            and global_token_mask is None
         ):
             return self._forward_causal_sliding_window(
                 query,
@@ -3127,6 +3913,41 @@ class IdentityAugmentedSelfAttention(nn.Module):
                 identity_sparse_mask=identity_sparse_mask,
                 beta=beta,
             )
+
+        # run5b_plus: hybrid sliding window — build combined mask where global positions
+        # can attend to all prior tokens, and non-global positions use sliding window.
+        if (
+            self.attention_window_size is not None
+            and compressed_memory is None
+            and self.causal
+            and global_token_mask is not None
+        ):
+            # True marks positions that should bypass the local attention window.
+            positions = torch.arange(seq_len, device=hidden.device)
+            window_mask = positions[None, :] < (
+                positions[:, None] - self.attention_window_size + 1
+            )  # True = masked-OUT in causal sliding window
+            global_token_mask = global_token_mask.to(
+                device=hidden.device,
+                dtype=torch.bool,
+            )
+            if global_token_mask.dim() == 1:
+                if global_token_mask.shape != (seq_len,):
+                    raise ValueError("global_token_mask must have shape [seq] or [batch, seq]")
+                global_row = global_token_mask.unsqueeze(1)
+                global_col = global_token_mask.unsqueeze(0)
+                hybrid_window_mask = window_mask & ~global_row & ~global_col
+            elif global_token_mask.dim() == 2:
+                if global_token_mask.shape != (batch_size, seq_len):
+                    raise ValueError("global_token_mask must have shape [seq] or [batch, seq]")
+                global_row = global_token_mask[:, :, None]
+                global_col = global_token_mask[:, None, :]
+                hybrid_window_mask = window_mask[None, :, :] & ~global_row & ~global_col
+            else:
+                raise ValueError("global_token_mask must have shape [seq] or [batch, seq]")
+            _hybrid_window_override: Optional[Tensor] = hybrid_window_mask
+        else:
+            _hybrid_window_override = None
 
         if memory_key is not None and memory_value is not None:
             memory_key = self._repeat_key_value_heads(memory_key)
@@ -3175,18 +3996,24 @@ class IdentityAugmentedSelfAttention(nn.Module):
             )
 
         if self.attention_window_size is not None:
-            positions = torch.arange(seq_len, device=hidden.device)
-            if self.causal:
-                window_mask = positions[None, :] < (
-                    positions[:, None] - self.attention_window_size + 1
-                )
+            if _hybrid_window_override is not None:
+                # run5b_plus hybrid path: precomputed mask already accounts for global tokens
+                effective_window_mask = _hybrid_window_override
             else:
-                window_mask = (
-                    positions[None, :] - positions[:, None]
-                ).abs() >= self.attention_window_size
+                positions = torch.arange(seq_len, device=hidden.device)
+                if self.causal:
+                    effective_window_mask = positions[None, :] < (
+                        positions[:, None] - self.attention_window_size + 1
+                    )
+                else:
+                    effective_window_mask = (
+                        positions[None, :] - positions[:, None]
+                    ).abs() >= self.attention_window_size
             token_attention_logits = attention_logits[..., memory_len:]
+            if effective_window_mask.dim() == 3:
+                effective_window_mask = effective_window_mask[:, None, :, :]
             token_attention_logits = token_attention_logits.masked_fill(
-                window_mask,
+                effective_window_mask,
                 float("-inf"),
             )
             attention_logits = torch.cat(
@@ -3629,24 +4456,31 @@ class TACTransformerBlock(nn.Module):
         update_content_memory: bool = True,
         update_identity_state: bool = True,
         content_write_mask: Optional[Tensor] = None,
+        global_token_mask: Optional[Tensor] = None,
     ) -> tuple[Tensor, IdentityState, IdentityFieldOutput, AttentionOutput]:
         normalized = self.norm_attention(hidden)
-        identity = self.identity_field(
-            normalized,
-            previous_state,
-            collect_auxiliary=collect_auxiliary,
-            collect_metrics=collect_metrics,
-            update_content_memory=update_content_memory,
-            update_identity_state=update_identity_state,
-            content_write_mask=content_write_mask,
-        )
+        if self.layer_index >= self.config.tac_active_layer_start:
+            identity = self.identity_field(
+                normalized,
+                previous_state,
+                collect_auxiliary=collect_auxiliary,
+                collect_metrics=collect_metrics,
+                update_content_memory=update_content_memory,
+                update_identity_state=update_identity_state,
+                content_write_mask=content_write_mask,
+            )
+        else:
+            identity = self._inactive_identity_output(normalized, previous_state)
         compressed_memory = None
         if (
             self.config.identity_attention_type
             in {"compressed_memory", "coherence_sparse_compressed"}
             and previous_state is not None
         ):
-            compressed_memory = previous_state.program_memory.to(hidden.device)
+            compressed_memory = self._compressed_identity_memory(
+                previous_state,
+                hidden.device,
+            )
         identity_context = None
         if self.config.identity_attention_type == "identity_first":
             identity_context = identity.program_identity
@@ -3667,6 +4501,7 @@ class TACTransformerBlock(nn.Module):
                 identity_context=identity_context,
                 identity_sparse_mask=identity_sparse_mask,
                 beta=self.config.beta * self.config.coherence_attention_scale,
+                global_token_mask=global_token_mask,
             )
             content_update = attention.hidden
         else:
@@ -3692,6 +4527,98 @@ class TACTransformerBlock(nn.Module):
             hidden = hidden + content_update + program_bias
         hidden = hidden + self.mlp(self.norm_mlp(hidden))
         return hidden, identity.state, identity, attention
+
+    def _inactive_identity_output(
+        self,
+        hidden: Tensor,
+        previous_state: Optional[IdentityState],
+    ) -> IdentityFieldOutput:
+        batch_size, seq_len, _ = hidden.shape
+        zero = hidden.new_zeros(())
+        stability = hidden.new_zeros(batch_size, self.config.n_programs)
+        program_memory = hidden.new_zeros(
+            batch_size,
+            self.config.n_programs,
+            self.config.d_model,
+        )
+        if previous_state is not None:
+            stability = previous_state.stability.to(hidden.device)
+            program_memory = previous_state.program_memory.to(hidden.device)
+        selected = hidden.new_zeros(batch_size, self.config.n_programs)
+        token_selected = hidden.new_zeros(batch_size, seq_len, self.config.n_programs)
+        losses = {
+            "coherence": zero,
+            "program_reuse": zero,
+            "energy": zero,
+            "separation": zero,
+            "content_cue_separation": zero,
+            "content_gate_entropy": zero,
+            "routing_load_balance": zero,
+            "decision_continuity": zero,
+            "ebm_decision_continuity": zero,
+            "activation_l1": zero,
+            "identity_norm_floor": zero,
+        }
+        metrics = self.identity_field._minimal_metrics(selected, zero)
+        metrics["tac_layer_active"] = zero
+        return IdentityFieldOutput(
+            coherence=hidden.new_zeros(batch_size, seq_len, seq_len),
+            activations=selected,
+            program_assignments=torch.zeros(
+                batch_size,
+                dtype=torch.long,
+                device=hidden.device,
+            ),
+            program_identity=hidden.new_zeros(
+                batch_size,
+                seq_len,
+                self.config.d_model,
+            ),
+            selected_program_mask=selected,
+            used_energy=hidden.new_zeros(batch_size),
+            program_context=hidden.new_zeros(batch_size, self.config.d_model),
+            state=IdentityState(stability=stability, program_memory=program_memory),
+            losses=losses,
+            metrics=metrics,
+            token_activations=token_selected,
+            token_selected_program_mask=token_selected,
+        )
+
+    def _compressed_identity_memory(
+        self,
+        previous_state: IdentityState,
+        device: torch.device,
+    ) -> Tensor:
+        base = previous_state.program_memory.to(device)
+        if self.config.memory_system_type != "multi_timescale":
+            return base
+        working = (
+            previous_state.working_state.to(device)
+            if previous_state.working_state is not None
+            else torch.zeros_like(base)
+        )
+        episodic = (
+            previous_state.episodic_state.to(device)
+            if previous_state.episodic_state is not None
+            else torch.zeros_like(base)
+        )
+        semantic = (
+            previous_state.semantic_state.to(device)
+            if previous_state.semantic_state is not None
+            else torch.zeros_like(base)
+        )
+        procedural = (
+            previous_state.procedural_state.to(device)
+            if previous_state.procedural_state is not None
+            else torch.zeros_like(base)
+        )
+        return (
+            0.25 * base
+            + 0.15 * working
+            + 0.20 * episodic
+            + 0.20 * semantic
+            + 0.20 * procedural
+        )
 
 
 class VanillaTransformerBlock(nn.Module):
@@ -3740,10 +4667,18 @@ class VanillaTransformerBlock(nn.Module):
         )
         self.mlp = _build_mlp(config)
 
-    def forward(self, hidden: Tensor) -> tuple[Tensor, AttentionOutput]:
+    def forward(
+        self,
+        hidden: Tensor,
+        *,
+        global_token_mask: Optional[Tensor] = None,
+    ) -> tuple[Tensor, AttentionOutput]:
         normalized = self.norm_attention(hidden)
         if self.attention is not None:
-            attention = self.attention(normalized)
+            attention = self.attention(
+                normalized,
+                global_token_mask=global_token_mask,
+            )
             content_update = attention.hidden
         else:
             attention = _empty_attention_output(normalized, self.config.n_heads)
@@ -3758,6 +4693,7 @@ class VanillaTransformerBlock(nn.Module):
 class TACTransformerLM(nn.Module):
     def __init__(self, config: TACConfig):
         super().__init__()
+        _validate_program_embed_dim(config)
         if config.n_prediction_heads < 1:
             raise ValueError("n_prediction_heads must be at least 1")
         if config.memory_read_type not in {
@@ -3809,16 +4745,49 @@ class TACTransformerLM(nn.Module):
             raise ValueError("content_gate_entropy_weight must be non-negative")
         if config.routing_load_balance_weight < 0.0:
             raise ValueError("routing_load_balance_weight must be non-negative")
+        if config.decision_continuity_strength < 0.0:
+            raise ValueError("decision_continuity_strength must be non-negative")
+        if not 0.0 <= config.decision_continuity_decay <= 1.0:
+            raise ValueError("decision_continuity_decay must be between 0 and 1")
+        if config.decision_continuity_loss_weight < 0.0:
+            raise ValueError("decision_continuity_loss_weight must be non-negative")
+        if config.tac_active_layer_start < 0 or config.tac_active_layer_start > config.n_layers:
+            raise ValueError("tac_active_layer_start must be between 0 and n_layers")
         if not 0.0 <= config.content_reconsolidate_rate <= 1.0:
             raise ValueError("content_reconsolidate_rate must be between 0 and 1")
         if config.memory_adapter_type not in {"none", "residual", "gated_residual"}:
             raise ValueError(
                 "memory_adapter_type must be 'none', 'residual', or 'gated_residual'"
             )
+        if config.memory_bridge_type not in {
+            "none",
+            "multi_timescale_readout",
+            "semantic_procedural_readout",
+        }:
+            raise ValueError(
+                "memory_bridge_type must be 'none', 'multi_timescale_readout', or 'semantic_procedural_readout'"
+            )
+        if config.memory_bridge_weight < 0.0:
+            raise ValueError("memory_bridge_weight must be non-negative")
         if config.program_residual_scale < 0.0:
             raise ValueError("program_residual_scale must be non-negative")
         if config.coherence_attention_scale < 0.0:
             raise ValueError("coherence_attention_scale must be non-negative")
+        if config.lm_readout_type not in {
+            "hidden",
+            "slot_conditioned_program_bottleneck",
+        }:
+            raise ValueError(
+                "lm_readout_type must be 'hidden' or 'slot_conditioned_program_bottleneck'"
+            )
+        if (
+            config.lm_readout_type == "slot_conditioned_program_bottleneck"
+            and config.program_compute_type
+            not in {"linear_expert", "low_rank_linear_expert"}
+        ):
+            raise ValueError(
+                "slot_conditioned_program_bottleneck requires linear or low-rank program experts"
+            )
         self.config = config
         self.token_embedding = nn.Embedding(config.vocab_size, config.d_model)
         self.position_embedding = _build_position_embedding(config)
@@ -3850,6 +4819,37 @@ class TACTransformerLM(nn.Module):
         else:
             self.memory_adapter = None
             self.memory_adapter_gate = None
+        if config.memory_bridge_type != "none":
+            self.memory_bridge_key_projection = nn.Linear(
+                config.d_model,
+                config.d_model,
+                bias=False,
+            )
+            self.memory_bridge_value_projection = nn.Linear(
+                config.d_model,
+                config.d_model,
+                bias=False,
+            )
+            self.memory_bridge_output_projection = nn.Linear(
+                config.d_model,
+                config.d_model,
+                bias=False,
+            )
+            self.memory_bridge_gate = nn.Linear(config.d_model * 2, config.d_model)
+        else:
+            self.memory_bridge_key_projection = None
+            self.memory_bridge_value_projection = None
+            self.memory_bridge_output_projection = None
+            self.memory_bridge_gate = None
+        # run5b_plus: EBM data energy head (only when program_embed_dim is set)
+        if config.program_embed_dim is not None:
+            self.data_energy_head: Optional[DataEnergyHead] = DataEnergyHead(
+                config.d_model,
+                config.program_embed_dim,
+                hidden_dim=config.ebm_head_hidden_dim,
+            )
+        else:
+            self.data_energy_head = None
 
     def forward(
         self,
@@ -3887,6 +4887,7 @@ class TACTransformerLM(nn.Module):
         next_states = []
         identity_outputs = []
         attention_outputs = []
+        global_token_mask = self._global_token_mask(input_ids)
 
         for index, block in enumerate(self.blocks):
             previous_state = identity_states[index] if identity_states else None
@@ -3898,6 +4899,7 @@ class TACTransformerLM(nn.Module):
                 update_content_memory=update_content_memory,
                 update_identity_state=update_identity_state,
                 content_write_mask=content_write_mask,
+                global_token_mask=global_token_mask,
             )
             state = self._update_content_token_memory(
                 state,
@@ -3912,9 +4914,22 @@ class TACTransformerLM(nn.Module):
             attention_outputs.append(attention)
 
         hidden = self.final_norm(hidden)
+        hidden, bridge_metrics = self._apply_memory_tier_bridge(
+            hidden,
+            identity_states,
+        )
+        hidden, readout_metrics = self._apply_lm_program_bottleneck(
+            hidden,
+            next_states,
+            identity_outputs,
+        )
         logits = self.lm_head(hidden)
         multi_token_logits = [head(hidden) for head in self.multi_token_heads]
         aux = self._merge_auxiliary(identity_outputs, attention_outputs)
+        aux.metrics.update(bridge_metrics)
+        aux.metrics.update(readout_metrics)
+        if collect_auxiliary:
+            self._add_data_energy_aux(aux, hidden)
 
         loss = None
         if labels is not None:
@@ -3942,6 +4957,162 @@ class TACTransformerLM(nn.Module):
             hidden_states=hidden,
             multi_token_logits=multi_token_logits,
         )
+
+    def _apply_lm_program_bottleneck(
+        self,
+        hidden: Tensor,
+        next_states: list[IdentityState],
+        identity_outputs: list[IdentityFieldOutput],
+    ) -> tuple[Tensor, dict[str, Tensor]]:
+        zero = hidden.new_zeros(())
+        metrics = {
+            "lm_readout_type": hidden.new_tensor(
+                1.0
+                if self.config.lm_readout_type
+                == "slot_conditioned_program_bottleneck"
+                else 0.0
+            ),
+            "lm_program_bottleneck_delta_norm": zero,
+            "lm_program_bottleneck_selected_mass": zero,
+        }
+        if self.config.lm_readout_type == "hidden":
+            return hidden, metrics
+        if not next_states or not identity_outputs:
+            return hidden, metrics
+
+        field = self.blocks[-1].identity_field
+        state = next_states[-1]
+        identity = identity_outputs[-1]
+        selected = identity.token_selected_program_mask
+        if selected is None:
+            selected = identity.selected_program_mask[:, None, :].expand(
+                hidden.shape[0],
+                hidden.shape[1],
+                identity.selected_program_mask.shape[-1],
+            )
+        selected = selected.to(dtype=hidden.dtype)
+        routed_weights = selected / selected.sum(dim=-1, keepdim=True).clamp_min(1e-6)
+        expert_inputs = hidden[:, :, None, :] + state.program_memory[:, None, :, :].to(
+            dtype=hidden.dtype
+        )
+        expert_outputs = field._program_axis_expert_outputs_for_sequence(expert_inputs)
+        bottleneck_hidden = (expert_outputs * routed_weights[..., None]).sum(dim=-2)
+        metrics["lm_program_bottleneck_delta_norm"] = (
+            bottleneck_hidden - hidden
+        ).norm(dim=-1).mean()
+        metrics["lm_program_bottleneck_selected_mass"] = selected.sum(dim=-1).mean()
+        return bottleneck_hidden, metrics
+
+    def _global_token_mask(self, input_ids: Tensor) -> Optional[Tensor]:
+        if not self.config.global_attention_token_ids:
+            return None
+        mask = torch.zeros_like(input_ids, dtype=torch.bool)
+        for token_id in self.config.global_attention_token_ids:
+            mask = mask | (input_ids == int(token_id))
+        return mask
+
+    def _apply_memory_tier_bridge(
+        self,
+        hidden: Tensor,
+        identity_states: Optional[list[IdentityState]],
+    ) -> tuple[Tensor, dict[str, Tensor]]:
+        zero = hidden.new_zeros(())
+        metrics = {
+            "memory_bridge_update_norm": zero,
+            "memory_bridge_tier_entropy": zero,
+        }
+        if (
+            self.config.memory_bridge_type == "none"
+            or not identity_states
+            or self.memory_bridge_key_projection is None
+            or self.memory_bridge_value_projection is None
+            or self.memory_bridge_output_projection is None
+            or self.memory_bridge_gate is None
+        ):
+            return hidden, metrics
+        state = identity_states[-1]
+        tier_memory = self._memory_bridge_tier_memory(state, hidden)
+        if tier_memory is None:
+            return hidden, metrics
+
+        keys = self.memory_bridge_key_projection(tier_memory)
+        values = self.memory_bridge_value_projection(tier_memory)
+        scores = torch.einsum("bsd,bmd->bsm", hidden, keys) / sqrt(self.config.d_model)
+        weights = F.softmax(scores, dim=-1)
+        read = torch.einsum("bsm,bmd->bsd", weights, values)
+        gate = torch.sigmoid(self.memory_bridge_gate(torch.cat([hidden, read], dim=-1)))
+        update = gate * self.memory_bridge_output_projection(read)
+        bridged_hidden = hidden + self.config.memory_bridge_weight * update
+        entropy = -(weights * weights.clamp_min(1e-8).log()).sum(dim=-1).mean()
+        metrics["memory_bridge_update_norm"] = update.norm(dim=-1).mean()
+        metrics["memory_bridge_tier_entropy"] = entropy
+        return bridged_hidden, metrics
+
+    def _memory_bridge_tier_memory(
+        self,
+        state: IdentityState,
+        hidden: Tensor,
+    ) -> Optional[Tensor]:
+        base = state.program_memory.to(device=hidden.device, dtype=hidden.dtype)
+        zeros = torch.zeros_like(base)
+        if self.config.memory_bridge_type == "semantic_procedural_readout":
+            tiers = [
+                state.semantic_state.to(device=hidden.device, dtype=hidden.dtype)
+                if state.semantic_state is not None
+                else zeros,
+                state.procedural_state.to(device=hidden.device, dtype=hidden.dtype)
+                if state.procedural_state is not None
+                else zeros,
+            ]
+        elif self.config.memory_bridge_type == "multi_timescale_readout":
+            tiers = [
+                state.working_state.to(device=hidden.device, dtype=hidden.dtype)
+                if state.working_state is not None
+                else zeros,
+                state.episodic_state.to(device=hidden.device, dtype=hidden.dtype)
+                if state.episodic_state is not None
+                else zeros,
+                state.semantic_state.to(device=hidden.device, dtype=hidden.dtype)
+                if state.semantic_state is not None
+                else zeros,
+                state.procedural_state.to(device=hidden.device, dtype=hidden.dtype)
+                if state.procedural_state is not None
+                else zeros,
+            ]
+        else:
+            return None
+        return torch.cat(tiers, dim=1)
+
+    def _add_data_energy_aux(
+        self,
+        aux: TACAuxiliaryOutput,
+        hidden: Tensor,
+    ) -> None:
+        if self.data_energy_head is None or aux.token_selected_program_mask is None:
+            return
+        last_field = self.blocks[-1].identity_field
+        selected_identity = torch.matmul(
+            aux.token_selected_program_mask,
+            last_field._program_identity_embeddings(),
+        )
+        clean_energy = self.data_energy_head(
+            hidden.detach(),
+            selected_identity.detach(),
+        )
+        if selected_identity.shape[1] > 1:
+            corrupt_identity = selected_identity.roll(shifts=1, dims=1)
+        else:
+            corrupt_identity = selected_identity.roll(shifts=1, dims=0)
+        corrupt_energy = self.data_energy_head(
+            hidden.detach(),
+            corrupt_identity.detach(),
+        )
+        aux.data_energy = clean_energy
+        aux.losses["data_energy"] = F.relu(
+            1.0 + clean_energy - corrupt_energy
+        ).mean()
+        aux.metrics["data_energy_clean"] = clean_energy.mean()
+        aux.metrics["data_energy_corrupt"] = corrupt_energy.mean()
 
     def _update_content_token_memory(
         self,
@@ -4144,7 +5315,15 @@ class TACTransformerLM(nn.Module):
         }
         metric_names = last_identity.metrics.keys()
         metrics = {
-            name: torch.stack([output.metrics[name] for output in identity_outputs]).mean()
+            name: torch.stack(
+                [
+                    output.metrics.get(
+                        name,
+                        last_identity.metrics[name].new_zeros(()),
+                    )
+                    for output in identity_outputs
+                ]
+            ).mean()
             for name in metric_names
         }
         return TACAuxiliaryOutput(
@@ -4404,6 +5583,7 @@ class VanillaTransformerLM(nn.Module):
 
     def __init__(self, config: TACConfig):
         super().__init__()
+        _validate_program_embed_dim(config)
         if config.n_prediction_heads < 1:
             raise ValueError("n_prediction_heads must be at least 1")
         self.config = config
@@ -4447,9 +5627,10 @@ class VanillaTransformerLM(nn.Module):
             self.position_embedding,
         )
         attention_outputs = []
+        global_token_mask = self._global_token_mask(input_ids)
 
         for block in self.blocks:
-            hidden, attention = block(hidden)
+            hidden, attention = block(hidden, global_token_mask=global_token_mask)
             attention_outputs.append(attention)
 
         hidden = self.final_norm(hidden)
@@ -4476,6 +5657,7 @@ class VanillaTransformerLM(nn.Module):
                 "coherence": zero,
                 "program_reuse": zero,
                 "energy": zero,
+                "decision_continuity": zero,
                 "multi_token": multi_token_loss,
             },
             metrics={
@@ -4491,6 +5673,8 @@ class VanillaTransformerLM(nn.Module):
                 "sequence_mixer_type": logits.new_tensor(
                     float(_sequence_mixer_type_id(self.config.sequence_mixer_type))
                 ),
+                "decision_continuity_agreement": zero,
+                "decision_continuity_memory_mass": zero,
             },
             token_program_activations=logits.new_zeros(batch_size, seq_len, 0),
             token_selected_program_mask=logits.new_zeros(batch_size, seq_len, 0),
@@ -4504,6 +5688,14 @@ class VanillaTransformerLM(nn.Module):
             hidden_states=hidden,
             multi_token_logits=multi_token_logits,
         )
+
+    def _global_token_mask(self, input_ids: Tensor) -> Optional[Tensor]:
+        if not self.config.global_attention_token_ids:
+            return None
+        mask = torch.zeros_like(input_ids, dtype=torch.bool)
+        for token_id in self.config.global_attention_token_ids:
+            mask = mask | (input_ids == int(token_id))
+        return mask
 
     def _multi_token_loss(
         self,

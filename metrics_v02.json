@@ -1,0 +1,45 @@
+{
+  "records": [
+    {
+      "eval_loss": null,
+      "extra": {
+        "purpose": "baseline first",
+        "status": "planned"
+      },
+      "memory_utilization": null,
+      "model_name": "transformer_112m",
+      "perplexity": null,
+      "program_utilization": null,
+      "raw_eval_metrics": {},
+      "raw_train_metrics": {
+        "loss": null
+      },
+      "routing_entropy": null,
+      "schema": "tac_v02_metrics.v1",
+      "state_carry_score": null,
+      "step": 0,
+      "train_loss": null
+    },
+    {
+      "eval_loss": null,
+      "extra": {
+        "purpose": "same data/tokens/compute",
+        "status": "planned"
+      },
+      "memory_utilization": null,
+      "model_name": "tac_112m",
+      "perplexity": null,
+      "program_utilization": null,
+      "raw_eval_metrics": {},
+      "raw_train_metrics": {
+        "loss": null
+      },
+      "routing_entropy": null,
+      "schema": "tac_v02_metrics.v1",
+      "state_carry_score": null,
+      "step": 0,
+      "train_loss": null
+    }
+  ],
+  "schema": "tac_v02_metrics.v1"
+}

@@ -294,6 +294,7 @@ def ats_example_to_prepared_row(example: Mapping[str, Any]) -> dict[str, Any]:
         "task_id": str(example.get("task_id")),
         "family": str(example.get("family")),
         "latent_invariant": str(example.get("latent_invariant")),
+        "prompt": prompt,
         "answer": answer,
         "text": text,
     }
@@ -775,6 +776,8 @@ def _ats_training_commands(train_path: Path, eval_path: Path) -> dict[str, str]:
         "tac_base": (
             "python kaggle/train_best_tac_agentic.py "
             f"{common} "
+            "--supervision-mode answer_only --prompt-field prompt "
+            "--completion-field answer "
             "--precision fp32 --min-healthy-gradient-norm 1e-12 "
             "--fail-on-unhealthy-optimization "
             "--routing-type base_semantic --routing-top-k 2 "

@@ -1,5 +1,71 @@
 # TAC-Transformer Identity Field Lab
 
+## TAC v0.1 Public Research Package
+
+TAC is an experimental persistent-state architecture for long-horizon AI agents,
+with validated mechanisms for memory, compression, control, repair, and causal
+fix selection in bounded benchmarks.
+
+## TAC v0.2 Scaling Work
+
+TAC v0.2 is scoped to one question: do the v0.1 mechanisms survive at about
+112M parameters on real language/code data?
+
+Start points:
+
+- [prd.v02.json](prd.v02.json) defines the v0.2 stage-gate.
+- [configs/tac_v02_112m.py](configs/tac_v02_112m.py) locks the TAC 112M config.
+- [transformer_112m.py](transformer_112m.py) locks the matched transformer baseline.
+- [docs/tac_v02_dataset_plan.md](docs/tac_v02_dataset_plan.md) defines data and holdout rules.
+- [docs/tac_v02_stage_gate.md](docs/tac_v02_stage_gate.md) is the result table to fill after training.
+- [public/tac-v02-progress.html](public/tac-v02-progress.html) is the shareable progress page.
+
+This repository does **not** claim that TAC beats transformers. The current
+evidence supports a narrower claim: persistent identity state and routed program
+modules can become causally useful in controlled local-CPU benchmarks, including
+context compression, multi-session continuity, repair control, no-restore
+multi-file sandbox repair, and causal fix disambiguation under injected
+ambiguity.
+
+Start here:
+
+- [LIMITATIONS.md](LIMITATIONS.md) defines what TAC v0.1 does not prove.
+- [REPRODUCIBILITY.md](REPRODUCIBILITY.md) gives the local and Kaggle validation commands.
+- [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md) summarizes the TAC-235 through TAC-272 evidence.
+- [runs/benchmarks/benchmark_summary_tac235_tac272.md](runs/benchmarks/benchmark_summary_tac235_tac272.md) is the compact benchmark table.
+
+Core validation pack:
+
+```bash
+python experiments/kaggle_validate_tac_core.py --benchmarks tac251,tac252,tac267,tac270,tac272 --seeds 5 --cases 50 --output runs/kaggle_validation/tac_core_validation.json
+```
+
+Current local validation-pack result:
+
+| Benchmark | CPU Metric | Local Measured | Gate | Tolerance | Decision |
+|---|---:|---:|---:|---:|---|
+| TAC-251 | 20.0000 | 20.0000 | 20.0000 | 0.0000 | PASS |
+| TAC-252 | 20.0000 | 20.0000 | 20.0000 | 0.0000 | PASS |
+| TAC-267 | 0.6767 | 0.6756 | 0.6000 | 0.0800 | PASS |
+| TAC-270 | 0.9635 | 0.9639 | 0.8500 | 0.0800 | PASS |
+| TAC-272 | 0.8417 | 0.8000 | 0.6500 | 0.1000 | PASS |
+
+The local run writes `runs/kaggle_validation/tac_core_validation.json`.
+
+Kaggle validation:
+
+- Kernel: https://www.kaggle.com/code/jeffkolo/tac-v0-1-core-validation-2026-06-13
+- Pulled artifact: `runs/kaggle_tac_core_validation_2026_06_13_output/runs/kaggle_validation/tac_core_validation.json`
+- Decision: PASS
+- `execution_environment`: `kaggle`
+- `validated_on_kaggle`: true for TAC-251, TAC-252, TAC-267, TAC-270, and TAC-272
+
+Expected public claim:
+
+> TAC is an experimental persistent-state architecture for long-horizon AI
+> agents, with validated mechanisms for memory, compression, control, repair,
+> and causal fix selection in bounded benchmarks.
+
 Interactive Vite/React prototype for testing an Identity Field Layer beside attention.
 
 The current prototype is deterministic and inspectable rather than trained. It demonstrates:

@@ -178,11 +178,18 @@ class ATSTransferBenchmarkTests(unittest.TestCase):
             self.assertTrue(
                 all(row["text"].endswith(row["answer"] + "\n") for row in train_rows)
             )
+            self.assertTrue(all(row["prompt"] for row in train_rows))
+            self.assertTrue(
+                all(row["text"].startswith(row["prompt"]) for row in train_rows)
+            )
             self.assertLessEqual(manifest["max_text_bytes"], 256)
             self.assertEqual(manifest["leakage"]["test_domain_rows_in_train"], 0)
             self.assertEqual(manifest["leakage"]["train_domain_rows_in_eval"], 0)
             tac_command = manifest["recommended_commands"]["tac_base"]
             self.assertIn("--seq-len 176", tac_command)
+            self.assertIn("--supervision-mode answer_only", tac_command)
+            self.assertIn("--prompt-field prompt", tac_command)
+            self.assertIn("--completion-field answer", tac_command)
             self.assertIn("--precision fp32", tac_command)
             self.assertIn("--min-healthy-gradient-norm 1e-12", tac_command)
             self.assertIn("--fail-on-unhealthy-optimization", tac_command)
@@ -196,6 +203,212 @@ class ATSTransferBenchmarkTests(unittest.TestCase):
             ).next_batch(batch_size=2)
             self.assertEqual(tuple(x.shape), (2, 256))
             self.assertEqual(tuple(y.shape), (2, 256))
+
+    def test_answer_only_jsonl_batcher_masks_prompt_and_preserves_domain_labels(self):
+        from tac_transformer.phase_d_benchmarks import (
+            PHASE_D_EOS_TOKEN_ID,
+            phase_d_text_to_token_ids,
+        )
+        from tac_transformer.training import (
+            JsonlCompletionBatcher,
+            JsonlLabeledCompletionBatcher,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "rows.jsonl"
+            row = {
+                "record_id": "row_1",
+                "prompt": "Resolve route: ",
+                "answer": "nav_identity_7",
+                "text": "Resolve route: nav_identity_7\n",
+                "domain": "navigation",
+            }
+            path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+
+            batcher = JsonlCompletionBatcher(
+                path,
+                seq_len=64,
+                vocab_size=512,
+                seed=1,
+                prompt_field="prompt",
+                completion_field="answer",
+            )
+            input_ids, labels = batcher.next_batch(batch_size=1)
+            prompt_ids = phase_d_text_to_token_ids(
+                row["prompt"],
+                vocab_size=512,
+                append_eos=False,
+            )
+            answer_ids = phase_d_text_to_token_ids(
+                row["answer"],
+                vocab_size=512,
+                append_eos=False,
+            )
+            expected_input = prompt_ids + answer_ids
+            expected_supervised = answer_ids + [PHASE_D_EOS_TOKEN_ID]
+            label_start = len(prompt_ids) - 1
+
+            self.assertEqual(
+                input_ids[0, : len(expected_input)].tolist(),
+                expected_input,
+            )
+            self.assertTrue(
+                all(value == -100 for value in labels[0, :label_start].tolist())
+            )
+            self.assertEqual(
+                labels[
+                    0,
+                    label_start : label_start + len(expected_supervised),
+                ].tolist(),
+                expected_supervised,
+            )
+            self.assertTrue(
+                all(
+                    value == -100
+                    for value in labels[
+                        0,
+                        label_start + len(expected_supervised) :,
+                    ].tolist()
+                )
+            )
+
+            labeled = JsonlLabeledCompletionBatcher(
+                path,
+                seq_len=64,
+                vocab_size=512,
+                seed=1,
+                prompt_field="prompt",
+                completion_field="answer",
+                label_field="domain",
+            )
+            _, labeled_labels, category_ids = labeled.next_batch(batch_size=1)
+
+            self.assertEqual(
+                labeled_labels[0, label_start].item(),
+                expected_supervised[0],
+            )
+            self.assertEqual(
+                category_ids.tolist(),
+                [labeled.category_to_id["navigation"]],
+            )
+
+    def test_tac_trainer_smoke_accepts_ats_answer_only_supervision(self):
+        from kaggle import train_best_tac_agentic
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            train_path = root / "train.prepared.jsonl"
+            eval_path = root / "eval.prepared.jsonl"
+            rows = [
+                {
+                    "record_id": "nav_0",
+                    "prompt": "Resolve route A: ",
+                    "answer": "nav_identity_0",
+                    "text": "Resolve route A: nav_identity_0\n",
+                    "domain": "navigation",
+                },
+                {
+                    "record_id": "nav_1",
+                    "prompt": "Resolve route B: ",
+                    "answer": "nav_identity_1",
+                    "text": "Resolve route B: nav_identity_1\n",
+                    "domain": "navigation",
+                },
+                {
+                    "record_id": "inv_0",
+                    "prompt": "Resolve bin A: ",
+                    "answer": "inv_identity_0",
+                    "text": "Resolve bin A: inv_identity_0\n",
+                    "domain": "inventory",
+                },
+                {
+                    "record_id": "inv_1",
+                    "prompt": "Resolve bin B: ",
+                    "answer": "inv_identity_1",
+                    "text": "Resolve bin B: inv_identity_1\n",
+                    "domain": "inventory",
+                },
+            ]
+            payload = "\n".join(json.dumps(row) for row in rows) + "\n"
+            train_path.write_text(payload, encoding="utf-8")
+            eval_path.write_text(payload, encoding="utf-8")
+
+            train_best_tac_agentic.main(
+                [
+                    "--scale",
+                    "smoke",
+                    "--d-model",
+                    "16",
+                    "--n-heads",
+                    "2",
+                    "--n-layers",
+                    "1",
+                    "--n-programs",
+                    "4",
+                    "--seq-len",
+                    "64",
+                    "--batch-size",
+                    "1",
+                    "--grad-accum-steps",
+                    "1",
+                    "--steps",
+                    "2",
+                    "--eval-every",
+                    "1",
+                    "--eval-batches",
+                    "1",
+                    "--checkpoint-every",
+                    "1",
+                    "--train-jsonl",
+                    str(train_path),
+                    "--eval-jsonl",
+                    str(eval_path),
+                    "--output-dir",
+                    str(root / "out"),
+                    "--device",
+                    "cpu",
+                    "--supervision-mode",
+                    "answer_only",
+                    "--category-route-weight",
+                    "0.1",
+                    "--category-route-objective",
+                    "selected_mi",
+                    "--precision",
+                    "fp32",
+                    "--min-healthy-gradient-norm",
+                    "1e-12",
+                    "--fail-on-unhealthy-optimization",
+                ]
+            )
+
+            manifest = json.loads(
+                (root / "out" / "run_manifest.json").read_text(encoding="utf-8")
+            )
+            summary = json.loads(
+                (root / "out" / "final_summary.json").read_text(encoding="utf-8")
+            )
+
+        self.assertEqual(manifest["supervision_mode"], "answer_only")
+        self.assertEqual(manifest["prompt_field"], "prompt")
+        self.assertEqual(manifest["completion_field"], "answer")
+        self.assertEqual(manifest["category_route_objective"], "selected_mi")
+        self.assertEqual(set(manifest["category_route_categories"]), {"inventory", "navigation"})
+        self.assertEqual(summary["completed_steps"], 2)
+        self.assertEqual(
+            summary["latest_metrics"]["optimization_health"]["status"],
+            "passed",
+        )
+        self.assertGreater(summary["latest_metrics"]["gradient_norm"], 0.0)
+
+    def test_generated_kaggle_instructions_include_ats_answer_only_repair(self):
+        from kaggle import make_agentic_training_bundle
+
+        instructions = make_agentic_training_bundle._instructions()
+
+        self.assertIn("TAC-198 ATS transfer repair", instructions)
+        self.assertIn("--supervision-mode answer_only", instructions)
+        self.assertIn("--prompt-field prompt", instructions)
+        self.assertIn("--completion-field answer", instructions)
 
     def test_ats_answer_copy_probe_reports_tac_and_vanilla_controls(self):
         from experiments import benchmark_ats_answer_copy_training as answer_probe

@@ -73,6 +73,7 @@ from tac_transformer.training import (
     selected_program_mi_loss,
     train_chunked_memory,
     train_synthetic,
+    _default_aux_weights,
 )
 from tac_transformer.evaluation import benchmark_effectiveness, evaluate_state_interventions
 from tac_transformer.capability import (
@@ -128,6 +129,20 @@ class TACTransformerArchitectureTest(unittest.TestCase):
         self.assertGreaterEqual(float(output.aux.losses["energy"].detach()), 0)
         self.assertGreaterEqual(float(output.aux.losses["program_reuse"].detach()), 0)
 
+    def test_routing_top_k_cannot_exceed_program_count(self):
+        with self.assertRaisesRegex(ValueError, "routing_top_k must be <= n_programs"):
+            TACTransformerLM(
+                TACConfig(
+                    vocab_size=32,
+                    d_model=16,
+                    n_heads=4,
+                    n_layers=1,
+                    n_programs=2,
+                    max_seq_len=12,
+                    routing_top_k=3,
+                )
+            )
+
     def test_identity_coherence_modulates_attention_probabilities(self):
         attention = IdentityAugmentedSelfAttention(d_model=8, n_heads=2)
         hidden = torch.randn(1, 3, 8)
@@ -158,6 +173,55 @@ class TACTransformerArchitectureTest(unittest.TestCase):
             )
         )
 
+    def test_identity_conditioned_decision_continuity_biases_carried_routes(self):
+        config = TACConfig(
+            vocab_size=32,
+            d_model=16,
+            n_heads=4,
+            n_layers=1,
+            n_programs=6,
+            max_seq_len=8,
+            routing_type="energy",
+            energy_budget=1.35,
+            decision_continuity_strength=20.0,
+            decision_continuity_decay=0.0,
+            detach_identity_state=False,
+        )
+        model = TACTransformerLM(config)
+        with torch.no_grad():
+            model.token_embedding.weight.zero_()
+            model.position_embedding.weight.zero_()
+            identity = model.blocks[0].identity_field
+            identity.program_embeddings.zero_()
+            identity.program_embeddings[0, 0] = 1.0
+            identity.program_embeddings[5, 1] = 1.0
+
+        input_ids = torch.tensor([[1, 2, 3, 4]])
+        zeros = torch.zeros(1, config.n_programs)
+        memory = torch.zeros(1, config.n_programs, config.d_model)
+        prior_decision = torch.zeros(1, config.n_programs)
+        prior_decision[:, 5] = 1.0
+        carried_state = IdentityState(
+            stability=zeros,
+            program_memory=memory,
+            decision_memory=prior_decision,
+        )
+        unconditioned_state = IdentityState(stability=zeros, program_memory=memory)
+
+        continued = model(input_ids, identity_states=[carried_state])
+        unconditioned = model(input_ids, identity_states=[unconditioned_state])
+
+        self.assertEqual(float(continued.aux.selected_program_mask[0, 5].detach()), 1.0)
+        self.assertEqual(float(unconditioned.aux.selected_program_mask[0, 0].detach()), 1.0)
+        self.assertEqual(float(unconditioned.aux.selected_program_mask[0, 5].detach()), 0.0)
+        self.assertIn("decision_continuity", continued.aux.losses)
+        self.assertIn("decision_continuity_agreement", continued.aux.metrics)
+        self.assertGreater(
+            float(continued.aux.metrics["decision_continuity_agreement"].detach()),
+            0.9,
+        )
+        self.assertIsNotNone(continued.identity_states[0].decision_memory)
+
     def test_forward_can_skip_auxiliary_diagnostics_for_inference(self):
         model = TACTransformerLM(self.config)
         output = model(torch.tensor([[1, 2, 3, 4]]), collect_auxiliary=False)
@@ -166,6 +230,80 @@ class TACTransformerArchitectureTest(unittest.TestCase):
         self.assertEqual(len(output.identity_states), 1)
         self.assertEqual(float(output.aux.losses["coherence"].detach()), 0.0)
         self.assertIn("active_expert_fraction", output.aux.metrics)
+
+    def test_run5b_plus_program_embed_dim_forward_wires_data_energy(self):
+        config = TACConfig(
+            vocab_size=32,
+            d_model=16,
+            n_heads=4,
+            n_layers=1,
+            n_programs=6,
+            max_seq_len=8,
+            program_embed_dim=8,
+            activation_l1_weight=0.05,
+            identity_norm_floor_weight=0.1,
+            detach_identity_state=False,
+        )
+        model = TACTransformerLM(config)
+        input_ids = torch.tensor([[1, 2, 3, 4], [4, 3, 2, 1]])
+
+        output = model(input_ids, labels=input_ids)
+        continued = model(input_ids, identity_states=output.identity_states)
+
+        self.assertEqual(output.logits.shape, (2, 4, config.vocab_size))
+        self.assertEqual(output.aux.data_energy.shape, (2, 4))
+        self.assertIn("data_energy", output.aux.losses)
+        self.assertIn("activation_l1", output.aux.losses)
+        self.assertIn("identity_norm_floor", output.aux.losses)
+        self.assertEqual(
+            output.identity_states[0].decision_memory_ebm.shape,
+            (2, config.n_programs, config.program_embed_dim),
+        )
+        self.assertTrue(torch.isfinite(output.aux.losses["data_energy"]))
+        self.assertTrue(torch.isfinite(continued.aux.losses["ebm_decision_continuity"]))
+        self.assertEqual(
+            estimate_tac_parameter_count(config),
+            count_parameters(model)["total"],
+        )
+
+    def test_run5b_plus_default_aux_weights_include_new_losses(self):
+        config = TACConfig(
+            vocab_size=32,
+            d_model=16,
+            n_heads=4,
+            n_layers=1,
+            n_programs=6,
+            max_seq_len=8,
+            program_embed_dim=8,
+            activation_l1_weight=0.05,
+            identity_norm_floor_weight=0.1,
+            decision_continuity_loss_weight=0.2,
+        )
+
+        weights = _default_aux_weights(config)
+
+        self.assertEqual(weights["data_energy"], 1.0)
+        self.assertAlmostEqual(weights["activation_l1"], 0.05)
+        self.assertAlmostEqual(weights["identity_norm_floor"], 0.1)
+        self.assertAlmostEqual(weights["ebm_decision_continuity"], 0.2)
+
+    def test_global_attention_token_ids_extend_sliding_window(self):
+        config = TACConfig(
+            vocab_size=32,
+            d_model=16,
+            n_heads=4,
+            n_layers=1,
+            n_programs=6,
+            max_seq_len=8,
+            attention_window_size=2,
+            global_attention_token_ids=(9,),
+        )
+        model = TACTransformerLM(config)
+        input_ids = torch.tensor([[9, 1, 2, 3, 4]])
+
+        output = model(input_ids)
+
+        self.assertFalse(torch.isneginf(output.aux.attention_probs[0, :, 4, 0]).any())
 
     def test_identity_compressed_attention_reads_program_memory_slots(self):
         config = TACConfig(
@@ -873,6 +1011,55 @@ class TACTransformerArchitectureTest(unittest.TestCase):
             estimate_tac_parameter_count(config),
             count_parameters(model)["total"],
         )
+
+    def test_low_rank_linear_program_experts_train_with_reduced_parameters(self):
+        full_config = TACConfig(
+            vocab_size=32,
+            d_model=16,
+            n_heads=4,
+            n_layers=1,
+            n_programs=6,
+            max_seq_len=12,
+            program_compute_type="linear_expert",
+        )
+        low_rank_config = replace(
+            full_config,
+            program_compute_type="low_rank_linear_expert",
+            program_expert_rank=5,
+        )
+        full_model = TACTransformerLM(full_config)
+        low_rank_model = TACTransformerLM(low_rank_config)
+
+        output = low_rank_model(torch.tensor([[1, 2, 3, 4, 5]]))
+        loss = output.logits.mean() + sum(output.aux.losses.values())
+        loss.backward()
+
+        expert_layer = low_rank_model.blocks[0].identity_field
+        self.assertEqual(output.logits.shape, (1, 5, 32))
+        self.assertIsNotNone(expert_layer.program_expert_down.grad)
+        self.assertIsNotNone(expert_layer.program_expert_up.grad)
+        self.assertGreater(float(expert_layer.program_expert_down.grad.abs().sum()), 0)
+        self.assertGreater(float(expert_layer.program_expert_up.grad.abs().sum()), 0)
+        self.assertLess(
+            count_parameters(low_rank_model)["identity_field"],
+            count_parameters(full_model)["identity_field"],
+        )
+        self.assertEqual(
+            estimate_tac_parameter_count(low_rank_config),
+            count_parameters(low_rank_model)["total"],
+        )
+
+    def test_low_rank_linear_expert_rank_is_validated(self):
+        with self.assertRaises(ValueError):
+            TACTransformerLM(
+                TACConfig(
+                    vocab_size=32,
+                    d_model=16,
+                    n_heads=4,
+                    program_compute_type="low_rank_linear_expert",
+                    program_expert_rank=0,
+                )
+            )
 
     def test_sparse_linear_program_experts_match_dense_routed_outputs(self):
         dense_config = TACConfig(
@@ -3307,6 +3494,12 @@ class TACTransformerArchitectureTest(unittest.TestCase):
             [
                 "--scale",
                 "smoke",
+                "--program-compute-type",
+                "low_rank_linear_expert",
+                "--program-expert-rank",
+                "5",
+                "--mlp-ratio",
+                "7",
                 "--routing-type",
                 "base_semantic",
                 "--routing-top-k",
@@ -3328,6 +3521,9 @@ class TACTransformerArchitectureTest(unittest.TestCase):
         scale = train_best_tac_agentic.resolved_scale(args)
         config = train_best_tac_agentic.build_training_config(args, scale)
 
+        self.assertEqual(config.program_compute_type, "low_rank_linear_expert")
+        self.assertEqual(config.program_expert_rank, 5)
+        self.assertEqual(config.mlp_ratio, 7)
         self.assertEqual(config.routing_type, "base_semantic")
         self.assertEqual(config.routing_top_k, 2)
         self.assertAlmostEqual(config.routing_load_balance_weight, 0.05)

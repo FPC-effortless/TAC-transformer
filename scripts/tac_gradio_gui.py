@@ -48,17 +48,39 @@ def create_demo(
         device=resolved_device,
     )
 
-    def generate(prompt, max_new_tokens, temperature, top_k, top_p, seed):
+    max_context_window = int(metadata["config"]["max_seq_len"])
+
+    def generate(
+        prompt,
+        max_new_tokens,
+        context_window,
+        temperature,
+        top_k,
+        top_p,
+        energy_rerank_top_k,
+        data_energy_weight,
+        data_energy_verifier_threshold,
+        seed,
+    ):
+        verifier_threshold = (
+            None
+            if data_energy_verifier_threshold in (None, "")
+            else float(data_energy_verifier_threshold)
+        )
         result = generate_tac_completion(
             model,
             prompt,
             max_new_tokens=int(max_new_tokens),
+            context_window=int(context_window),
             temperature=float(temperature),
             top_k=int(top_k),
             top_p=float(top_p),
             device=resolved_device,
             precision=precision,
             seed=None if seed in (None, "") else int(seed),
+            energy_rerank_top_k=int(energy_rerank_top_k),
+            data_energy_weight=float(data_energy_weight),
+            data_energy_verifier_threshold=verifier_threshold,
         )
         return result["completion"], _format_metadata(metadata, result)
 
@@ -69,15 +91,51 @@ def create_demo(
             output = gr.Textbox(label="Completion", lines=8)
         with gr.Row():
             max_new_tokens = gr.Slider(1, 512, value=128, step=1, label="Max new tokens")
+            context_window = gr.Slider(
+                1,
+                max_context_window,
+                value=max_context_window,
+                step=1,
+                label="Context window",
+            )
             temperature = gr.Slider(0.0, 1.5, value=0.7, step=0.05, label="Temperature")
             top_k = gr.Slider(1, 256, value=50, step=1, label="Top-K")
             top_p = gr.Slider(0.05, 1.0, value=0.9, step=0.05, label="Top-P")
+            energy_rerank_top_k = gr.Slider(
+                0,
+                16,
+                value=0,
+                step=1,
+                label="Energy rerank candidates",
+            )
+            data_energy_weight = gr.Slider(
+                0.0,
+                5.0,
+                value=1.0,
+                step=0.1,
+                label="Data energy weight",
+            )
+            data_energy_verifier_threshold = gr.Number(
+                value=None,
+                label="Verifier energy threshold",
+            )
             seed = gr.Number(value=0, precision=0, label="Seed")
         generate_button = gr.Button("Generate", variant="primary")
         metadata_box = gr.JSON(label="Run metadata")
         generate_button.click(
             generate,
-            inputs=[prompt, max_new_tokens, temperature, top_k, top_p, seed],
+            inputs=[
+                prompt,
+                max_new_tokens,
+                context_window,
+                temperature,
+                top_k,
+                top_p,
+                energy_rerank_top_k,
+                data_energy_weight,
+                data_energy_verifier_threshold,
+                seed,
+            ],
             outputs=[output, metadata_box],
         )
     return demo
@@ -114,6 +172,13 @@ def _format_metadata(metadata, result):
         "tokens_per_second": result["tokens_per_second"],
         "truncated_prompt_token_count": result["truncated_prompt_token_count"],
         "context_window": result["context_window"],
+        "checkpoint_max_seq_len": result["checkpoint_max_seq_len"],
+        "energy_rerank_top_k": result["energy_rerank_top_k"],
+        "data_energy_weight": result["data_energy_weight"],
+        "data_energy_reranked_token_count": result["data_energy_reranked_token_count"],
+        "data_energy_verifier_required_count": result[
+            "data_energy_verifier_required_count"
+        ],
     }
 
 

@@ -1,0 +1,267 @@
+{
+  "schema": "tac_prepared_token_count.v1",
+  "tokenizer": "tac_byte_utf8_plus_eos",
+  "profile": "full",
+  "exclude_multimodal": true,
+  "splits": {
+    "all": {
+      "records": 581896,
+      "tac_byte_tokens": 1405209352,
+      "approx_bpe_tokens_len_div_4": 351052450,
+      "streams": {
+        "cpt": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\unified_cpt.jsonl",
+          "records": 510066,
+          "tac_byte_tokens": 1225277305,
+          "approx_bpe_tokens_len_div_4": 306191703,
+          "multimodal_skipped": 0
+        },
+        "sft": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\unified_sft_messages.jsonl",
+          "records": 34990,
+          "tac_byte_tokens": 109292470,
+          "approx_bpe_tokens_len_div_4": 27239854,
+          "multimodal_skipped": 17
+        },
+        "reasoning": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\unified_reasoning_traces.jsonl",
+          "records": 33500,
+          "tac_byte_tokens": 53930870,
+          "approx_bpe_tokens_len_div_4": 13445895,
+          "multimodal_skipped": 0
+        },
+        "preference": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\unified_preference_pairs.jsonl",
+          "records": 3340,
+          "tac_byte_tokens": 16708707,
+          "approx_bpe_tokens_len_div_4": 4174998,
+          "multimodal_skipped": 0
+        }
+      },
+      "datasets": {
+        "Jackrong__Claude-opus-4.6-TraceInversion-9000x": {
+          "records": 17338,
+          "tac_byte_tokens": 25257325
+        },
+        "ReasonCore__open-spatial-reasoning": {
+          "records": 41,
+          "tac_byte_tokens": 56846
+        },
+        "SupraLabs__SupraThink-Dataset-500x": {
+          "records": 495,
+          "tac_byte_tokens": 990482
+        },
+        "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k": {
+          "records": 8706,
+          "tac_byte_tokens": 46681249
+        },
+        "distillation_datasets": {
+          "records": 7023,
+          "tac_byte_tokens": 14865298
+        },
+        "distillation_datasets_70k": {
+          "records": 63000,
+          "tac_byte_tokens": 133852304
+        },
+        "enriched_new_folder_llm_dataset": {
+          "records": 667,
+          "tac_byte_tokens": 3406032
+        },
+        "enriched_sudoku_dataset": {
+          "records": 21704,
+          "tac_byte_tokens": 6509974
+        },
+        "enriched_transcripts_llm_dataset": {
+          "records": 21660,
+          "tac_byte_tokens": 111838166
+        },
+        "llm-distillation-spec": {
+          "records": 5405,
+          "tac_byte_tokens": 3573637
+        },
+        "openai__gsm8k": {
+          "records": 2186,
+          "tac_byte_tokens": 1224586
+        },
+        "prepared_corpus_agentic_hard": {
+          "records": 433671,
+          "tac_byte_tokens": 1056953453
+        }
+      }
+    },
+    "train": {
+      "records": 552371,
+      "tac_byte_tokens": 1333810741,
+      "approx_bpe_tokens_len_div_4": 333215424,
+      "streams": {
+        "cpt": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\splits\\train\\unified_cpt.jsonl",
+          "records": 484188,
+          "tac_byte_tokens": 1163044789,
+          "approx_bpe_tokens_len_div_4": 290639851,
+          "multimodal_skipped": 0
+        },
+        "sft": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\splits\\train\\unified_sft_messages.jsonl",
+          "records": 33174,
+          "tac_byte_tokens": 103643872,
+          "approx_bpe_tokens_len_div_4": 25832179,
+          "multimodal_skipped": 17
+        },
+        "reasoning": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\splits\\train\\unified_reasoning_traces.jsonl",
+          "records": 31838,
+          "tac_byte_tokens": 51276904,
+          "approx_bpe_tokens_len_div_4": 12784157,
+          "multimodal_skipped": 0
+        },
+        "preference": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\splits\\train\\unified_preference_pairs.jsonl",
+          "records": 3171,
+          "tac_byte_tokens": 15845176,
+          "approx_bpe_tokens_len_div_4": 3959237,
+          "multimodal_skipped": 0
+        }
+      },
+      "datasets": {
+        "Jackrong__Claude-opus-4.6-TraceInversion-9000x": {
+          "records": 16432,
+          "tac_byte_tokens": 23872207
+        },
+        "ReasonCore__open-spatial-reasoning": {
+          "records": 38,
+          "tac_byte_tokens": 52170
+        },
+        "SupraLabs__SupraThink-Dataset-500x": {
+          "records": 462,
+          "tac_byte_tokens": 924739
+        },
+        "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k": {
+          "records": 8274,
+          "tac_byte_tokens": 44397825
+        },
+        "distillation_datasets": {
+          "records": 6636,
+          "tac_byte_tokens": 14025151
+        },
+        "distillation_datasets_70k": {
+          "records": 59523,
+          "tac_byte_tokens": 126286798
+        },
+        "enriched_new_folder_llm_dataset": {
+          "records": 632,
+          "tac_byte_tokens": 3224409
+        },
+        "enriched_sudoku_dataset": {
+          "records": 20632,
+          "tac_byte_tokens": 6189720
+        },
+        "enriched_transcripts_llm_dataset": {
+          "records": 20567,
+          "tac_byte_tokens": 106225909
+        },
+        "llm-distillation-spec": {
+          "records": 5135,
+          "tac_byte_tokens": 3377343
+        },
+        "openai__gsm8k": {
+          "records": 2077,
+          "tac_byte_tokens": 1165123
+        },
+        "prepared_corpus_agentic_hard": {
+          "records": 411963,
+          "tac_byte_tokens": 1004069347
+        }
+      }
+    },
+    "validation": {
+      "records": 29525,
+      "tac_byte_tokens": 71398611,
+      "approx_bpe_tokens_len_div_4": 17837026,
+      "streams": {
+        "cpt": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\splits\\validation\\unified_cpt.jsonl",
+          "records": 25878,
+          "tac_byte_tokens": 62232516,
+          "approx_bpe_tokens_len_div_4": 15551852,
+          "multimodal_skipped": 0
+        },
+        "sft": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\splits\\validation\\unified_sft_messages.jsonl",
+          "records": 1816,
+          "tac_byte_tokens": 5648598,
+          "approx_bpe_tokens_len_div_4": 1407675,
+          "multimodal_skipped": 0
+        },
+        "reasoning": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\splits\\validation\\unified_reasoning_traces.jsonl",
+          "records": 1662,
+          "tac_byte_tokens": 2653966,
+          "approx_bpe_tokens_len_div_4": 661738,
+          "multimodal_skipped": 0
+        },
+        "preference": {
+          "path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\splits\\validation\\unified_preference_pairs.jsonl",
+          "records": 169,
+          "tac_byte_tokens": 863531,
+          "approx_bpe_tokens_len_div_4": 215761,
+          "multimodal_skipped": 0
+        }
+      },
+      "datasets": {
+        "Jackrong__Claude-opus-4.6-TraceInversion-9000x": {
+          "records": 906,
+          "tac_byte_tokens": 1385118
+        },
+        "ReasonCore__open-spatial-reasoning": {
+          "records": 3,
+          "tac_byte_tokens": 4676
+        },
+        "SupraLabs__SupraThink-Dataset-500x": {
+          "records": 33,
+          "tac_byte_tokens": 65743
+        },
+        "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k": {
+          "records": 432,
+          "tac_byte_tokens": 2283424
+        },
+        "distillation_datasets": {
+          "records": 387,
+          "tac_byte_tokens": 840147
+        },
+        "distillation_datasets_70k": {
+          "records": 3477,
+          "tac_byte_tokens": 7565506
+        },
+        "enriched_new_folder_llm_dataset": {
+          "records": 35,
+          "tac_byte_tokens": 181623
+        },
+        "enriched_sudoku_dataset": {
+          "records": 1072,
+          "tac_byte_tokens": 320254
+        },
+        "enriched_transcripts_llm_dataset": {
+          "records": 1093,
+          "tac_byte_tokens": 5612257
+        },
+        "llm-distillation-spec": {
+          "records": 270,
+          "tac_byte_tokens": 196294
+        },
+        "openai__gsm8k": {
+          "records": 109,
+          "tac_byte_tokens": 59463
+        },
+        "prepared_corpus_agentic_hard": {
+          "records": 21708,
+          "tac_byte_tokens": 52884106
+        }
+      }
+    }
+  },
+  "total_basis": "all",
+  "total_records": 581896,
+  "total_tac_byte_tokens": 1405209352,
+  "total_approx_bpe_tokens_len_div_4": 351052450
+}

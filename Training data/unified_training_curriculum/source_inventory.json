@@ -1,0 +1,2810 @@
+[
+  {
+    "path": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\.gitattributes",
+    "bytes": 2860,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\code_train.jsonl",
+    "bytes": 12454927,
+    "action": "skip_reasoning_variant_has_no_reasoning_peer",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\code_train_no_reasoning.jsonl",
+    "bytes": 8228646,
+    "action": "use",
+    "records_read": 1840,
+    "written": {
+      "cpt": 0,
+      "sft": 1840,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\full_train.jsonl",
+    "bytes": 71446661,
+    "action": "skip_reasoning_variant_has_no_reasoning_peer",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\full_train_no_reasoning.jsonl",
+    "bytes": 48355573,
+    "action": "use",
+    "records_read": 8706,
+    "written": {
+      "cpt": 0,
+      "sft": 6866,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\instruct_train.jsonl",
+    "bytes": 60614678,
+    "action": "skip_reasoning_variant_has_no_reasoning_peer",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\instruct_train_no_reasoning.jsonl",
+    "bytes": 40958973,
+    "action": "use",
+    "records_read": 7217,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\README.md",
+    "bytes": 10580,
+    "action": "skip_dataset_readme_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\roleplay_train.jsonl",
+    "bytes": 10831983,
+    "action": "skip_roleplay_identity_drift",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\roleplay_train_no_reasoning.jsonl",
+    "bytes": 7396600,
+    "action": "skip_roleplay_identity_drift",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\agentic_trajectory.eval.prepared.jsonl",
+    "bytes": 646557,
+    "action": "use",
+    "records_read": 150,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 150
+    }
+  },
+  {
+    "path": "distillation_datasets\\agentic_trajectory.eval.raw.jsonl",
+    "bytes": 937844,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\agentic_trajectory.train.prepared.jsonl",
+    "bytes": 4314265,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 1000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\agentic_trajectory.train.raw.jsonl",
+    "bytes": 6258068,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\coding_evol_instruct.eval.prepared.jsonl",
+    "bytes": 425779,
+    "action": "use",
+    "records_read": 150,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 150
+    }
+  },
+  {
+    "path": "distillation_datasets\\coding_evol_instruct.eval.raw.jsonl",
+    "bytes": 707087,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\coding_evol_instruct.train.prepared.jsonl",
+    "bytes": 2842290,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 1000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\coding_evol_instruct.train.raw.jsonl",
+    "bytes": 4719455,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\coding_oss_instruct.eval.prepared.jsonl",
+    "bytes": 331093,
+    "action": "use",
+    "records_read": 150,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 150
+    }
+  },
+  {
+    "path": "distillation_datasets\\coding_oss_instruct.eval.raw.jsonl",
+    "bytes": 552310,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\coding_oss_instruct.train.prepared.jsonl",
+    "bytes": 2211215,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 1000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\coding_oss_instruct.train.raw.jsonl",
+    "bytes": 3687930,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\curriculum_metadata.eval.prepared.jsonl",
+    "bytes": 241638,
+    "action": "use",
+    "records_read": 150,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 150
+    }
+  },
+  {
+    "path": "distillation_datasets\\curriculum_metadata.eval.raw.jsonl",
+    "bytes": 334707,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\curriculum_metadata.train.prepared.jsonl",
+    "bytes": 1616762,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 1000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\curriculum_metadata.train.raw.jsonl",
+    "bytes": 2239143,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\eval.prepared.jsonl",
+    "bytes": 2560668,
+    "action": "use",
+    "records_read": 1050,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1050
+    }
+  },
+  {
+    "path": "distillation_datasets\\execution_repair.eval.prepared.jsonl",
+    "bytes": 308047,
+    "action": "use",
+    "records_read": 150,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 150
+    }
+  },
+  {
+    "path": "distillation_datasets\\execution_repair.eval.raw.jsonl",
+    "bytes": 482981,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\execution_repair.train.prepared.jsonl",
+    "bytes": 2057867,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 1000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\execution_repair.train.raw.jsonl",
+    "bytes": 3226234,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\knowledge_synthesis.eval.prepared.jsonl",
+    "bytes": 375127,
+    "action": "use",
+    "records_read": 150,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 150
+    }
+  },
+  {
+    "path": "distillation_datasets\\knowledge_synthesis.eval.raw.jsonl",
+    "bytes": 603704,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\knowledge_synthesis.train.prepared.jsonl",
+    "bytes": 2510130,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 1000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\knowledge_synthesis.train.raw.jsonl",
+    "bytes": 4041260,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\manifest.json",
+    "bytes": 6108,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\preference_pair.eval.prepared.jsonl",
+    "bytes": 232427,
+    "action": "use",
+    "records_read": 150,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 150
+    }
+  },
+  {
+    "path": "distillation_datasets\\preference_pair.eval.raw.jsonl",
+    "bytes": 380404,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\preference_pair.train.prepared.jsonl",
+    "bytes": 1553407,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 1000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\preference_pair.train.raw.jsonl",
+    "bytes": 2541814,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\preference_pairs.eval.jsonl",
+    "bytes": 120535,
+    "action": "use",
+    "records_read": 150,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 150
+    }
+  },
+  {
+    "path": "distillation_datasets\\preference_pairs.train.jsonl",
+    "bytes": 804565,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 23,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets\\train.prepared.jsonl",
+    "bytes": 17105936,
+    "action": "use",
+    "records_read": 7000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\agentic_trajectory.eval.prepared.jsonl",
+    "bytes": 4311265,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1000
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\agentic_trajectory.eval.raw.jsonl",
+    "bytes": 6254068,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\agentic_trajectory.train.prepared.jsonl",
+    "bytes": 43152640,
+    "action": "use",
+    "records_read": 10000,
+    "written": {
+      "cpt": 9000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\agentic_trajectory.train.raw.jsonl",
+    "bytes": 62600666,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\coding_evol_instruct.eval.prepared.jsonl",
+    "bytes": 2839290,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1000
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\coding_evol_instruct.eval.raw.jsonl",
+    "bytes": 4715455,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\coding_evol_instruct.train.prepared.jsonl",
+    "bytes": 28432911,
+    "action": "use",
+    "records_read": 10000,
+    "written": {
+      "cpt": 9000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\coding_evol_instruct.train.raw.jsonl",
+    "bytes": 47214572,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\coding_oss_instruct.eval.prepared.jsonl",
+    "bytes": 2208215,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1000
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\coding_oss_instruct.eval.raw.jsonl",
+    "bytes": 3683930,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\coding_oss_instruct.train.prepared.jsonl",
+    "bytes": 22122161,
+    "action": "use",
+    "records_read": 10000,
+    "written": {
+      "cpt": 9000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\coding_oss_instruct.train.raw.jsonl",
+    "bytes": 36899322,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\curriculum_metadata.eval.prepared.jsonl",
+    "bytes": 1612762,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1000
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\curriculum_metadata.eval.raw.jsonl",
+    "bytes": 2234143,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\curriculum_metadata.train.prepared.jsonl",
+    "bytes": 16187550,
+    "action": "use",
+    "records_read": 10000,
+    "written": {
+      "cpt": 9000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\curriculum_metadata.train.raw.jsonl",
+    "bytes": 22421325,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\eval.prepared.jsonl",
+    "bytes": 17083936,
+    "action": "use",
+    "records_read": 7000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 7000
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\execution_repair.eval.prepared.jsonl",
+    "bytes": 2054867,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1000
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\execution_repair.eval.raw.jsonl",
+    "bytes": 3222234,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\execution_repair.train.prepared.jsonl",
+    "bytes": 20588663,
+    "action": "use",
+    "records_read": 10000,
+    "written": {
+      "cpt": 9000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\execution_repair.train.raw.jsonl",
+    "bytes": 32282326,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\knowledge_synthesis.eval.prepared.jsonl",
+    "bytes": 2507130,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1000
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\knowledge_synthesis.eval.raw.jsonl",
+    "bytes": 4037260,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\knowledge_synthesis.train.prepared.jsonl",
+    "bytes": 25171249,
+    "action": "use",
+    "records_read": 10000,
+    "written": {
+      "cpt": 9000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\knowledge_synthesis.train.raw.jsonl",
+    "bytes": 40552498,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\manifest.json",
+    "bytes": 6264,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\preference_pair.eval.prepared.jsonl",
+    "bytes": 1550407,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1000
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\preference_pair.eval.raw.jsonl",
+    "bytes": 2537814,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\preference_pair.train.prepared.jsonl",
+    "bytes": 15544066,
+    "action": "use",
+    "records_read": 10000,
+    "written": {
+      "cpt": 9000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\preference_pair.train.raw.jsonl",
+    "bytes": 25438132,
+    "action": "skip_raw_has_prepared",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\preference_pairs.eval.jsonl",
+    "bytes": 803565,
+    "action": "use",
+    "records_read": 1000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1000
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\preference_pairs.train.jsonl",
+    "bytes": 8045652,
+    "action": "use",
+    "records_read": 10000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "distillation_datasets_70k\\train.prepared.jsonl",
+    "bytes": 171199240,
+    "action": "use",
+    "records_read": 70000,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\continual_pretraining.jsonl",
+    "bytes": 431671,
+    "action": "use",
+    "records_read": 95,
+    "written": {
+      "cpt": 95,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\continual_pretraining.parquet",
+    "bytes": 199894,
+    "action": "skip_parquet_mirror_jsonl_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\DATASET_CARD.md",
+    "bytes": 2974,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\examples.json",
+    "bytes": 60868,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\knowledge_units.jsonl",
+    "bytes": 235570,
+    "action": "use",
+    "records_read": 95,
+    "written": {
+      "cpt": 95,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\knowledge_units.parquet",
+    "bytes": 114403,
+    "action": "skip_parquet_mirror_jsonl_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\manifest.json",
+    "bytes": 1870,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\preference_pairs.jsonl",
+    "bytes": 647182,
+    "action": "use",
+    "records_read": 95,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 95,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\preference_pairs.parquet",
+    "bytes": 300305,
+    "action": "skip_parquet_mirror_jsonl_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\reasoning_traces.jsonl",
+    "bytes": 881763,
+    "action": "use",
+    "records_read": 95,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 95,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\reasoning_traces.parquet",
+    "bytes": 347904,
+    "action": "skip_parquet_mirror_jsonl_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\schema.json",
+    "bytes": 1241,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\sft_messages.jsonl",
+    "bytes": 1653006,
+    "action": "use",
+    "records_read": 285,
+    "written": {
+      "cpt": 0,
+      "sft": 285,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\sft_messages.parquet",
+    "bytes": 329088,
+    "action": "skip_parquet_mirror_jsonl_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\splits\\train\\continual_pretraining.jsonl",
+    "bytes": 412016,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\splits\\train\\knowledge_units.jsonl",
+    "bytes": 224287,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\splits\\train\\preference_pairs.jsonl",
+    "bytes": 617403,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\splits\\train\\reasoning_traces.jsonl",
+    "bytes": 840176,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\splits\\train\\sft_messages.jsonl",
+    "bytes": 1576853,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\splits\\validation\\continual_pretraining.jsonl",
+    "bytes": 19655,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\splits\\validation\\knowledge_units.jsonl",
+    "bytes": 11283,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\splits\\validation\\preference_pairs.jsonl",
+    "bytes": 29779,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\splits\\validation\\reasoning_traces.jsonl",
+    "bytes": 41587,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\splits\\validation\\sft_messages.jsonl",
+    "bytes": 76153,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_new_folder_llm_dataset\\transcript_enrichment.py",
+    "bytes": 23216,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_sudoku_dataset\\DATASET_CARD.md",
+    "bytes": 1159,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_sudoku_dataset\\examples.json",
+    "bytes": 4586,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_sudoku_dataset\\generated_puzzles.parquet",
+    "bytes": 10949,
+    "action": "use",
+    "records_read": 60,
+    "written": {
+      "cpt": 0,
+      "sft": 60,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_sudoku_dataset\\manifest.json",
+    "bytes": 421,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_sudoku_dataset\\reasoning_traces.parquet",
+    "bytes": 606344,
+    "action": "use",
+    "records_read": 21198,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 21198,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_sudoku_dataset\\schema.json",
+    "bytes": 1759,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_sudoku_dataset\\search_episodes.parquet",
+    "bytes": 19570,
+    "action": "use",
+    "records_read": 444,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 444,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_sudoku_dataset\\sudoku_enrichment.py",
+    "bytes": 21437,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\continual_pretraining.jsonl",
+    "bytes": 13824393,
+    "action": "use",
+    "records_read": 3094,
+    "written": {
+      "cpt": 3094,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\continual_pretraining.parquet",
+    "bytes": 6339637,
+    "action": "skip_parquet_mirror_jsonl_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\DATASET_CARD.md",
+    "bytes": 2982,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\examples.json",
+    "bytes": 59083,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\knowledge_units.jsonl",
+    "bytes": 7262705,
+    "action": "use",
+    "records_read": 3094,
+    "written": {
+      "cpt": 3094,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\knowledge_units.parquet",
+    "bytes": 3303381,
+    "action": "skip_parquet_mirror_jsonl_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\manifest.json",
+    "bytes": 1878,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\preference_pairs.jsonl",
+    "bytes": 20883969,
+    "action": "use",
+    "records_read": 3094,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 3094,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\preference_pairs.parquet",
+    "bytes": 9299129,
+    "action": "skip_parquet_mirror_jsonl_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\reasoning_traces.jsonl",
+    "bytes": 28596195,
+    "action": "use",
+    "records_read": 3094,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 3094,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\reasoning_traces.parquet",
+    "bytes": 10280285,
+    "action": "skip_parquet_mirror_jsonl_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\schema.json",
+    "bytes": 1241,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\sft_messages.jsonl",
+    "bytes": 53217790,
+    "action": "use",
+    "records_read": 9282,
+    "written": {
+      "cpt": 0,
+      "sft": 9282,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\sft_messages.parquet",
+    "bytes": 10675740,
+    "action": "skip_parquet_mirror_jsonl_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\splits\\train\\continual_pretraining.jsonl",
+    "bytes": 13143955,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\splits\\train\\knowledge_units.jsonl",
+    "bytes": 6905116,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\splits\\train\\preference_pairs.jsonl",
+    "bytes": 19853871,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\splits\\train\\reasoning_traces.jsonl",
+    "bytes": 27189897,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\splits\\train\\sft_messages.jsonl",
+    "bytes": 50597307,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\splits\\validation\\continual_pretraining.jsonl",
+    "bytes": 680438,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\splits\\validation\\knowledge_units.jsonl",
+    "bytes": 357589,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\splits\\validation\\preference_pairs.jsonl",
+    "bytes": 1030098,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\splits\\validation\\reasoning_traces.jsonl",
+    "bytes": 1406298,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\splits\\validation\\sft_messages.jsonl",
+    "bytes": 2620483,
+    "action": "skip_enriched_split_duplicate",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "enriched_transcripts_llm_dataset\\transcript_enrichment.py",
+    "bytes": 21068,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "Jackrong__Claude-opus-4.6-TraceInversion-9000x\\.gitattributes",
+    "bytes": 2583,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "Jackrong__Claude-opus-4.6-TraceInversion-9000x\\claude-opus-4.6-traceInversion-9000x.jsonl",
+    "bytes": 61910405,
+    "action": "use",
+    "records_read": 8669,
+    "written": {
+      "cpt": 0,
+      "sft": 8669,
+      "reasoning": 8669,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "Jackrong__Claude-opus-4.6-TraceInversion-9000x\\README.md",
+    "bytes": 84920,
+    "action": "skip_dataset_readme_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\01-synthetic-data-generation.md",
+    "bytes": 36230,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\02-validation-feedback-pipelines.md",
+    "bytes": 43859,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\03-distillation-mathematics.md",
+    "bytes": 40843,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\04-optimization-architectures.md",
+    "bytes": 24711,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\05-implementation-roadmap.md",
+    "bytes": 32487,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\code-samples\\data_generation_pipeline.py",
+    "bytes": 34761,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\code-samples\\distillation_trainer.py",
+    "bytes": 23748,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\code-samples\\training_config.yaml",
+    "bytes": 8092,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\expanded-dataset\\agentic_trajectories.jsonl",
+    "bytes": 294040,
+    "action": "skip_component_duplicate_in_combined_sft",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\expanded-dataset\\assistant_capability_sft.jsonl",
+    "bytes": 4476114,
+    "action": "use",
+    "records_read": 5283,
+    "written": {
+      "cpt": 0,
+      "sft": 5283,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\expanded-dataset\\ats_transfer_curriculum.jsonl",
+    "bytes": 8626034,
+    "action": "skip_component_duplicate_in_combined_sft",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\expanded-dataset\\capability_taxonomy.json",
+    "bytes": 1433,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\expanded-dataset\\coding_samples.jsonl",
+    "bytes": 85948,
+    "action": "skip_component_duplicate_in_combined_sft",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\expanded-dataset\\contrastive_pairs.jsonl",
+    "bytes": 99889,
+    "action": "use",
+    "records_read": 128,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 128,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\expanded-dataset\\handwritten_behavior_multimodal.jsonl",
+    "bytes": 34022,
+    "action": "skip_component_duplicate_in_combined_sft",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\expanded-dataset\\manifest.json",
+    "bytes": 1229,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\expanded-dataset\\README.md",
+    "bytes": 1563,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\expanded-dataset\\validation_report.json",
+    "bytes": 1381,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\README.md",
+    "bytes": 6201,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\schemas\\agentic-trajectory.json",
+    "bytes": 4584,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\schemas\\coding-instruction.json",
+    "bytes": 5043,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\schemas\\contrastive-pair.json",
+    "bytes": 2032,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "llm-distillation-spec\\tools\\create_expanded_dataset.py",
+    "bytes": 116610,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\AzW2iKd-ITM.json",
+    "bytes": 9668,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\dItUGF8GdTw.json",
+    "bytes": 4452,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\DtePicx_kFY.json",
+    "bytes": 69305,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\e_qX84BsKG8.json",
+    "bytes": 5421,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\fXyRprdoEoE.json",
+    "bytes": 15136,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\gZNstNuwEXQ.json",
+    "bytes": 5126,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\HekZLSZ2mpU.json",
+    "bytes": 3993,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\hyUr5E_xwjk.json",
+    "bytes": 6986,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\iuYlGRnC7J8.json",
+    "bytes": 8227,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\jozNEpY8iik.json",
+    "bytes": 7702,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\JpYA7WXkHyI.json",
+    "bytes": 16693,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\knJJhluV3DU.json",
+    "bytes": 6006,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\LejRmFRxXbY.json",
+    "bytes": 108575,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\mzhjQjkS6x0.json",
+    "bytes": 6025,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\RLONpDgUyxM.json",
+    "bytes": 13106,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\w1Ydm-vpzjE.json",
+    "bytes": 11532,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\W6PVargxd1g.json",
+    "bytes": 23226,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\wEwGBIr_RIw.json",
+    "bytes": 13298,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "New folder\\New folder\\WjgJZUMR8pI.json",
+    "bytes": 14736,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "openai__gsm8k\\.gitattributes",
+    "bytes": 1610,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "openai__gsm8k\\eval.yaml",
+    "bytes": 920,
+    "action": "use",
+    "records_read": 1,
+    "written": {
+      "cpt": 1,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "openai__gsm8k\\main\\test-00000-of-00001.parquet",
+    "bytes": 419088,
+    "action": "use",
+    "records_read": 1319,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1319
+    }
+  },
+  {
+    "path": "openai__gsm8k\\main\\train-00000-of-00001.parquet",
+    "bytes": 2306545,
+    "action": "use",
+    "records_read": 7473,
+    "written": {
+      "cpt": 0,
+      "sft": 2186,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "openai__gsm8k\\README.md",
+    "bytes": 7935,
+    "action": "skip_dataset_readme_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "openai__gsm8k\\socratic\\test-00000-of-00001.parquet",
+    "bytes": 486995,
+    "action": "use",
+    "records_read": 1319,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 1319
+    }
+  },
+  {
+    "path": "openai__gsm8k\\socratic\\train-00000-of-00001.parquet",
+    "bytes": 2677259,
+    "action": "use",
+    "records_read": 7473,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "prepared_corpus_agentic_hard\\base_train.deduped.jsonl",
+    "bytes": 1069839471,
+    "action": "use",
+    "records_read": 308671,
+    "written": {
+      "cpt": 308671,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "prepared_corpus_agentic_hard\\eval.prepared.jsonl",
+    "bytes": 6266481,
+    "action": "use",
+    "records_read": 5441,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 5441
+    }
+  },
+  {
+    "path": "prepared_corpus_agentic_hard\\hard_agentic_eval.generated.jsonl",
+    "bytes": 5458183,
+    "action": "use",
+    "records_read": 5000,
+    "written": {
+      "cpt": 5000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "prepared_corpus_agentic_hard\\hard_agentic_train.generated.jsonl",
+    "bytes": 131265785,
+    "action": "use",
+    "records_read": 120000,
+    "written": {
+      "cpt": 120000,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "prepared_corpus_agentic_hard\\manifest.json",
+    "bytes": 1773,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "prepared_corpus_agentic_hard\\train.prepared.jsonl",
+    "bytes": 1201105256,
+    "action": "use",
+    "records_read": 428671,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "ReasonCore__open-spatial-reasoning\\.gitattributes",
+    "bytes": 2504,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "ReasonCore__open-spatial-reasoning\\data\\train-00000-of-00001.parquet",
+    "bytes": 21285474,
+    "action": "use",
+    "records_read": 50,
+    "written": {
+      "cpt": 0,
+      "sft": 41,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "ReasonCore__open-spatial-reasoning\\README.md",
+    "bytes": 3538,
+    "action": "skip_dataset_readme_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "SupraLabs__SupraThink-Dataset-500x\\.gitattributes",
+    "bytes": 2504,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "SupraLabs__SupraThink-Dataset-500x\\data.jsonl",
+    "bytes": 1031766,
+    "action": "use",
+    "records_read": 500,
+    "written": {
+      "cpt": 0,
+      "sft": 495,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "SupraLabs__SupraThink-Dataset-500x\\README.md",
+    "bytes": 54,
+    "action": "skip_dataset_readme_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "Training data.rar",
+    "bytes": 256700919,
+    "action": "skip_unsupported",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "transcripts.jsonl",
+    "bytes": 11406006,
+    "action": "skip_raw_transcript_enriched_available",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\splits\\train\\unified_cpt.jsonl",
+    "bytes": 1362163165,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\splits\\train\\unified_preference_pairs.jsonl",
+    "bytes": 19341211,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\splits\\train\\unified_reasoning_traces.jsonl",
+    "bytes": 57408811,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\splits\\train\\unified_sft_messages.jsonl",
+    "bytes": 112979966,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\splits\\validation\\unified_cpt.jsonl",
+    "bytes": 72795577,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\splits\\validation\\unified_preference_pairs.jsonl",
+    "bytes": 997902,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\splits\\validation\\unified_reasoning_traces.jsonl",
+    "bytes": 2915479,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\splits\\validation\\unified_sft_messages.jsonl",
+    "bytes": 6030974,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\unified_cpt.jsonl",
+    "bytes": 1434941999,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\unified_eval.jsonl",
+    "bytes": 49634347,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\unified_preference_pairs.jsonl",
+    "bytes": 20322229,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\unified_reasoning_traces.jsonl",
+    "bytes": 60459401,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "unified_training_curriculum\\unified_sft_messages.jsonl",
+    "bytes": 119156772,
+    "action": "skip_output_artifact",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "wikimedia__structured-wikipedia_METADATA_ONLY\\.gitattributes",
+    "bytes": 2419,
+    "action": "skip_metadata",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "wikimedia__structured-wikipedia_METADATA_ONLY\\FULL_DATASET_DRY_RUN.txt",
+    "bytes": 12840,
+    "action": "skip_metadata_only",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  },
+  {
+    "path": "wikimedia__structured-wikipedia_METADATA_ONLY\\README.md",
+    "bytes": 26299,
+    "action": "skip_metadata_only",
+    "records_read": 0,
+    "written": {
+      "cpt": 0,
+      "sft": 0,
+      "reasoning": 0,
+      "preference": 0,
+      "eval": 0
+    }
+  }
+]

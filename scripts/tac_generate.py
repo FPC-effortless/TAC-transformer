@@ -25,9 +25,33 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
     parser.add_argument("--precision", choices=["fp32", "fp16", "bf16"], default="fp32")
     parser.add_argument("--max-new-tokens", type=int, default=128)
+    parser.add_argument(
+        "--context-window",
+        type=int,
+        default=None,
+        help="Optional decode context window; defaults to the checkpoint max_seq_len.",
+    )
     parser.add_argument("--temperature", type=float, default=0.7)
     parser.add_argument("--top-k", type=int, default=50)
     parser.add_argument("--top-p", type=float, default=0.9)
+    parser.add_argument(
+        "--energy-rerank-top-k",
+        type=int,
+        default=0,
+        help="When positive, rerank the LM's top-K candidates with TAC data_energy.",
+    )
+    parser.add_argument(
+        "--data-energy-weight",
+        type=float,
+        default=1.0,
+        help="Penalty weight applied to candidate data_energy during reranking.",
+    )
+    parser.add_argument(
+        "--data-energy-verifier-threshold",
+        type=float,
+        default=None,
+        help="Mark generated tokens above this data_energy as verifier-required.",
+    )
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--json", action="store_true", help="Print the full generation payload as JSON.")
     return parser
@@ -45,12 +69,16 @@ def main(argv: list[str] | None = None) -> None:
         model,
         args.prompt,
         max_new_tokens=args.max_new_tokens,
+        context_window=args.context_window,
         temperature=args.temperature,
         top_k=args.top_k,
         top_p=args.top_p,
         device=device,
         precision=args.precision,
         seed=args.seed,
+        energy_rerank_top_k=args.energy_rerank_top_k,
+        data_energy_weight=args.data_energy_weight,
+        data_energy_verifier_threshold=args.data_energy_verifier_threshold,
     )
     payload = {"metadata": metadata, "generation": result}
     if args.json:

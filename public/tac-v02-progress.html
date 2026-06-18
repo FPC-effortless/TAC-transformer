@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TAC v0.2 Progress</title>
+    <style>
+      :root {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #172026;
+        background: #f6f8f5;
+      }
+      body {
+        margin: 0;
+      }
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 48px 24px 72px;
+      }
+      h1 {
+        font-size: clamp(2rem, 5vw, 4.5rem);
+        line-height: 1.02;
+        margin: 0 0 16px;
+      }
+      .lead {
+        font-size: 1.2rem;
+        max-width: 760px;
+        line-height: 1.5;
+      }
+      section {
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid #cbd5cb;
+      }
+      h2 {
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #425049;
+      }
+      ul {
+        padding-left: 1.2rem;
+        line-height: 1.65;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+        background: white;
+      }
+      th, td {
+        text-align: left;
+        padding: 12px;
+        border-bottom: 1px solid #dde5dc;
+      }
+      th {
+        color: #425049;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>TAC v0.2</h1>
+      <p class="lead">
+        The next TAC milestone is a single scaling question: do persistent
+        state, repair planning, and compression advantages survive at about
+        112M parameters on real language and code data?
+      </p>
+
+      <section>
+        <h2>What TAC Is</h2>
+        <ul>
+          <li>An experimental transformer variant with persistent identity state and routed program modules.</li>
+          <li>A research architecture for long-horizon agent memory, repair, and compressed context.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>What TAC Proved In v0.1</h2>
+        <ul>
+          <li>Bounded persistent-state mechanisms can become causally useful.</li>
+          <li>20x compression survived realistic local benchmarks.</li>
+          <li>Repair-control and causal-fix selection passed bounded sandbox tests.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>What TAC Failed</h2>
+        <ul>
+          <li>Open-ended agency is not validated.</li>
+          <li>Long interacting repair chains still miss the completion gate.</li>
+          <li>v0.1 does not prove a transformer-beating scaling law.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>What TAC Tests Next</h2>
+        <table>
+          <thead>
+            <tr><th>Run</th><th>Status</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Transformer 112M</td><td>ready</td><td>LM baseline</td></tr>
+            <tr><td>TAC 112M</td><td>ready</td><td>matched-token comparison</td></tr>
+            <tr><td>Mechanism retests</td><td>pending</td><td>persistent state, repair, compression</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </body>
+</html>

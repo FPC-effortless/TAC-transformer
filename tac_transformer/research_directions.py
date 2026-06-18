@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from dataclasses import dataclass, field
 from statistics import mean
 from typing import Any
 
@@ -235,6 +236,599 @@ def computation_prediction_loss(
     log_probs = F.log_softmax(logits, dim=-1)
     target_probs = _normalise_probs(future_routes.detach())
     return F.kl_div(log_probs, target_probs, reduction="batchmean")
+
+
+CONCEPT_RELATION_TYPES: dict[str, int] = {
+    "same": 0,
+    "child_of": 1,
+    "parent_of": 2,
+    "overlaps": 3,
+    "disjoint": 4,
+    "analogy_related": 5,
+}
+
+
+def diagonal_mahalanobis_distance(
+    points: Tensor,
+    means: Tensor,
+    log_vars: Tensor,
+    *,
+    min_log_var: float = -8.0,
+    max_log_var: float = 8.0,
+) -> Tensor:
+    """Squared Mahalanobis distance for diagonal Gaussian concept volumes."""
+    if points.shape != means.shape or points.shape != log_vars.shape:
+        raise ValueError("points, means, and log_vars must have matching shapes")
+    bounded_log_vars = log_vars.clamp(min_log_var, max_log_var)
+    inv_vars = torch.exp(-bounded_log_vars)
+    return ((points - means).pow(2) * inv_vars).sum(dim=-1)
+
+
+def adaptive_concept_volume_loss(
+    embeddings: Tensor,
+    concept_ids: Tensor,
+    concept_means: Tensor,
+    concept_log_vars: Tensor,
+    *,
+    min_log_var: float = -8.0,
+    max_log_var: float = 8.0,
+) -> Tensor:
+    """Gaussian NLL-style contraction into learned anisotropic concept regions."""
+    if embeddings.ndim != 2:
+        raise ValueError("embeddings must be [n_examples, d_model]")
+    if concept_means.shape != concept_log_vars.shape:
+        raise ValueError("concept_means and concept_log_vars must have matching shapes")
+    if concept_means.ndim != 2 or concept_means.shape[-1] != embeddings.shape[-1]:
+        raise ValueError("concept parameters must be [n_concepts, d_model]")
+    concept_ids = concept_ids.long().reshape(-1)
+    if concept_ids.numel() != embeddings.shape[0]:
+        raise ValueError("concept_ids must provide one concept per embedding")
+    selected_means = concept_means.index_select(0, concept_ids)
+    selected_log_vars = concept_log_vars.index_select(0, concept_ids).clamp(
+        min_log_var,
+        max_log_var,
+    )
+    mahalanobis = diagonal_mahalanobis_distance(
+        embeddings,
+        selected_means,
+        selected_log_vars,
+        min_log_var=min_log_var,
+        max_log_var=max_log_var,
+    )
+    log_volume = selected_log_vars.sum(dim=-1)
+    return 0.5 * (mahalanobis + log_volume).mean()
+
+
+def concept_subsumption_loss(
+    concept_means: Tensor,
+    concept_log_vars: Tensor,
+    child_indices: Tensor,
+    parent_indices: Tensor,
+    *,
+    center_margin: float | None = None,
+    size_slack: float = 0.0,
+    size_weight: float = 1.0,
+) -> Tensor:
+    """Penalize child concept volumes that sit outside or exceed parent volumes."""
+    if concept_means.shape != concept_log_vars.shape:
+        raise ValueError("concept_means and concept_log_vars must have matching shapes")
+    child_indices = child_indices.long().reshape(-1)
+    parent_indices = parent_indices.long().reshape(-1)
+    if child_indices.numel() != parent_indices.numel():
+        raise ValueError("child_indices and parent_indices must have matching lengths")
+    if child_indices.numel() == 0:
+        return concept_means.new_zeros(())
+    margin = float(concept_means.shape[-1] if center_margin is None else center_margin)
+    child_means = concept_means.index_select(0, child_indices)
+    parent_means = concept_means.index_select(0, parent_indices)
+    child_log_vars = concept_log_vars.index_select(0, child_indices)
+    parent_log_vars = concept_log_vars.index_select(0, parent_indices)
+    center_distance = diagonal_mahalanobis_distance(
+        child_means,
+        parent_means,
+        parent_log_vars,
+    )
+    center_loss = F.relu(center_distance - margin).mean()
+    child_vars = torch.exp(child_log_vars.clamp(-8.0, 8.0))
+    parent_vars = torch.exp(parent_log_vars.clamp(-8.0, 8.0))
+    size_loss = F.relu(child_vars - parent_vars - size_slack).mean()
+    return center_loss + float(size_weight) * size_loss
+
+
+def concept_relation_loss(
+    concept_means: Tensor,
+    concept_log_vars: Tensor,
+    relation_pairs: Tensor,
+    relation_types: Tensor,
+    *,
+    center_margin: float | None = None,
+    overlap_margin: float | None = None,
+    disjoint_margin: float | None = None,
+) -> Tensor:
+    """Relation-aware concept-volume loss for same, hierarchy, overlap, and disjoint pairs."""
+    if concept_means.shape != concept_log_vars.shape:
+        raise ValueError("concept_means and concept_log_vars must have matching shapes")
+    if relation_pairs.numel() == 0:
+        return concept_means.new_zeros(())
+    if relation_pairs.ndim != 2 or relation_pairs.shape[-1] != 2:
+        raise ValueError("relation_pairs must be [n_relations, 2]")
+    relation_types = relation_types.long().reshape(-1)
+    if relation_types.numel() != relation_pairs.shape[0]:
+        raise ValueError("relation_types must provide one type per relation pair")
+
+    dim = concept_means.shape[-1]
+    center = float(dim if center_margin is None else center_margin)
+    overlap = float(dim if overlap_margin is None else overlap_margin)
+    disjoint = float(dim * 2.0 if disjoint_margin is None else disjoint_margin)
+    left = relation_pairs[:, 0].long()
+    right = relation_pairs[:, 1].long()
+    losses: list[Tensor] = []
+
+    same_mask = relation_types == CONCEPT_RELATION_TYPES["same"]
+    if same_mask.any():
+        same_left = left[same_mask]
+        same_right = right[same_mask]
+        losses.append(
+            F.mse_loss(
+                concept_means.index_select(0, same_left),
+                concept_means.index_select(0, same_right),
+            )
+            + F.mse_loss(
+                concept_log_vars.index_select(0, same_left),
+                concept_log_vars.index_select(0, same_right),
+            )
+        )
+
+    child_mask = relation_types == CONCEPT_RELATION_TYPES["child_of"]
+    if child_mask.any():
+        losses.append(
+            concept_subsumption_loss(
+                concept_means,
+                concept_log_vars,
+                left[child_mask],
+                right[child_mask],
+                center_margin=center,
+            )
+        )
+
+    parent_mask = relation_types == CONCEPT_RELATION_TYPES["parent_of"]
+    if parent_mask.any():
+        losses.append(
+            concept_subsumption_loss(
+                concept_means,
+                concept_log_vars,
+                right[parent_mask],
+                left[parent_mask],
+                center_margin=center,
+            )
+        )
+
+    overlap_mask = relation_types == CONCEPT_RELATION_TYPES["overlaps"]
+    if overlap_mask.any():
+        overlap_left = left[overlap_mask]
+        overlap_right = right[overlap_mask]
+        joint_log_vars = torch.logaddexp(
+            concept_log_vars.index_select(0, overlap_left),
+            concept_log_vars.index_select(0, overlap_right),
+        )
+        overlap_distance = diagonal_mahalanobis_distance(
+            concept_means.index_select(0, overlap_left),
+            concept_means.index_select(0, overlap_right),
+            joint_log_vars,
+        )
+        losses.append(F.relu(overlap_distance - overlap).mean())
+
+    disjoint_mask = relation_types == CONCEPT_RELATION_TYPES["disjoint"]
+    if disjoint_mask.any():
+        disjoint_left = left[disjoint_mask]
+        disjoint_right = right[disjoint_mask]
+        joint_log_vars = torch.logaddexp(
+            concept_log_vars.index_select(0, disjoint_left),
+            concept_log_vars.index_select(0, disjoint_right),
+        )
+        disjoint_distance = diagonal_mahalanobis_distance(
+            concept_means.index_select(0, disjoint_left),
+            concept_means.index_select(0, disjoint_right),
+            joint_log_vars,
+        )
+        losses.append(F.relu(disjoint - disjoint_distance).mean())
+
+    if not losses:
+        return concept_means.new_zeros(())
+    return torch.stack(losses).mean()
+
+
+@dataclass
+class StructureMemoryRecord:
+    structure_id: str
+    task_descriptors: tuple[str, ...] = ()
+    success_count: int = 0
+    failure_count: int = 0
+    reset_sensitivity: float = 0.0
+    knockout_sensitivity: float = 0.0
+    survival_score: float = 0.0
+    reuse_score: float = 0.0
+    transfer_edges: dict[str, dict[str, float]] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class StructureRouteResult:
+    family_ids: Tensor
+    specialist_ids: Tensor
+    family_scores: Tensor
+    specialist_scores: Tensor
+    family_confidence: Tensor
+    specialist_confidence: Tensor
+
+
+def structure_volume_route(
+    embeddings: Tensor,
+    family_means: Tensor,
+    family_log_vars: Tensor,
+) -> tuple[Tensor, Tensor, Tensor]:
+    """Route embeddings to adaptive concept-volume families by Mahalanobis score."""
+    if embeddings.ndim != 2:
+        raise ValueError("embeddings must be [batch, d_model]")
+    if family_means.shape != family_log_vars.shape:
+        raise ValueError("family_means and family_log_vars must have matching shapes")
+    if family_means.ndim != 2 or family_means.shape[-1] != embeddings.shape[-1]:
+        raise ValueError("family parameters must be [families, d_model]")
+    expanded_embeddings = embeddings[:, None, :].expand(
+        embeddings.shape[0],
+        family_means.shape[0],
+        embeddings.shape[-1],
+    )
+    expanded_means = family_means[None, :, :].expand_as(expanded_embeddings)
+    expanded_log_vars = family_log_vars[None, :, :].expand_as(expanded_embeddings)
+    distances = diagonal_mahalanobis_distance(
+        expanded_embeddings,
+        expanded_means,
+        expanded_log_vars,
+    )
+    scores = -distances
+    family_ids = scores.argmax(dim=-1)
+    confidence = F.softmax(scores, dim=-1).gather(
+        1,
+        family_ids[:, None],
+    ).squeeze(1)
+    return family_ids, scores, confidence
+
+
+def two_level_structure_route(
+    embeddings: Tensor,
+    family_means: Tensor,
+    family_log_vars: Tensor,
+    specialist_means: Tensor,
+    *,
+    top_k: int = 1,
+) -> StructureRouteResult:
+    """Route first to a structure family volume, then to a family-local specialist."""
+    if specialist_means.ndim != 3:
+        raise ValueError("specialist_means must be [families, specialists, d_model]")
+    if specialist_means.shape[0] != family_means.shape[0]:
+        raise ValueError("specialist family count must match family_means")
+    if specialist_means.shape[-1] != embeddings.shape[-1]:
+        raise ValueError("specialist_means d_model must match embeddings")
+    specialists_per_family = specialist_means.shape[1]
+    if top_k < 1:
+        raise ValueError("top_k must be at least 1")
+    if top_k > specialists_per_family:
+        raise ValueError("top_k must be <= specialists per family")
+
+    family_ids, family_scores, family_confidence = structure_volume_route(
+        embeddings,
+        family_means,
+        family_log_vars,
+    )
+    selected_specialists = specialist_means.index_select(0, family_ids)
+    specialist_distances = torch.cdist(
+        embeddings[:, None, :],
+        selected_specialists,
+        p=2,
+    ).squeeze(1).pow(2)
+    specialist_scores = -specialist_distances
+    specialist_ids = specialist_scores.topk(top_k, dim=-1).indices[:, 0]
+    specialist_confidence = F.softmax(specialist_scores, dim=-1).gather(
+        1,
+        specialist_ids[:, None],
+    ).squeeze(1)
+    return StructureRouteResult(
+        family_ids=family_ids,
+        specialist_ids=specialist_ids,
+        family_scores=family_scores,
+        specialist_scores=specialist_scores,
+        family_confidence=family_confidence,
+        specialist_confidence=specialist_confidence,
+    )
+
+
+@dataclass
+class ProceduralMemoryRecord:
+    procedure_id: str
+    family_id: str
+    task_descriptor: str
+    steps: tuple[str, ...]
+    embedding: Tensor
+    success_rate: float = 0.0
+    use_count: int = 0
+    failure_count: int = 0
+    retired: bool = False
+
+
+@dataclass(frozen=True)
+class ProceduralMemoryRetrieval:
+    procedure_id: str
+    family_id: str
+    score: float
+    similarity: float
+    success_rate: float
+    record: ProceduralMemoryRecord
+
+
+class ProceduralMemoryStore:
+    """Small deterministic procedural-memory store for repair/reuse experiments."""
+
+    def __init__(self, *, success_weight: float = 0.15):
+        self.success_weight = float(success_weight)
+        self._records: dict[str, ProceduralMemoryRecord] = {}
+
+    def __len__(self) -> int:
+        return len(self._records)
+
+    def write(self, record: ProceduralMemoryRecord) -> ProceduralMemoryRecord:
+        if record.embedding.ndim != 1:
+            raise ValueError("procedure embedding must be one-dimensional")
+        normalized = _unit_vector(record.embedding.detach().clone().float())
+        stored = ProceduralMemoryRecord(
+            procedure_id=str(record.procedure_id),
+            family_id=str(record.family_id),
+            task_descriptor=str(record.task_descriptor),
+            steps=tuple(str(step) for step in record.steps),
+            embedding=normalized,
+            success_rate=float(record.success_rate),
+            use_count=int(record.use_count),
+            failure_count=int(record.failure_count),
+            retired=bool(record.retired),
+        )
+        self._records[stored.procedure_id] = stored
+        return stored
+
+    def get(self, procedure_id: str) -> ProceduralMemoryRecord:
+        return self._records[str(procedure_id)]
+
+    def retrieve(
+        self,
+        query_embedding: Tensor,
+        *,
+        family_id: str | None = None,
+        top_k: int = 1,
+    ) -> list[ProceduralMemoryRetrieval]:
+        if top_k < 1:
+            raise ValueError("top_k must be at least 1")
+        query = _unit_vector(query_embedding.detach().clone().float())
+        rows: list[ProceduralMemoryRetrieval] = []
+        for record in self._records.values():
+            if record.retired:
+                continue
+            if family_id is not None and record.family_id != family_id:
+                continue
+            similarity = float(torch.dot(query, _unit_vector(record.embedding)))
+            score = similarity + self.success_weight * float(record.success_rate)
+            rows.append(
+                ProceduralMemoryRetrieval(
+                    procedure_id=record.procedure_id,
+                    family_id=record.family_id,
+                    score=score,
+                    similarity=similarity,
+                    success_rate=float(record.success_rate),
+                    record=record,
+                )
+            )
+        rows.sort(key=lambda row: row.score, reverse=True)
+        return rows[:top_k]
+
+    def replace(self, record: ProceduralMemoryRecord) -> None:
+        self._records[record.procedure_id] = record
+
+
+def adapt_procedural_memory_after_feedback(
+    store: ProceduralMemoryStore,
+    *,
+    selected_procedure_id: str,
+    task_embedding: Tensor,
+    success: bool,
+    expected_family_id: str | None = None,
+    learning_rate: float = 0.25,
+) -> dict[str, float | int]:
+    """Update procedure embeddings after success/failure feedback."""
+    if learning_rate < 0.0:
+        raise ValueError("learning_rate must be non-negative")
+    query = _unit_vector(task_embedding.detach().clone().float())
+    before_margin = _expected_family_margin(
+        store,
+        query,
+        selected_procedure_id=selected_procedure_id,
+        expected_family_id=expected_family_id,
+    )
+    selected = store.get(selected_procedure_id)
+    updated_records = 0
+    if success:
+        store.replace(
+            _replace_procedure_embedding(
+                selected,
+                _unit_vector(selected.embedding + float(learning_rate) * query),
+                success_delta=0.05,
+                use_delta=1,
+            )
+        )
+        updated_records += 1
+    else:
+        pushed = _unit_vector(selected.embedding - float(learning_rate) * 1.5 * query)
+        store.replace(
+            _replace_procedure_embedding(
+                selected,
+                pushed,
+                success_delta=-0.20,
+                failure_delta=1,
+                use_delta=1,
+            )
+        )
+        updated_records += 1
+        if expected_family_id is not None:
+            for record in list(store._records.values()):
+                if record.procedure_id == selected_procedure_id or record.retired:
+                    continue
+                if record.family_id != expected_family_id:
+                    continue
+                pulled = _unit_vector(record.embedding + float(learning_rate) * query)
+                store.replace(
+                    _replace_procedure_embedding(
+                        record,
+                        pulled,
+                        success_delta=0.05,
+                    )
+                )
+                updated_records += 1
+    after_margin = _expected_family_margin(
+        store,
+        query,
+        selected_procedure_id=selected_procedure_id,
+        expected_family_id=expected_family_id,
+    )
+    return {
+        "updated_records": int(updated_records),
+        "successful_updates": int(bool(success)),
+        "failed_updates": int(not success),
+        "retrieval_margin_before": float(before_margin),
+        "retrieval_margin_after": float(after_margin),
+    }
+
+
+def update_structure_memory(
+    record: StructureMemoryRecord,
+    *,
+    task_descriptor: str,
+    success: bool,
+    reset_drop: float = 0.0,
+    knockout_drop: float = 0.0,
+    transfer_to: str | None = None,
+    transfer_gain: float = 0.0,
+) -> StructureMemoryRecord:
+    """Return an updated Structure Memory record from one behavioral observation."""
+    success_count = record.success_count + int(bool(success))
+    failure_count = record.failure_count + int(not success)
+    observations = max(success_count + failure_count, 1)
+    previous_observations = max(record.success_count + record.failure_count, 1)
+    reset_sensitivity = (
+        record.reset_sensitivity * previous_observations + max(float(reset_drop), 0.0)
+    ) / (previous_observations + 1)
+    knockout_sensitivity = (
+        record.knockout_sensitivity * previous_observations
+        + max(float(knockout_drop), 0.0)
+    ) / (previous_observations + 1)
+    task_descriptors = tuple(
+        dict.fromkeys((*record.task_descriptors, str(task_descriptor)))
+    )
+    transfer_edges = {
+        edge: dict(stats) for edge, stats in record.transfer_edges.items()
+    }
+    if transfer_to is not None:
+        edge = transfer_edges.setdefault(
+            str(transfer_to),
+            {"count": 0.0, "mean_gain": 0.0},
+        )
+        count = float(edge.get("count", 0.0))
+        edge["mean_gain"] = (
+            edge.get("mean_gain", 0.0) * count + float(transfer_gain)
+        ) / (count + 1.0)
+        edge["count"] = count + 1.0
+    success_rate = success_count / observations
+    causal_sensitivity = min((reset_sensitivity + knockout_sensitivity) / 2.0, 1.0)
+    positive_transfer = [
+        max(float(stats.get("mean_gain", 0.0)), 0.0)
+        for stats in transfer_edges.values()
+    ]
+    reuse_score = min(sum(positive_transfer), 1.0)
+    survival_score = min(0.55 * success_rate + 0.45 * causal_sensitivity, 1.0)
+    return StructureMemoryRecord(
+        structure_id=record.structure_id,
+        task_descriptors=task_descriptors,
+        success_count=success_count,
+        failure_count=failure_count,
+        reset_sensitivity=reset_sensitivity,
+        knockout_sensitivity=knockout_sensitivity,
+        survival_score=survival_score,
+        reuse_score=reuse_score,
+        transfer_edges=transfer_edges,
+    )
+
+
+def _unit_vector(vector: Tensor, *, eps: float = 1e-8) -> Tensor:
+    norm = vector.norm()
+    if float(norm) <= eps:
+        return torch.zeros_like(vector)
+    return vector / norm.clamp_min(eps)
+
+
+def _replace_procedure_embedding(
+    record: ProceduralMemoryRecord,
+    embedding: Tensor,
+    *,
+    success_delta: float = 0.0,
+    failure_delta: int = 0,
+    use_delta: int = 0,
+) -> ProceduralMemoryRecord:
+    return ProceduralMemoryRecord(
+        procedure_id=record.procedure_id,
+        family_id=record.family_id,
+        task_descriptor=record.task_descriptor,
+        steps=record.steps,
+        embedding=_unit_vector(embedding.detach().clone().float()),
+        success_rate=max(0.0, min(1.0, float(record.success_rate) + success_delta)),
+        use_count=record.use_count + int(use_delta),
+        failure_count=record.failure_count + int(failure_delta),
+        retired=record.retired,
+    )
+
+
+def _expected_family_margin(
+    store: ProceduralMemoryStore,
+    query: Tensor,
+    *,
+    selected_procedure_id: str,
+    expected_family_id: str | None,
+) -> float:
+    selected_rows = [
+        row
+        for row in store.retrieve(query, top_k=max(len(store), 1))
+        if row.procedure_id == selected_procedure_id
+    ]
+    selected_score = selected_rows[0].score if selected_rows else float("-inf")
+    if expected_family_id is None:
+        rows = store.retrieve(query, top_k=2)
+        if len(rows) < 2:
+            return 0.0
+        return float(rows[0].score - rows[1].score)
+    expected_rows = store.retrieve(
+        query,
+        family_id=expected_family_id,
+        top_k=1,
+    )
+    if not expected_rows:
+        return float("-inf")
+    return float(expected_rows[0].score - selected_score)
+
+
+def structure_memory_score(record: StructureMemoryRecord) -> float:
+    observations = max(record.success_count + record.failure_count, 1)
+    success_rate = record.success_count / observations
+    return float(
+        0.35 * success_rate
+        + 0.25 * record.survival_score
+        + 0.20 * record.reuse_score
+        + 0.10 * min(record.reset_sensitivity, 1.0)
+        + 0.10 * min(record.knockout_sensitivity, 1.0)
+    )
 
 
 def macro_program_compression_stats(

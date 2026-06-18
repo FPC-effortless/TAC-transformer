@@ -1,0 +1,57 @@
+{
+  "schema": "tac_completion_unified_curriculum.v1",
+  "profile": "full",
+  "tokenizer": "tac_byte_utf8_plus_eos",
+  "exclude_multimodal": true,
+  "files": {
+    "train": {
+      "path": "Training data\\unified_training_curriculum\\tac_completions_full_text_only_clean\\train.completions.jsonl",
+      "records": 36345,
+      "tac_byte_tokens": 118980218,
+      "streams": {
+        "preference": 3171,
+        "sft": 33174
+      },
+      "datasets": {
+        "Jackrong__Claude-opus-4.6-TraceInversion-9000x": 8216,
+        "ReasonCore__open-spatial-reasoning": 38,
+        "SupraLabs__SupraThink-Dataset-500x": 462,
+        "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k": 8274,
+        "distillation_datasets": 20,
+        "enriched_new_folder_llm_dataset": 354,
+        "enriched_sudoku_dataset": 54,
+        "enriched_transcripts_llm_dataset": 11725,
+        "llm-distillation-spec": 5125,
+        "openai__gsm8k": 2077
+      },
+      "multimodal_skipped": 17
+    },
+    "eval": {
+      "path": "Training data\\unified_training_curriculum\\tac_completions_full_text_only_clean\\eval.completions.jsonl",
+      "records": 1985,
+      "tac_byte_tokens": 6484339,
+      "streams": {
+        "preference": 169,
+        "sft": 1816
+      },
+      "datasets": {
+        "Jackrong__Claude-opus-4.6-TraceInversion-9000x": 453,
+        "ReasonCore__open-spatial-reasoning": 3,
+        "SupraLabs__SupraThink-Dataset-500x": 33,
+        "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k": 432,
+        "distillation_datasets": 3,
+        "enriched_new_folder_llm_dataset": 26,
+        "enriched_sudoku_dataset": 6,
+        "enriched_transcripts_llm_dataset": 651,
+        "llm-distillation-spec": 269,
+        "openai__gsm8k": 109
+      },
+      "multimodal_skipped": 0
+    }
+  },
+  "notes": [
+    "Completion files expose prompt and answer fields for --supervision-mode answer_only.",
+    "Answer fields contain only assistant target content; role markers remain in prompts only.",
+    "Only SFT and preference-chosen rows are included; CPT and reasoning traces remain full-LM objectives."
+  ]
+}

@@ -38,6 +38,7 @@ FILES = [
     "experiments/benchmark_run5_pathfinder.py",
     "experiments/benchmark_routing_pressure_phase.py",
     "experiments/evaluate_external_run5b_validation.py",
+    "experiments/monitor_run5b_best_capability_external_validation.py",
     "experiments/advance_tac_research_plan.py",
     "experiments/aggregate_phase_b_seed_results.py",
     "experiments/aggregate_phase_c_identity_stability.py",
@@ -50,6 +51,7 @@ FILES = [
     "experiments/benchmark_agentic_controller_learning.py",
     "experiments/benchmark_live_agentic_policy_adapter.py",
     "experiments/benchmark_live_agentic_policy_training.py",
+    "experiments/benchmark_live_tac_runtime_search.py",
     "experiments/benchmark_agentic_scratchpad_state.py",
     "experiments/benchmark_phase_d_scratchpad_state_execution.py",
     "experiments/benchmark_scratchpad_autoregressive_decoding.py",
@@ -72,10 +74,12 @@ FILES = [
     "experiments/benchmark_phase_boundary_quantification.py",
     "experiments/benchmark_memory_advantage_model_version.py",
     "experiments/benchmark_long_horizon_memory_advantage.py",
+    "experiments/benchmark_multihop_reasoning_advantage.py",
     "experiments/benchmark_kaggle_tac_training_speed_profile.py",
     "experiments/benchmark_local_tac_efficiency_matrix.py",
     "experiments/benchmark_cpu_research_tac_version.py",
     "experiments/benchmark_identity_attention_selectivity.py",
+    "experiments/benchmark_identity_weight_ratio_validation.py",
     "experiments/benchmark_ats_transfer_suite.py",
     "experiments/stage_ats_transfer_corpus.py",
     "experiments/run_ats_checkpoint_predictions.py",
@@ -98,6 +102,7 @@ FILES = [
     "tac_transformer/model.py",
     "tac_transformer/training.py",
     "tac_transformer/serving.py",
+    "tac_transformer/runtime_search.py",
     "tac_transformer/presets.py",
     "tac_transformer/optimization.py",
     "tac_transformer/data.py",
@@ -179,7 +184,43 @@ else:
             shutil.copy2(item, target)
 
 %cd /kaggle/working/best_tac_agentic_code
+```
 
+TAC-198 ATS transfer repair command. Use this when the attached prepared
+corpus is the ATS transfer corpus with `prompt`, `answer`, `text`, and `domain`
+fields. It trains only answer tokens plus EOS while preserving selected-route
+MI pressure:
+
+```python
+!torchrun --standalone --nproc_per_node=2 kaggle/train_best_tac_agentic.py \\
+  --scale base \\
+  --seq-len 176 \\
+  --steps 5000 \\
+  --batch-size 12 \\
+  --grad-accum-steps 3 \\
+  --eval-every 1000 \\
+  --eval-batches 4 \\
+  --checkpoint-every 500 \\
+  --output-dir /kaggle/working/tac_ats_transfer_tac_base_answer_only_5k \\
+  --device auto \\
+  --supervision-mode answer_only \\
+  --prompt-field prompt \\
+  --completion-field answer \\
+  --precision fp32 \\
+  --min-healthy-gradient-norm 1e-12 \\
+  --fail-on-unhealthy-optimization \\
+  --max-seconds 30600 \\
+  --stop-buffer-seconds 1200 \\
+  --routing-type base_semantic \\
+  --routing-top-k 2 \\
+  --category-route-weight 0.5 \\
+  --category-route-objective selected_mi \\
+  --skip-end-specialization-on-time-stop
+```
+
+General Run 4 selected-MI training command for hard-agentic full-LM rows:
+
+```python
 !python kaggle/train_best_tac_agentic.py \\
   --scale base \\
   --steps 20000 \\

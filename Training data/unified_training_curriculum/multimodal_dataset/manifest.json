@@ -1,0 +1,32 @@
+{
+  "schema": "unified_multimodal_dataset.v1",
+  "generated_at": "2026-06-06T17:49:49.171725+00:00",
+  "source_curriculum": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum",
+  "record_type": "sft_messages_with_structured_multimodal_content",
+  "counts": {
+    "all": 17,
+    "train": 17,
+    "validation": 0,
+    "balanced_train": 17
+  },
+  "source_datasets": {
+    "llm-distillation-spec": 17
+  },
+  "tac_byte_tokens_if_text_serialized": {
+    "all": 14814,
+    "train": 14814,
+    "validation": 0,
+    "balanced_train": 14814
+  },
+  "files": [
+    "unified_sft_messages.jsonl",
+    "splits/train/unified_sft_messages.jsonl",
+    "splits/validation/unified_sft_messages.jsonl",
+    "splits_balanced/train/unified_sft_messages.jsonl"
+  ],
+  "notes": [
+    "These rows preserve structured multimodal-style message content arrays.",
+    "The current TAC byte-text trainer should exclude these rows unless a multimodal encoder path is added.",
+    "All current structured multimodal rows come from llm-distillation-spec and are in the train split."
+  ]
+}

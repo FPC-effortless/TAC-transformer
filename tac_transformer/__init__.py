@@ -73,6 +73,13 @@ from .serving import (
     sample_next_token,
     stream_tac_completion,
 )
+from .runtime_search import (
+    TACRuntimeSearchConfig,
+    TACRuntimeSearchResult,
+    follow_context_graph as follow_runtime_context_graph,
+    run_tac_runtime_search,
+    structural_verifier_scores,
+)
 from .distillation_datasets import (
     DIFFICULTY_TIERS,
     STREAMS as DISTILLATION_STREAMS,
@@ -273,6 +280,11 @@ __all__ = [
     "load_tac_checkpoint_for_generation",
     "sample_next_token",
     "stream_tac_completion",
+    "TACRuntimeSearchConfig",
+    "TACRuntimeSearchResult",
+    "follow_runtime_context_graph",
+    "run_tac_runtime_search",
+    "structural_verifier_scores",
     "benchmark_effectiveness",
     "evaluate_state_interventions",
     "DIFFICULTY_TIERS",

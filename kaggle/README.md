@@ -174,6 +174,42 @@ runs/prepared_corpus_agentic_hard_upload.zip
 
 Upload it to Kaggle as `tac-hard-agentic-corpus`, then train with:
 
+## TAC-198 ATS Transfer Repair
+
+When the attached prepared corpus is the ATS transfer corpus with `prompt`,
+`answer`, `text`, and `domain` fields, use answer-only supervision. This masks
+prompt tokens and trains only the generated answer bytes plus EOS while keeping
+selected-route MI pressure:
+
+```bash
+torchrun --standalone --nproc_per_node=2 kaggle/train_best_tac_agentic.py \
+  --scale base \
+  --seq-len 176 \
+  --steps 5000 \
+  --batch-size 12 \
+  --grad-accum-steps 3 \
+  --eval-every 1000 \
+  --eval-batches 4 \
+  --checkpoint-every 500 \
+  --output-dir /kaggle/working/tac_ats_transfer_tac_base_answer_only_5k \
+  --device auto \
+  --supervision-mode answer_only \
+  --prompt-field prompt \
+  --completion-field answer \
+  --precision fp32 \
+  --min-healthy-gradient-norm 1e-12 \
+  --fail-on-unhealthy-optimization \
+  --max-seconds 30600 \
+  --stop-buffer-seconds 1200 \
+  --routing-type base_semantic \
+  --routing-top-k 2 \
+  --category-route-weight 0.5 \
+  --category-route-objective selected_mi \
+  --skip-end-specialization-on-time-stop
+```
+
+For hard-agentic full-LM rows, keep the standard selected-MI command:
+
 ```bash
 torchrun --standalone --nproc_per_node=2 kaggle/train_best_tac_agentic.py \
   --scale base \

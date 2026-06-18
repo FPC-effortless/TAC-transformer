@@ -392,8 +392,15 @@ def _force_program(model: TACTransformerLM, program_id: int) -> Iterator[None]:
         original = identity._route_programs
         originals.append((identity, original))
 
-        def patched(self, stability, activations=None, *, _program_id=program_id):
-            del activations
+        def patched(
+            self,
+            stability,
+            activations=None,
+            decision_memory=None,
+            *,
+            _program_id=program_id,
+        ):
+            del activations, decision_memory
             routed = torch.zeros_like(stability)
             routed[..., _program_id] = 1.0
             return routed

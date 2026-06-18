@@ -40,8 +40,13 @@ from tac_transformer import (
 )
 from tac_transformer.optimization import TACOptimizerConfig, build_tac_optimizer
 from tac_transformer.training import (
+    JsonlCompletionBatcher,
+    JsonlLabeledCompletionBatcher,
     JsonlLabeledTextBatcher,
     JsonlTextBatcher,
+    JsonlWeightedCompletionBatcher,
+    JsonlWeightedTextBatcher,
+    TokenizedMemmapBatcher,
     category_program_mi_loss,
     category_route_loss,
     selected_program_mi_loss,
@@ -97,6 +102,39 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--train-jsonl", type=Path, default=None)
     parser.add_argument("--eval-jsonl", type=Path, default=None)
+    parser.add_argument(
+        "--train-tokenized-manifest",
+        type=Path,
+        default=None,
+        help="Train from a tokenized memmap manifest instead of JSONL text.",
+    )
+    parser.add_argument(
+        "--eval-tokenized-manifest",
+        type=Path,
+        default=None,
+        help="Evaluate from a tokenized memmap manifest instead of JSONL text.",
+    )
+    parser.add_argument(
+        "--supervision-mode",
+        choices=["full_lm", "answer_only"],
+        default="full_lm",
+        help=(
+            "Training label contract for prepared JSONL rows. full_lm keeps "
+            "standard next-token loss over the text field. answer_only expects "
+            "separate prompt and answer fields and masks prompt tokens."
+        ),
+    )
+    parser.add_argument("--prompt-field", default="prompt")
+    parser.add_argument("--completion-field", default="answer")
+    parser.add_argument(
+        "--sampling-weights-json",
+        type=Path,
+        default=None,
+        help=(
+            "Optional JSON object mapping domain labels, dataset names, stream names, "
+            "or '*' to sampling weights for JSONL training."
+        ),
+    )
     parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--scale", choices=sorted(MODEL_SCALES), default="base")
     parser.add_argument(
@@ -129,6 +167,29 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--n-heads", type=int, default=None)
     parser.add_argument("--n-layers", type=int, default=None)
     parser.add_argument("--n-programs", type=int, default=None)
+    parser.add_argument(
+        "--mlp-ratio",
+        type=int,
+        default=None,
+        help="Override transformer MLP expansion ratio without changing identity programs.",
+    )
+    parser.add_argument(
+        "--program-compute-type",
+        choices=[
+            "embedding",
+            "linear_expert",
+            "sparse_linear_expert",
+            "low_rank_linear_expert",
+        ],
+        default=None,
+        help="Override the per-program compute module used by the identity field.",
+    )
+    parser.add_argument(
+        "--program-expert-rank",
+        type=int,
+        default=None,
+        help="Rank for --program-compute-type low_rank_linear_expert.",
+    )
     parser.add_argument("--energy-budget", type=float, default=4.0)
     parser.add_argument("--beta", type=float, default=1.5)
     parser.add_argument(
@@ -537,6 +598,33 @@ def apply_torch_thread_settings(args: argparse.Namespace) -> dict[str, Any]:
     return status
 
 
+def batcher_record_count(batcher: Any) -> int:
+    if hasattr(batcher, "offsets"):
+        return len(batcher.offsets)
+    if hasattr(batcher, "record_offsets"):
+        return int(batcher.record_offsets.shape[0])
+    return 0
+
+
+def load_sampling_weights(path: Path | None) -> dict[str, float] | None:
+    if path is None:
+        return None
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("--sampling-weights-json must contain a JSON object")
+    weights: dict[str, float] = {}
+    for key, value in payload.items():
+        weight = float(value)
+        if weight < 0.0:
+            raise ValueError("sampling weights must be non-negative")
+        weights[str(key)] = weight
+    if not weights:
+        raise ValueError("--sampling-weights-json must not be empty")
+    if sum(weights.values()) <= 0.0:
+        raise ValueError("at least one sampling weight must be positive")
+    return weights
+
+
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     thread_settings = apply_torch_thread_settings(args)
@@ -552,8 +640,29 @@ def main(argv: list[str] | None = None) -> None:
     if distributed:
         dist.barrier()
 
-    train_path = args.train_jsonl or discover_prepared_jsonl("train.prepared.jsonl")
-    eval_path = args.eval_jsonl or discover_prepared_jsonl("eval.prepared.jsonl")
+    tokenized_training = (
+        args.train_tokenized_manifest is not None
+        or args.eval_tokenized_manifest is not None
+    )
+    sampling_weights = load_sampling_weights(args.sampling_weights_json)
+    if tokenized_training:
+        if args.train_tokenized_manifest is None or args.eval_tokenized_manifest is None:
+            raise ValueError(
+                "--train-tokenized-manifest and --eval-tokenized-manifest must be provided together"
+            )
+        if args.train_jsonl is not None or args.eval_jsonl is not None:
+            raise ValueError("Use either JSONL paths or tokenized manifests, not both")
+        if args.supervision_mode != "full_lm":
+            raise ValueError("tokenized manifests currently support full_lm supervision only")
+        if args.category_route_weight > 0.0:
+            raise ValueError("category-route training is not supported with tokenized manifests yet")
+        if sampling_weights is not None:
+            raise ValueError("sampling weights are only supported with JSONL training")
+        train_path = None
+        eval_path = None
+    else:
+        train_path = args.train_jsonl or discover_prepared_jsonl("train.prepared.jsonl")
+        eval_path = args.eval_jsonl or discover_prepared_jsonl("eval.prepared.jsonl")
     scale = resolved_scale(args)
     config = build_training_config(args, scale)
     base_model = TACTransformerLM(config).to(device)
@@ -583,35 +692,121 @@ def main(argv: list[str] | None = None) -> None:
             device=device,
         )
 
-    train_batcher = JsonlTextBatcher(
-        train_path,
-        seq_len=config.max_seq_len,
-        vocab_size=config.vocab_size,
-        seed=args.seed + rank,
-    )
-    category_batcher = None
-    if args.category_route_weight > 0.0:
-        category_batcher = JsonlLabeledTextBatcher(
+    if tokenized_training:
+        train_batcher = TokenizedMemmapBatcher.from_manifest(
+            args.train_tokenized_manifest,
+            seq_len=config.max_seq_len,
+            seed=args.seed + rank,
+        )
+        eval_batcher = TokenizedMemmapBatcher.from_manifest(
+            args.eval_tokenized_manifest,
+            seq_len=config.max_seq_len,
+            seed=args.seed + 1000,
+        )
+        if train_batcher.vocab_size != config.vocab_size:
+            raise ValueError(
+                "train tokenized manifest vocab_size must match --vocab-size "
+                f"({train_batcher.vocab_size} != {config.vocab_size})"
+            )
+        if eval_batcher.vocab_size != config.vocab_size:
+            raise ValueError(
+                "eval tokenized manifest vocab_size must match --vocab-size "
+                f"({eval_batcher.vocab_size} != {config.vocab_size})"
+            )
+    elif args.supervision_mode == "answer_only":
+        batcher_cls = (
+            JsonlWeightedCompletionBatcher
+            if sampling_weights is not None
+            else JsonlCompletionBatcher
+        )
+        train_kwargs: dict[str, Any] = {}
+        if sampling_weights is not None:
+            train_kwargs["category_weights"] = sampling_weights
+        train_batcher = batcher_cls(
             train_path,
             seq_len=config.max_seq_len,
             vocab_size=config.vocab_size,
-            seed=args.seed + rank + 2000,
+            seed=args.seed + rank,
+            prompt_field=args.prompt_field,
+            completion_field=args.completion_field,
+            **train_kwargs,
         )
-    eval_batcher = JsonlTextBatcher(
-        eval_path,
-        seq_len=config.max_seq_len,
-        vocab_size=config.vocab_size,
-        seed=args.seed + 1000,
-    )
+    else:
+        batcher_cls = (
+            JsonlWeightedTextBatcher
+            if sampling_weights is not None
+            else JsonlTextBatcher
+        )
+        train_kwargs: dict[str, Any] = {}
+        if sampling_weights is not None:
+            train_kwargs["category_weights"] = sampling_weights
+        train_batcher = batcher_cls(
+            train_path,
+            seq_len=config.max_seq_len,
+            vocab_size=config.vocab_size,
+            seed=args.seed + rank,
+            **train_kwargs,
+        )
+    category_batcher = None
+    if args.category_route_weight > 0.0:
+        if args.supervision_mode == "answer_only":
+            category_batcher = JsonlLabeledCompletionBatcher(
+                train_path,
+                seq_len=config.max_seq_len,
+                vocab_size=config.vocab_size,
+                seed=args.seed + rank + 2000,
+                prompt_field=args.prompt_field,
+                completion_field=args.completion_field,
+                category_weights=sampling_weights,
+            )
+        else:
+            category_batcher = JsonlLabeledTextBatcher(
+                train_path,
+                seq_len=config.max_seq_len,
+                vocab_size=config.vocab_size,
+                seed=args.seed + rank + 2000,
+                category_weights=sampling_weights,
+            )
+    if tokenized_training:
+        pass
+    elif args.supervision_mode == "answer_only":
+        eval_batcher = JsonlCompletionBatcher(
+            eval_path,
+            seq_len=config.max_seq_len,
+            vocab_size=config.vocab_size,
+            seed=args.seed + 1000,
+            prompt_field=args.prompt_field,
+            completion_field=args.completion_field,
+        )
+    else:
+        eval_batcher = JsonlTextBatcher(
+            eval_path,
+            seq_len=config.max_seq_len,
+            vocab_size=config.vocab_size,
+            seed=args.seed + 1000,
+        )
     run_manifest = {
         "device": str(device),
         "precision": precision,
+        "supervision_mode": args.supervision_mode,
+        "prompt_field": args.prompt_field,
+        "completion_field": args.completion_field,
+        "sampling_weights_json": None
+        if args.sampling_weights_json is None
+        else str(args.sampling_weights_json),
+        "sampling_weights": sampling_weights,
         "torch_thread_settings": thread_settings,
         "distributed": distributed,
         "rank": rank,
         "world_size": world_size,
-        "train_jsonl": str(train_path),
-        "eval_jsonl": str(eval_path),
+        "train_jsonl": None if train_path is None else str(train_path),
+        "eval_jsonl": None if eval_path is None else str(eval_path),
+        "train_tokenized_manifest": None
+        if args.train_tokenized_manifest is None
+        else str(args.train_tokenized_manifest),
+        "eval_tokenized_manifest": None
+        if args.eval_tokenized_manifest is None
+        else str(args.eval_tokenized_manifest),
         "output_dir": str(output_dir),
         "start_step": start_step,
         "resume_checkpoint": None
@@ -630,8 +825,8 @@ def main(argv: list[str] | None = None) -> None:
         "preset": args.preset,
         "parameter_counts": count_parameters(unwrap_model(model)),
         "config": asdict(config),
-        "train_records": len(train_batcher.offsets),
-        "eval_records": len(eval_batcher.offsets),
+        "train_records": batcher_record_count(train_batcher),
+        "eval_records": batcher_record_count(eval_batcher),
         "specialization_analysis_enabled": bool(args.analyze_specialization_at_end),
         "skip_end_specialization_on_time_stop": bool(
             args.skip_end_specialization_on_time_stop
@@ -669,7 +864,7 @@ def main(argv: list[str] | None = None) -> None:
         "semantic_route_suppressed_programs": args.semantic_route_suppressed_programs,
         "category_route_categories": []
         if category_batcher is None
-        else category_batcher.categories,
+        else getattr(category_batcher, "categories", []),
         "per_device_batch_size": scale["batch_size"],
         "grad_accum_steps": scale["grad_accum_steps"],
         "effective_batch_sequences": (
@@ -693,7 +888,7 @@ def main(argv: list[str] | None = None) -> None:
             * scale["batch_size"]
             * scale["grad_accum_steps"]
             * world_size
-            / max(len(train_batcher.offsets), 1)
+            / max(batcher_record_count(train_batcher), 1)
         ),
     }
     if rank == 0:
@@ -754,6 +949,12 @@ def resolved_scale(args: argparse.Namespace) -> dict[str, int]:
 
 def build_training_config(args: argparse.Namespace, scale: dict[str, int]):
     overrides: dict[str, Any] = {}
+    if args.mlp_ratio is not None:
+        overrides["mlp_ratio"] = args.mlp_ratio
+    if args.program_compute_type is not None:
+        overrides["program_compute_type"] = args.program_compute_type
+    if args.program_expert_rank is not None:
+        overrides["program_expert_rank"] = args.program_expert_rank
     if args.routing_type is not None:
         overrides["routing_type"] = args.routing_type
     if args.routing_top_k is not None:
@@ -871,9 +1072,9 @@ def train_until_done(
     model: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
     scaler: torch.amp.GradScaler | None,
-    train_batcher: JsonlTextBatcher,
-    category_batcher: JsonlLabeledTextBatcher | None,
-    eval_batcher: JsonlTextBatcher,
+    train_batcher: JsonlTextBatcher | JsonlCompletionBatcher,
+    category_batcher: JsonlLabeledTextBatcher | JsonlLabeledCompletionBatcher | None,
+    eval_batcher: JsonlTextBatcher | JsonlCompletionBatcher,
     args: argparse.Namespace,
     scale: dict[str, int],
     device: torch.device,

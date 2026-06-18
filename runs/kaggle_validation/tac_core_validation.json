@@ -1,0 +1,65 @@
+{
+  "benchmarks": [
+    {
+      "benchmark": "tac251",
+      "cpu_metric": 20.0,
+      "cpu_replicated": true,
+      "decision": "PASS",
+      "gate": 20.0,
+      "kaggle_metric": null,
+      "measured_metric": 20.0,
+      "tolerance": 0.0,
+      "validated_on_kaggle": false
+    },
+    {
+      "benchmark": "tac252",
+      "cpu_metric": 20.0,
+      "cpu_replicated": true,
+      "decision": "PASS",
+      "gate": 20.0,
+      "kaggle_metric": null,
+      "measured_metric": 20.0,
+      "tolerance": 0.0,
+      "validated_on_kaggle": false
+    },
+    {
+      "benchmark": "tac267",
+      "cpu_metric": 0.6767,
+      "cpu_replicated": true,
+      "decision": "PASS",
+      "gate": 0.6,
+      "kaggle_metric": null,
+      "measured_metric": 0.6755652153795335,
+      "tolerance": 0.08,
+      "validated_on_kaggle": false
+    },
+    {
+      "benchmark": "tac270",
+      "cpu_metric": 0.9635,
+      "cpu_replicated": true,
+      "decision": "PASS",
+      "gate": 0.85,
+      "kaggle_metric": null,
+      "measured_metric": 0.9639435862006436,
+      "tolerance": 0.08,
+      "validated_on_kaggle": false
+    },
+    {
+      "benchmark": "tac272",
+      "cpu_metric": 0.8417,
+      "cpu_replicated": true,
+      "decision": "PASS",
+      "gate": 0.65,
+      "kaggle_metric": null,
+      "measured_metric": 0.8,
+      "tolerance": 0.1,
+      "validated_on_kaggle": false
+    }
+  ],
+  "boundary": "This pack validates reproducibility of the bounded TAC v0.1 benchmark metrics. It does not claim TAC beats transformers or validates open-ended agency.",
+  "case_count": 50,
+  "decision": "PASS",
+  "execution_environment": "local",
+  "schema": "tac_core_kaggle_validation.v1",
+  "seed_count": 5
+}

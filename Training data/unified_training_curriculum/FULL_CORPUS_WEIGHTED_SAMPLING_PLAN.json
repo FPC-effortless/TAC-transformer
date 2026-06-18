@@ -1,0 +1,110 @@
+{
+  "schema": "full_corpus_source_weight_plan.v1",
+  "weights_path": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum\\FULL_CORPUS_SOURCE_WEIGHTS.json",
+  "basis": "TOKEN_COUNT_TAC_FULL_TEXT_ONLY.json splits.train.datasets",
+  "weights": {
+    "*": 1.0,
+    "distillation_datasets_70k": 3.0,
+    "enriched_transcripts_llm_dataset": 4.0
+  },
+  "total_raw_train_tac_byte_tokens": 1333810741,
+  "total_effective_train_tac_byte_tokens": 1905062064,
+  "datasets": [
+    {
+      "dataset": "prepared_corpus_agentic_hard",
+      "records": 411963,
+      "raw_tac_byte_tokens": 1004069347,
+      "weight": 1.0,
+      "effective_tac_byte_tokens": 1004069347,
+      "effective_share": 0.5270533522103666
+    },
+    {
+      "dataset": "enriched_transcripts_llm_dataset",
+      "records": 20567,
+      "raw_tac_byte_tokens": 106225909,
+      "weight": 4.0,
+      "effective_tac_byte_tokens": 424903636,
+      "effective_share": 0.22303926157022042
+    },
+    {
+      "dataset": "distillation_datasets_70k",
+      "records": 59523,
+      "raw_tac_byte_tokens": 126286798,
+      "weight": 3.0,
+      "effective_tac_byte_tokens": 378860394,
+      "effective_share": 0.19887036814145495
+    },
+    {
+      "dataset": "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k",
+      "records": 8274,
+      "raw_tac_byte_tokens": 44397825,
+      "weight": 1.0,
+      "effective_tac_byte_tokens": 44397825,
+      "effective_share": 0.023305185609952917
+    },
+    {
+      "dataset": "Jackrong__Claude-opus-4.6-TraceInversion-9000x",
+      "records": 16432,
+      "raw_tac_byte_tokens": 23872207,
+      "weight": 1.0,
+      "effective_tac_byte_tokens": 23872207,
+      "effective_share": 0.012530934005308081
+    },
+    {
+      "dataset": "distillation_datasets",
+      "records": 6636,
+      "raw_tac_byte_tokens": 14025151,
+      "weight": 1.0,
+      "effective_tac_byte_tokens": 14025151,
+      "effective_share": 0.007362044137581441
+    },
+    {
+      "dataset": "enriched_sudoku_dataset",
+      "records": 20632,
+      "raw_tac_byte_tokens": 6189720,
+      "weight": 1.0,
+      "effective_tac_byte_tokens": 6189720,
+      "effective_share": 0.003249090996544037
+    },
+    {
+      "dataset": "llm-distillation-spec",
+      "records": 5135,
+      "raw_tac_byte_tokens": 3377343,
+      "weight": 1.0,
+      "effective_tac_byte_tokens": 3377343,
+      "effective_share": 0.0017728257067429589
+    },
+    {
+      "dataset": "enriched_new_folder_llm_dataset",
+      "records": 632,
+      "raw_tac_byte_tokens": 3224409,
+      "weight": 1.0,
+      "effective_tac_byte_tokens": 3224409,
+      "effective_share": 0.001692548007191854
+    },
+    {
+      "dataset": "openai__gsm8k",
+      "records": 2077,
+      "raw_tac_byte_tokens": 1165123,
+      "weight": 1.0,
+      "effective_tac_byte_tokens": 1165123,
+      "effective_share": 0.0006115931979421327
+    },
+    {
+      "dataset": "SupraLabs__SupraThink-Dataset-500x",
+      "records": 462,
+      "raw_tac_byte_tokens": 924739,
+      "weight": 1.0,
+      "effective_tac_byte_tokens": 924739,
+      "effective_share": 0.0004854114821111676
+    },
+    {
+      "dataset": "ReasonCore__open-spatial-reasoning",
+      "records": 38,
+      "raw_tac_byte_tokens": 52170,
+      "weight": 1.0,
+      "effective_tac_byte_tokens": 52170,
+      "effective_share": 2.738493458342258e-05
+    }
+  ]
+}

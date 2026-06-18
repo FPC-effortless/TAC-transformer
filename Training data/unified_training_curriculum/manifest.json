@@ -1,0 +1,66 @@
+{
+  "source_root": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data",
+  "output_dir": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum",
+  "validation_ratio": 0.05,
+  "source_file_count": 216,
+  "source_bytes": 7413902748,
+  "output_counts": {
+    "cpt": 510066,
+    "sft": 35007,
+    "reasoning": 33500,
+    "preference": 3340,
+    "eval": 25330
+  },
+  "split_counts": {
+    "train": {
+      "cpt": 484188,
+      "sft": 33191,
+      "reasoning": 31838,
+      "preference": 3171,
+      "eval": 0
+    },
+    "validation": {
+      "cpt": 25878,
+      "sft": 1816,
+      "reasoning": 1662,
+      "preference": 169,
+      "eval": 0
+    }
+  },
+  "skipped_counts": {
+    "skip_metadata": 20,
+    "skip_reasoning_variant_has_no_reasoning_peer": 3,
+    "skip_dataset_readme_metadata": 5,
+    "skip_roleplay_identity_drift": 2,
+    "skip_raw_has_prepared": 28,
+    "skip_parquet_mirror_jsonl_available": 10,
+    "skip_enriched_split_duplicate": 20,
+    "skip_component_duplicate_in_combined_sft": 4,
+    "skip_raw_transcript_enriched_available": 20,
+    "skip_unsupported": 1,
+    "skip_output_artifact": 13,
+    "skip_metadata_only": 2
+  },
+  "errored_files": [],
+  "output_files": [
+    "unified_cpt.jsonl",
+    "unified_sft_messages.jsonl",
+    "unified_reasoning_traces.jsonl",
+    "unified_preference_pairs.jsonl",
+    "unified_eval.jsonl",
+    "splits/train/unified_cpt.jsonl",
+    "splits/train/unified_sft_messages.jsonl",
+    "splits/train/unified_reasoning_traces.jsonl",
+    "splits/train/unified_preference_pairs.jsonl",
+    "splits/validation/unified_cpt.jsonl",
+    "splits/validation/unified_sft_messages.jsonl",
+    "splits/validation/unified_reasoning_traces.jsonl",
+    "splits/validation/unified_preference_pairs.jsonl",
+    "curriculum_plan.json",
+    "source_inventory.json",
+    "manifest.json",
+    "README.md",
+    "TRAINING_RECIPE.md",
+    "unified_curriculum_builder.py"
+  ]
+}

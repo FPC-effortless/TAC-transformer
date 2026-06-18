@@ -1,0 +1,168 @@
+{
+  "product": "TAC v0.2 Scaling Validation",
+  "goal": "Determine whether TAC's validated persistent-computation mechanisms survive real language-model scaling from 30M-50M to about 112M parameters.",
+  "current_assessment": {
+    "stage": "mechanism_validated_scaling_unproven",
+    "technology_readiness_level": "TRL 3-4",
+    "strongest_asset": "persistent computation",
+    "commercial_story": "context compression remains the strongest current commercial angle",
+    "not_yet_proven": [
+      "better language modeling",
+      "better coding",
+      "better mathematics",
+      "better planning",
+      "better agents",
+      "better reasoning",
+      "better multi-hop reasoning",
+      "better scaling behavior"
+    ]
+  },
+  "stage_gate": {
+    "continue_if": [
+      "TAC training is stable at matched token and compute budget.",
+      "Routing entropy and program utilization do not collapse.",
+      "Memory utilization and state carry metrics remain positive.",
+      "Persistent-state, repair, or compression holdout advantages survive against the matched transformer."
+    ],
+    "stop_if": [
+      "TAC loses the matched LM comparison and all mechanism holdouts.",
+      "Routing collapse, state dilution, or optimization interference explains the result."
+    ]
+  },
+  "tickets": [
+    {
+      "id": "V02-001",
+      "title": "Freeze TAC v0.1 branch structure",
+      "status": "completed",
+      "acceptance": [
+        "main exists.",
+        "release/tac-v0.1 exists as the frozen v0.1 reference.",
+        "develop/tac-v0.2 exists for new scaling work."
+      ]
+    },
+    {
+      "id": "V02-002",
+      "title": "Build 112M TAC and matched transformer configs",
+      "status": "completed",
+      "acceptance": [
+        "configs/tac_v02_112m.py locks vocab_size=8192, d_model=512, n_layers=8, n_heads=8.",
+        "transformer_112m.py provides the matched transformer baseline.",
+        "Both configs are within 1 percent parameter gap."
+      ]
+    },
+    {
+      "id": "V02-003",
+      "title": "Add metrics_v02 logging contract",
+      "status": "completed",
+      "acceptance": [
+        "metrics_v02.json contains train loss, eval loss, perplexity, routing entropy, program utilization, memory utilization, and state carry metrics.",
+        "The schema normalizes raw trainer metrics for TAC and transformer records."
+      ]
+    },
+    {
+      "id": "V02-004",
+      "title": "Prepare dataset builder and holdout split",
+      "status": "completed",
+      "acceptance": [
+        "Language, code, long-horizon, and holdout streams are specified.",
+        "Validation holdout rows are written separately and documented as never-train data.",
+        "Offline smoke mode verifies split behavior without remote downloads."
+      ]
+    },
+    {
+      "id": "V02-005",
+      "title": "Create public release and outreach artifacts",
+      "status": "completed",
+      "acceptance": [
+        "Release audit exists.",
+        "Public progress page exists.",
+        "Researcher/founder outreach workbook exists.",
+        "Demo video source and rendered local MP4 exist."
+      ]
+    },
+    {
+      "id": "V02-006",
+      "title": "Integrate TAC-235 native bottleneck into LM path",
+      "status": "complete",
+      "acceptance": [
+        "The default TAC v0.2 LM path forces generation through state-conditioned native program computation.",
+        "The path has a causal knockout test at the language-model interface.",
+        "The old residual/bypass path remains available only as an ablation."
+      ]
+    },
+    {
+      "id": "V02-007",
+      "title": "Kaggle mechanism reproduction",
+      "status": "partial",
+      "acceptance": [
+        "Run TAC-235 on Kaggle/GPU.",
+        "Run TAC-242 on Kaggle/GPU.",
+        "Run TAC-272 on Kaggle/GPU.",
+        "Archive artifacts under runs/ or Kaggle output and compare to CPU results."
+      ]
+    },
+    {
+      "id": "V02-008",
+      "title": "Run 30M-50M real language-model pilot",
+      "status": "complete",
+      "acceptance": [
+        "Train transformer_50m first on real v0.2 data.",
+        "Train tac_50m second on the same data, tokens, and compute budget.",
+        "Measure perplexity, throughput, memory usage, and compression retention."
+      ]
+    },
+    {
+      "id": "V02-009",
+      "title": "Run full 112M scaling experiment",
+      "status": "blocked_by_tac281_no_scale_decision",
+      "acceptance": [
+        "Do not launch bigger scaling solely from the LM50A result.",
+        "The attempted lm112a Kaggle kernel was canceled and is not counted as a 112M result.",
+        "Review TAC-280 checkpoint mechanism retests before spending the 112M run.",
+        "TAC-281 mechanism sharpening completed and no variant passed the scale gate.",
+        "Train transformer_112m first on real v0.2 data.",
+        "Train tac_112m second on the same data, tokens, and compute budget.",
+        "Run persistent-state, repair, and compression retests.",
+        "Fill docs/tac_v02_stage_gate.md comparison table with measured results."
+      ]
+    },
+    {
+      "id": "V02-011",
+      "title": "Run TAC-280 checkpoint mechanism retest suite",
+      "status": "complete",
+      "acceptance": [
+        "Run transformer_50m and tac_50m checkpoints from LM50A through the same post-training probes.",
+        "Measure persistent-state carry, repair trace reuse, compression/structure reuse, noisy-key retrieval, reset versus carry, and native bottleneck knockout.",
+        "Record whether TAC has a mechanism advantage after losing the plain LM comparison.",
+        "Document the result without claiming better LM, coding, math, planning, reasoning, or agent performance."
+      ]
+    },
+    {
+      "id": "V02-010",
+      "title": "Draft scaling-retention paper",
+      "status": "complete",
+      "acceptance": [
+        "Frame the paper around whether persistent computational states survive scale.",
+        "Report negative results if advantages disappear.",
+        "Avoid claiming competitive LM, coding, math, planning, or reasoning gains unless measured.",
+        "Draft written to docs/tac_v02_scaling_retention_report.md with the TAC-281 do-not-scale decision."
+      ]
+    },
+    {
+      "id": "V02-012",
+      "title": "Run TAC-281 mechanism sharpening before scale",
+      "status": "complete_no_scale_decision",
+      "acceptance": [
+        "Define late-bottleneck, small-adapter, and auxiliary-mechanism TAC variants in the 30M-50M parameter band.",
+        "Train each variant against the matched transformer baseline before any 112M run.",
+        "Retest each trained variant with the checkpoint mechanism suite.",
+        "Scale only if mechanism wins stay at least 3/4, carry stays positive, knockout delta stays positive, LM gap shrinks by at least 30%, and speed penalty drops.",
+        "Small adapter completed on Kaggle with 95.01% LM-gap shrink, 4.35x speed penalty, 3/4 mechanism wins, and positive carry, but failed the scale gate because bottleneck knockout delta was only 0.000021.",
+        "The first late bottleneck Kaggle run failed from an inactive identity-context shape bug and is not counted as a scientific result.",
+        "A fixed late bottleneck rerun completed on Kaggle as tac-v02-tac281-late-bottleneck-tac281b-latefix and failed the gate because the LM gap worsened despite mechanism retention.",
+        "Auxiliary mechanism completed on Kaggle as tac-v02-tac281-auxiliary-mechanism-tac281a and failed the gate because the LM gap did not shrink enough despite mechanism retention.",
+        "Combined TAC-281 decision is do_not_scale_yet with zero scale-ready variants."
+      ]
+    }
+  ]
+}

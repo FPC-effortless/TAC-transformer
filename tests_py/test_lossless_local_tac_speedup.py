@@ -61,6 +61,15 @@ class _RecordingChunkedModel(torch.nn.Module):
         )
 
 
+class _ModuleWrapper(torch.nn.Module):
+    def __init__(self, module: torch.nn.Module):
+        super().__init__()
+        self.module = module
+
+    def forward(self, *args, **kwargs):
+        return self.module(*args, **kwargs)
+
+
 class LosslessLocalTacSpeedupTests(unittest.TestCase):
     def test_trainer_metric_collection_schedule_matches_observable_steps(self):
         args = SimpleNamespace(
@@ -154,6 +163,27 @@ class LosslessLocalTacSpeedupTests(unittest.TestCase):
 
         torch.testing.assert_close(logits, expected_logits)
         torch.testing.assert_close(loss, expected_loss)
+
+    def test_chunked_forward_reads_config_through_ddp_style_module_wrapper(self):
+        base_model = _RecordingChunkedModel()
+        wrapped_model = _ModuleWrapper(base_model)
+        input_ids = torch.tensor([[0, 1, 2, 3, 4, 5]])
+        labels = torch.tensor([[1, 2, 3, 4, 5, 6]])
+
+        output, loss, logits = forward_language_model_window(
+            wrapped_model,
+            input_ids,
+            labels,
+            chunked_state_within_batch=True,
+        )
+
+        self.assertEqual(
+            [call["collect_auxiliary"] for call in base_model.calls],
+            [False, True],
+        )
+        self.assertEqual(output.identity_states, ["state_2"])
+        self.assertEqual(logits.shape, (1, 6, base_model.config.vocab_size))
+        self.assertGreater(float(loss), 0.0)
 
     def test_chunked_forward_can_defer_query_metrics_while_keeping_auxiliary_losses(self):
         model = _RecordingChunkedModel()

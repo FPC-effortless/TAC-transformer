@@ -1,0 +1,303 @@
+{
+  "generated_at": "2026-06-06T17:13:41.420557+00:00",
+  "status": "fixed",
+  "dataset_dir": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\unified_training_curriculum",
+  "source_archive_retained": "C:\\Users\\warit\\OneDrive\\Documents\\My Programs\\identity transformer\\Training data\\Training data.rar",
+  "manifest_counts": {
+    "cpt": 510066,
+    "sft": 35007,
+    "reasoning": 33500,
+    "preference": 3340,
+    "eval": 25330
+  },
+  "split_counts": {
+    "train": {
+      "cpt": 484188,
+      "sft": 33191,
+      "reasoning": 31838,
+      "preference": 3171,
+      "eval": 0
+    },
+    "validation": {
+      "cpt": 25878,
+      "sft": 1816,
+      "reasoning": 1662,
+      "preference": 169,
+      "eval": 0
+    }
+  },
+  "skipped_counts": {
+    "skip_metadata": 20,
+    "skip_reasoning_variant_has_no_reasoning_peer": 3,
+    "skip_dataset_readme_metadata": 5,
+    "skip_roleplay_identity_drift": 2,
+    "skip_raw_has_prepared": 28,
+    "skip_parquet_mirror_jsonl_available": 10,
+    "skip_enriched_split_duplicate": 20,
+    "skip_component_duplicate_in_combined_sft": 4,
+    "skip_raw_transcript_enriched_available": 20,
+    "skip_unsupported": 1,
+    "skip_output_artifact": 13,
+    "skip_metadata_only": 2
+  },
+  "errored_files": [],
+  "sft_quality": {
+    "count": 35007,
+    "missing_messages": 0,
+    "unique_ids": 35007,
+    "duplicate_ids": 0,
+    "assistant_think": 0,
+    "any_think": 0,
+    "records_with_newlines": 27624,
+    "multimodal_structured": 17,
+    "multimodal_stringified": 0,
+    "duplicate_user_prompts": 0,
+    "max_same_user_prompt_count": 1,
+    "top_role_sequences": [
+      [
+        "('system', 'user', 'assistant')",
+        20102
+      ],
+      [
+        "('user', 'assistant')",
+        11451
+      ],
+      [
+        "('system', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant')",
+        1858
+      ],
+      [
+        "('system', 'user', 'assistant', 'user', 'assistant')",
+        1491
+      ],
+      [
+        "('system', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant')",
+        82
+      ],
+      [
+        "('system', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant')",
+        21
+      ],
+      [
+        "('system', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant')",
+        2
+      ]
+    ],
+    "top_sources": [
+      [
+        "enriched_transcripts_llm_dataset\\sft_messages.jsonl",
+        9282
+      ],
+      [
+        "Jackrong__Claude-opus-4.6-TraceInversion-9000x\\claude-opus-4.6-traceInversion-9000x.jsonl",
+        8669
+      ],
+      [
+        "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\full_train_no_reasoning.jsonl",
+        6866
+      ],
+      [
+        "llm-distillation-spec\\expanded-dataset\\assistant_capability_sft.jsonl",
+        5283
+      ],
+      [
+        "openai__gsm8k\\main\\train-00000-of-00001.parquet",
+        2186
+      ],
+      [
+        "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k\\code_train_no_reasoning.jsonl",
+        1840
+      ],
+      [
+        "SupraLabs__SupraThink-Dataset-500x\\data.jsonl",
+        495
+      ],
+      [
+        "enriched_new_folder_llm_dataset\\sft_messages.jsonl",
+        285
+      ],
+      [
+        "enriched_sudoku_dataset\\generated_puzzles.parquet",
+        60
+      ],
+      [
+        "ReasonCore__open-spatial-reasoning\\data\\train-00000-of-00001.parquet",
+        41
+      ]
+    ]
+  },
+  "sft_split_overlap": {
+    "train_n": 33191,
+    "validation_n": 1816,
+    "train_duplicate_ids": 0,
+    "validation_duplicate_ids": 0,
+    "id_overlap": 0,
+    "full_message_overlap": 0,
+    "user_prompt_overlap": 0
+  },
+  "other_stream_quality": {
+    "preference": {
+      "count": 3340,
+      "unique_ids": 3340,
+      "duplicate_ids": 0,
+      "extra": {}
+    },
+    "reasoning": {
+      "count": 33500,
+      "unique_ids": 33500,
+      "duplicate_ids": 0,
+      "extra": {
+        "think_like": 8669
+      }
+    },
+    "eval": {
+      "count": 25330,
+      "unique_ids": 25330,
+      "duplicate_ids": 0,
+      "extra": {}
+    }
+  },
+  "balanced_training_view": {
+    "purpose": "Balanced TAC training view with per-source cap; validation still uses ../validation files.",
+    "max_train_records_per_dataset": 35000,
+    "total_train_records": 150902,
+    "file_counts": {
+      "unified_cpt.jsonl": {
+        "read": 484188,
+        "written": 82702
+      },
+      "unified_sft_messages.jsonl": {
+        "read": 33191,
+        "written": 33191
+      },
+      "unified_reasoning_traces.jsonl": {
+        "read": 31838,
+        "written": 31838
+      },
+      "unified_preference_pairs.jsonl": {
+        "read": 3171,
+        "written": 3171
+      }
+    },
+    "dataset_counts": {
+      "distillation_datasets_70k": 35000,
+      "prepared_corpus_agentic_hard": 35000,
+      "enriched_sudoku_dataset": 20632,
+      "enriched_transcripts_llm_dataset": 20567,
+      "Jackrong__Claude-opus-4.6-TraceInversion-9000x": 16432,
+      "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k": 8274,
+      "distillation_datasets": 6636,
+      "llm-distillation-spec": 5152,
+      "openai__gsm8k": 2077,
+      "enriched_new_folder_llm_dataset": 632,
+      "SupraLabs__SupraThink-Dataset-500x": 462,
+      "ReasonCore__open-spatial-reasoning": 38
+    },
+    "max_dataset_share": 0.2319386091635631,
+    "dataset_kind_counts": {
+      "Jackrong__Claude-opus-4.6-TraceInversion-9000x::unified_reasoning_traces.jsonl": 8216,
+      "Jackrong__Claude-opus-4.6-TraceInversion-9000x::unified_sft_messages.jsonl": 8216,
+      "ReasonCore__open-spatial-reasoning::unified_sft_messages.jsonl": 38,
+      "SupraLabs__SupraThink-Dataset-500x::unified_sft_messages.jsonl": 462,
+      "angrygiraffe__claude-opus-4.6-4.7-reasoning-8.7k::unified_sft_messages.jsonl": 8274,
+      "distillation_datasets::unified_cpt.jsonl": 6616,
+      "distillation_datasets::unified_preference_pairs.jsonl": 20,
+      "distillation_datasets_70k::unified_cpt.jsonl": 35000,
+      "enriched_new_folder_llm_dataset::unified_cpt.jsonl": 185,
+      "enriched_new_folder_llm_dataset::unified_preference_pairs.jsonl": 86,
+      "enriched_new_folder_llm_dataset::unified_reasoning_traces.jsonl": 93,
+      "enriched_new_folder_llm_dataset::unified_sft_messages.jsonl": 268,
+      "enriched_sudoku_dataset::unified_cpt.jsonl": 2,
+      "enriched_sudoku_dataset::unified_reasoning_traces.jsonl": 20576,
+      "enriched_sudoku_dataset::unified_sft_messages.jsonl": 54,
+      "enriched_transcripts_llm_dataset::unified_cpt.jsonl": 5889,
+      "enriched_transcripts_llm_dataset::unified_preference_pairs.jsonl": 2943,
+      "enriched_transcripts_llm_dataset::unified_reasoning_traces.jsonl": 2953,
+      "enriched_transcripts_llm_dataset::unified_sft_messages.jsonl": 8782,
+      "llm-distillation-spec::unified_cpt.jsonl": 10,
+      "llm-distillation-spec::unified_preference_pairs.jsonl": 122,
+      "llm-distillation-spec::unified_sft_messages.jsonl": 5020,
+      "openai__gsm8k::unified_sft_messages.jsonl": 2077,
+      "prepared_corpus_agentic_hard::unified_cpt.jsonl": 35000
+    }
+  },
+  "balanced_integrity": {
+    "balanced_train": {
+      "unified_cpt.jsonl": {
+        "count": 82702,
+        "invalid": 0,
+        "duplicate_ids": 0,
+        "duplicate_content": 0
+      },
+      "unified_sft_messages.jsonl": {
+        "count": 33191,
+        "messages_with_newline": 38770,
+        "multimodal_structured_messages": 17,
+        "invalid": 0,
+        "duplicate_ids": 0,
+        "duplicate_content": 0,
+        "duplicate_user_prompts": 0,
+        "max_same_user_prompt_count": 1
+      },
+      "unified_reasoning_traces.jsonl": {
+        "count": 31838,
+        "invalid": 0,
+        "duplicate_ids": 0,
+        "duplicate_content": 0
+      },
+      "unified_preference_pairs.jsonl": {
+        "count": 3171,
+        "invalid": 0,
+        "duplicate_ids": 0,
+        "duplicate_content": 0
+      }
+    },
+    "validation_overlap": {
+      "unified_cpt.jsonl": {
+        "id_overlap": 0,
+        "content_overlap": 0
+      },
+      "unified_sft_messages.jsonl": {
+        "id_overlap": 0,
+        "content_overlap": 0,
+        "user_prompt_overlap": 0
+      },
+      "unified_reasoning_traces.jsonl": {
+        "id_overlap": 0,
+        "content_overlap": 0
+      },
+      "unified_preference_pairs.jsonl": {
+        "id_overlap": 0,
+        "content_overlap": 0
+      }
+    }
+  },
+  "fixes_applied": [
+    "Preserved internal message whitespace and newlines instead of collapsing formatting.",
+    "Removed <think> blocks from SFT assistant targets while keeping reasoning traces separate.",
+    "Preserved structured multimodal content arrays instead of stringifying them.",
+    "Fixed ATS/component double-emission and duplicate IDs.",
+    "Applied prompt-level SFT dedupe to prevent train/validation prompt leakage.",
+    "Skipped mirrored parquet/jsonl enriched files and roleplay identity-drift sources.",
+    "Added a balanced TAC train view with a 35,000-record per-source cap."
+  ],
+  "recommended_training_files": {
+    "train": [
+      "splits_balanced/train/unified_cpt.jsonl",
+      "splits_balanced/train/unified_sft_messages.jsonl",
+      "splits_balanced/train/unified_reasoning_traces.jsonl",
+      "splits_balanced/train/unified_preference_pairs.jsonl"
+    ],
+    "validation": [
+      "splits/validation/unified_cpt.jsonl",
+      "splits/validation/unified_sft_messages.jsonl",
+      "splits/validation/unified_reasoning_traces.jsonl",
+      "splits/validation/unified_preference_pairs.jsonl"
+    ]
+  },
+  "residual_notes": [
+    "Reasoning traces still contain trace-like material by design; do not mix them into normal assistant SFT unless deliberately training a reasoning-trace objective.",
+    "The full unified train files are retained for inspection and alternate samplers, but TAC training should use splits_balanced/train to avoid source dominance.",
+    "Raw sources were extracted from Training data.rar for the rebuild and then removed to recover disk space; the archive itself was retained."
+  ]
+}

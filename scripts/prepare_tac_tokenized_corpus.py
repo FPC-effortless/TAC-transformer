@@ -16,7 +16,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Build TAC-native tokenized memmap files from prepared JSONL splits. "
-            "This preserves the byte-level TAC tokenizer instead of forcing GPT-2 BPE."
+            "By default this preserves the byte-level TAC tokenizer. Pass "
+            "--tokens-field for pretokenized BPE/subword ID datasets."
         )
     )
     parser.add_argument("--train-jsonl", type=Path, required=True)
@@ -24,8 +25,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", type=Path, default=Path("tokenized"))
     parser.add_argument("--vocab-size", type=int, default=512)
     parser.add_argument("--text-field", default="text")
+    parser.add_argument(
+        "--tokens-field",
+        default=None,
+        help="JSON field containing pretokenized integer IDs, for example input_ids.",
+    )
     parser.add_argument("--label-field", default="domain")
     parser.add_argument("--dtype", choices=["uint16", "uint32"], default=None)
+    parser.add_argument("--eos-token-id", type=int, default=3)
+    parser.add_argument(
+        "--no-append-eos",
+        action="store_true",
+        help="Do not append eos-token-id to each record.",
+    )
     return parser
 
 
@@ -39,21 +51,30 @@ def main(argv: list[str] | None = None) -> None:
         train_dir,
         vocab_size=args.vocab_size,
         text_field=args.text_field,
+        tokens_field=args.tokens_field,
         label_field=args.label_field,
         dtype=args.dtype,
+        eos_token_id=args.eos_token_id,
+        append_eos=not args.no_append_eos,
     )
     valid_manifest = build_tokenized_memmap_from_jsonl(
         args.valid_jsonl,
         valid_dir,
         vocab_size=args.vocab_size,
         text_field=args.text_field,
+        tokens_field=args.tokens_field,
         label_field=args.label_field,
         dtype=args.dtype,
+        eos_token_id=args.eos_token_id,
+        append_eos=not args.no_append_eos,
     )
     manifest = {
         "schema": "tac_tokenized_corpus.v1",
-        "tokenizer": "tac_byte",
+        "tokenizer": "pretokenized" if args.tokens_field is not None else "tac_byte",
         "vocab_size": args.vocab_size,
+        "tokens_field": args.tokens_field,
+        "eos_token_id": args.eos_token_id,
+        "append_eos": not args.no_append_eos,
         "train_manifest": str(train_dir / "manifest.json"),
         "valid_manifest": str(valid_dir / "manifest.json"),
         "train_records": int(train_manifest["records"]),
@@ -61,8 +82,8 @@ def main(argv: list[str] | None = None) -> None:
         "train_tokens": int(train_manifest["tokens"]),
         "valid_tokens": int(valid_manifest["tokens"]),
         "notes": (
-            "TAC currently trains on UTF-8 byte tokens offset by 4, with EOS token 3. "
-            "These memmaps remove JSON parsing from the hot training path."
+            "Use --tokens-field input_ids for BPE/subword datasets that are already "
+            "tokenized. The model vocab_size must match the tokenizer ID range."
         ),
     }
     (args.output_dir / "manifest.json").write_text(

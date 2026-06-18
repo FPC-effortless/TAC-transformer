@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "objective": "Train a model from broad source knowledge through instruction behavior, reasoning drills, domain-specific tasks, and preference alignment.",
+  "notes": [
+    "Run stages in order unless you already have an instruction-tuned base model.",
+    "Use JSONL files under splits/train and splits/validation for training and evaluation.",
+    "The preference stage is DPO-style and expects prompt/chosen/rejected records."
+  ],
+  "stages": [
+    {
+      "id": "01_foundation_cpt",
+      "name": "Foundation Continued Pretraining",
+      "objective": "Transfer broad source knowledge, docs, code, transcripts, and prepared corpora.",
+      "train_files": [
+        "splits/train/unified_cpt.jsonl"
+      ],
+      "validation_files": [
+        "splits/validation/unified_cpt.jsonl"
+      ],
+      "trainer": "TRL SFTTrainer or causal LM trainer with text field",
+      "recommended_epochs": 1
+    },
+    {
+      "id": "02_instruction_sft",
+      "name": "Instruction and Assistant Behavior SFT",
+      "objective": "Teach instruction following, coding, math, summarization, and task response formats.",
+      "train_files": [
+        "splits/train/unified_sft_messages.jsonl"
+      ],
+      "validation_files": [
+        "splits/validation/unified_sft_messages.jsonl"
+      ],
+      "trainer": "TRL SFTTrainer with conversational messages",
+      "recommended_epochs": 1
+    },
+    {
+      "id": "03_reasoning_traces",
+      "name": "Evidence-Grounded and Procedural Reasoning",
+      "objective": "Teach explicit state/action/next_state style traces from transcript, Sudoku, math, and synthetic reasoning sources.",
+      "train_files": [
+        "splits/train/unified_reasoning_traces.jsonl"
+      ],
+      "validation_files": [
+        "splits/validation/unified_reasoning_traces.jsonl"
+      ],
+      "trainer": "Convert traces to chat SFT or use a custom trace objective",
+      "recommended_epochs": 1
+    },
+    {
+      "id": "04_preference_alignment",
+      "name": "Preference Alignment",
+      "objective": "Prefer grounded or higher-quality completions over rejected alternatives.",
+      "train_files": [
+        "splits/train/unified_preference_pairs.jsonl"
+      ],
+      "validation_files": [
+        "splits/validation/unified_preference_pairs.jsonl"
+      ],
+      "trainer": "TRL DPOTrainer",
+      "recommended_epochs": 1
+    },
+    {
+      "id": "05_eval",
+      "name": "Held-Out Evaluation",
+      "objective": "Evaluate on held-out/test/eval rows from source datasets.",
+      "train_files": [],
+      "validation_files": [
+        "unified_eval.jsonl"
+      ],
+      "trainer": "Evaluation only",
+      "recommended_epochs": 0
+    }
+  ]
+}

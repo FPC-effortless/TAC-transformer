@@ -1,0 +1,5 @@
+{
+  "*": 1.0,
+  "distillation_datasets_70k": 3.0,
+  "enriched_transcripts_llm_dataset": 4.0
+}

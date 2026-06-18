@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass, replace
 import os
 import json
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Mapping, Optional, Sequence
 
 import torch
 from torch import Tensor, nn
@@ -115,10 +115,16 @@ def estimate_tac_parameter_count(config: TACConfig) -> int:
         "embedding",
         "linear_expert",
         "sparse_linear_expert",
+        "low_rank_linear_expert",
     }:
         raise ValueError(
-            "program_compute_type must be 'embedding', 'linear_expert', or 'sparse_linear_expert'"
+            "program_compute_type must be 'embedding', 'linear_expert', 'sparse_linear_expert', or 'low_rank_linear_expert'"
         )
+    if config.program_expert_rank is not None:
+        if config.program_expert_rank < 1:
+            raise ValueError("program_expert_rank must be positive when set")
+        if config.program_expert_rank > config.d_model:
+            raise ValueError("program_expert_rank must be <= d_model")
     if config.routing_type not in {
         "energy",
         "expert_choice",
@@ -146,8 +152,32 @@ def estimate_tac_parameter_count(config: TACConfig) -> int:
         )
     if config.attention_window_size is not None and config.attention_window_size < 1:
         raise ValueError("attention_window_size must be positive when set")
-    if config.memory_write_type not in {"standard", "novelty_gated"}:
-        raise ValueError("memory_write_type must be 'standard' or 'novelty_gated'")
+    if config.program_activation_type not in {"sigmoid", "relu", "softplus"}:
+        raise ValueError(
+            "program_activation_type must be 'sigmoid', 'relu', or 'softplus'"
+        )
+    if config.memory_write_type not in {"standard", "novelty_gated", "hebbian_outer"}:
+        raise ValueError(
+            "memory_write_type must be 'standard', 'novelty_gated', or 'hebbian_outer'"
+        )
+    if config.memory_system_type not in {"flat", "multi_timescale"}:
+        raise ValueError("memory_system_type must be 'flat' or 'multi_timescale'")
+    if not 0.0 <= config.memory_retention_rate <= 1.0:
+        raise ValueError("memory_retention_rate must be between 0 and 1")
+    if not 0.0 <= config.memory_consolidation_rate <= 1.0:
+        raise ValueError("memory_consolidation_rate must be between 0 and 1")
+    if not 0.0 <= config.procedural_memory_rate <= 1.0:
+        raise ValueError("procedural_memory_rate must be between 0 and 1")
+    if config.memory_bridge_type not in {
+        "none",
+        "multi_timescale_readout",
+        "semantic_procedural_readout",
+    }:
+        raise ValueError(
+            "memory_bridge_type must be 'none', 'multi_timescale_readout', or 'semantic_procedural_readout'"
+        )
+    if config.memory_bridge_weight < 0.0:
+        raise ValueError("memory_bridge_weight must be non-negative")
     if config.memory_tier_type not in {"flat", "hierarchical"}:
         raise ValueError("memory_tier_type must be 'flat' or 'hierarchical'")
     if config.memory_lookup_type not in {"none", "product_key"}:
@@ -204,6 +234,21 @@ def estimate_tac_parameter_count(config: TACConfig) -> int:
         raise ValueError("content_gate_entropy_weight must be non-negative")
     if config.routing_load_balance_weight < 0.0:
         raise ValueError("routing_load_balance_weight must be non-negative")
+    if config.decision_continuity_strength < 0.0:
+        raise ValueError("decision_continuity_strength must be non-negative")
+    if not 0.0 <= config.decision_continuity_decay <= 1.0:
+        raise ValueError("decision_continuity_decay must be between 0 and 1")
+    if config.decision_continuity_loss_weight < 0.0:
+        raise ValueError("decision_continuity_loss_weight must be non-negative")
+    if config.program_embed_dim is not None:
+        if config.program_embed_dim < 1:
+            raise ValueError("program_embed_dim must be positive when set")
+        if config.program_embed_dim > config.d_model:
+            raise ValueError("program_embed_dim must be <= d_model")
+    if config.activation_l1_weight < 0.0:
+        raise ValueError("activation_l1_weight must be non-negative")
+    if config.identity_norm_floor_weight < 0.0:
+        raise ValueError("identity_norm_floor_weight must be non-negative")
     if not 0.0 <= config.authority_trusted_threshold <= 1.0:
         raise ValueError("authority_trusted_threshold must be between 0 and 1")
     if not 0.0 <= config.content_reconsolidate_rate <= 1.0:
@@ -268,6 +313,15 @@ def estimate_tac_parameter_count(config: TACConfig) -> int:
             config.n_programs * config.d_model * config.d_model
             + config.n_programs * config.d_model
         )
+    if config.program_compute_type == "low_rank_linear_expert":
+        expert_rank = (
+            int(config.program_expert_rank)
+            if config.program_expert_rank is not None
+            else max(1, config.d_model // 4)
+        )
+        identity_per_block += config.n_programs * (
+            2 * config.d_model * expert_rank + config.d_model
+        )
     if config.memory_lookup_type == "product_key":
         identity_per_block += (
             config.d_model * config.d_model
@@ -289,6 +343,8 @@ def estimate_tac_parameter_count(config: TACConfig) -> int:
     if config.content_read_steps > 1 and config.content_read_gate_type == "synthesis":
         identity_per_block += 5 * config.d_model * config.d_model + config.d_model
         identity_per_block += 5 * config.d_model + 1
+    if config.program_embed_dim is not None:
+        identity_per_block += config.program_embed_dim * config.n_programs
     if config.residual_stream_type == "dual_stream":
         identity_per_block += 2 * (2 * config.d_model * config.d_model + config.d_model)
     model_level = 0
@@ -302,6 +358,15 @@ def estimate_tac_parameter_count(config: TACConfig) -> int:
     elif config.memory_adapter_type != "none":
         raise ValueError(
             "memory_adapter_type must be 'none', 'residual', or 'gated_residual'"
+        )
+    if config.memory_bridge_type != "none":
+        model_level += 5 * config.d_model * config.d_model + config.d_model
+    if config.program_embed_dim is not None:
+        model_level += (
+            (config.d_model + config.program_embed_dim) * config.ebm_head_hidden_dim
+            + config.ebm_head_hidden_dim
+            + config.ebm_head_hidden_dim
+            + 1
         )
     identity_attention_extra = 0
     if config.identity_attention_type == "identity_first":
@@ -320,6 +385,48 @@ def estimate_tac_parameter_count(config: TACConfig) -> int:
         + identity_attention_extra
         + model_level
     )
+
+
+def _default_aux_weights(config: TACConfig) -> dict[str, float]:
+    return {
+        "coherence": 0.05,
+        "program_reuse": 0.05,
+        "energy": 0.01,
+        "multi_token": getattr(config, "multi_token_loss_weight", 0.0),
+        "separation": getattr(config, "memory_separation_weight", 0.0),
+        "content_cue_separation": getattr(
+            config,
+            "content_cue_separation_weight",
+            0.0,
+        ),
+        "content_gate_entropy": getattr(
+            config,
+            "content_gate_entropy_weight",
+            0.0,
+        ),
+        "routing_load_balance": getattr(
+            config,
+            "routing_load_balance_weight",
+            0.0,
+        ),
+        "decision_continuity": getattr(
+            config,
+            "decision_continuity_loss_weight",
+            0.0,
+        ),
+        "ebm_decision_continuity": getattr(
+            config,
+            "decision_continuity_loss_weight",
+            0.0,
+        ),
+        "activation_l1": getattr(config, "activation_l1_weight", 0.0),
+        "identity_norm_floor": getattr(
+            config,
+            "identity_norm_floor_weight",
+            0.0,
+        ),
+        "data_energy": 1.0 if getattr(config, "program_embed_dim", None) is not None else 0.0,
+    }
 
 
 def _uses_attention_mixer(sequence_mixer_type: str, layer_index: int) -> bool:
@@ -513,6 +620,48 @@ class JsonlTextBatcher:
         return _byte_tokens(text) + [3]
 
 
+def _resolve_category_weight(
+    category: str,
+    category_weights: Mapping[str, float] | None,
+) -> float:
+    if not category_weights:
+        return 1.0
+    candidates = [category]
+    if ":" in category:
+        stream, dataset = category.split(":", 1)
+        candidates.extend([dataset, stream])
+    candidates.append("*")
+    for candidate in candidates:
+        if candidate in category_weights:
+            weight = float(category_weights[candidate])
+            if weight < 0.0:
+                raise ValueError("sampling weights must be non-negative")
+            return weight
+    return 1.0
+
+
+def _category_sample_weights(
+    categories: Sequence[str],
+    category_weights: Mapping[str, float] | None,
+) -> list[float] | None:
+    if not category_weights:
+        return None
+    weights = [_resolve_category_weight(category, category_weights) for category in categories]
+    if sum(weights) <= 0.0:
+        raise ValueError("at least one sampling weight must be positive")
+    return weights
+
+
+def _choose_category(
+    rng: random.Random,
+    categories: Sequence[str],
+    weights: Sequence[float] | None,
+) -> str:
+    if weights is None:
+        return rng.choice(categories)
+    return rng.choices(list(categories), weights=list(weights), k=1)[0]
+
+
 class JsonlLabeledTextBatcher:
     """Byte-level JSONL batches with a categorical label from each row.
 
@@ -530,6 +679,7 @@ class JsonlLabeledTextBatcher:
         seed: int = 0,
         text_field: str = "text",
         label_field: str = "domain",
+        category_weights: Mapping[str, float] | None = None,
     ):
         if vocab_size < 260:
             raise ValueError("vocab_size must be at least 260 for byte-level text batches")
@@ -544,6 +694,10 @@ class JsonlLabeledTextBatcher:
         self.category_to_id = {
             category: index for index, category in enumerate(self.categories)
         }
+        self.category_sample_weights = _category_sample_weights(
+            self.categories,
+            category_weights,
+        )
         self.offsets = [
             offset
             for category in self.categories
@@ -558,7 +712,11 @@ class JsonlLabeledTextBatcher:
         windows = []
         category_ids = []
         for _ in range(batch_size):
-            category = self.rng.choice(self.categories)
+            category = _choose_category(
+                self.rng,
+                self.categories,
+                self.category_sample_weights,
+            )
             windows.append(self._sample_window(category))
             category_ids.append(self.category_to_id[category])
         batch = torch.tensor(windows, dtype=torch.long, device=device)
@@ -609,20 +767,224 @@ class JsonlLabeledTextBatcher:
         return _byte_tokens(text) + [3]
 
 
+class JsonlWeightedTextBatcher(JsonlLabeledTextBatcher):
+    """Weighted labeled JSONL sampler that returns standard LM batches."""
+
+    def next_batch(
+        self,
+        batch_size: int,
+        device: str | torch.device = "cpu",
+    ) -> tuple[Tensor, Tensor]:
+        input_ids, labels, _categories = super().next_batch(batch_size, device=device)
+        return input_ids, labels
+
+
+class JsonlCompletionBatcher:
+    """JSONL completion batcher with prompt-masked next-token labels.
+
+    Rows must contain separate prompt and completion fields. The model sees
+    ``prompt + completion`` but only receives loss on completion bytes plus EOS.
+    """
+
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        seq_len: int,
+        vocab_size: int,
+        seed: int = 0,
+        prompt_field: str = "prompt",
+        completion_field: str = "answer",
+        pad_token_id: int = 3,
+    ):
+        if vocab_size < 260:
+            raise ValueError("vocab_size must be at least 260 for byte-level text batches")
+        if seq_len < 1:
+            raise ValueError("seq_len must be positive")
+        self.path = Path(path)
+        self.seq_len = int(seq_len)
+        self.vocab_size = int(vocab_size)
+        self.prompt_field = prompt_field
+        self.completion_field = completion_field
+        self.pad_token_id = int(pad_token_id)
+        self.rng = random.Random(seed)
+        self.offsets = self._build_offsets()
+
+    def next_batch(
+        self,
+        batch_size: int,
+        device: str | torch.device = "cpu",
+    ) -> tuple[Tensor, Tensor]:
+        inputs = []
+        labels = []
+        for _ in range(batch_size):
+            input_row, label_row = self._sample_row()
+            inputs.append(input_row)
+            labels.append(label_row)
+        input_tensor = torch.tensor(inputs, dtype=torch.long, device=device)
+        label_tensor = torch.tensor(labels, dtype=torch.long, device=device)
+        return input_tensor, label_tensor
+
+    def _build_offsets(self) -> list[int]:
+        offsets = []
+        with self.path.open("rb") as handle:
+            while True:
+                offset = handle.tell()
+                line = handle.readline()
+                if not line:
+                    break
+                if not line.strip():
+                    continue
+                row = json.loads(line.decode("utf-8"))
+                prompt = str(row.get(self.prompt_field, ""))
+                completion = str(row.get(self.completion_field, ""))
+                if prompt and completion:
+                    offsets.append(offset)
+        if not offsets:
+            raise ValueError(
+                f"no JSONL records with {self.prompt_field!r} and "
+                f"{self.completion_field!r} found in {self.path}"
+            )
+        return offsets
+
+    def _sample_row(self) -> tuple[list[int], list[int]]:
+        offset = self.rng.choice(self.offsets)
+        return self._read_completion_tokens(offset)
+
+    def _read_completion_tokens(self, offset: int) -> tuple[list[int], list[int]]:
+        with self.path.open("rb") as handle:
+            handle.seek(offset)
+            line = handle.readline().decode("utf-8")
+        row = json.loads(line)
+        prompt = str(row.get(self.prompt_field, ""))
+        completion = str(row.get(self.completion_field, ""))
+        return _completion_input_and_labels(
+            prompt,
+            completion,
+            seq_len=self.seq_len,
+            pad_token_id=self.pad_token_id,
+        )
+
+
+class JsonlLabeledCompletionBatcher(JsonlCompletionBatcher):
+    """Category-balanced completion batcher for route-supervised JSONL rows."""
+
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        seq_len: int,
+        vocab_size: int,
+        seed: int = 0,
+        prompt_field: str = "prompt",
+        completion_field: str = "answer",
+        label_field: str = "domain",
+        pad_token_id: int = 3,
+        category_weights: Mapping[str, float] | None = None,
+    ):
+        self.label_field = label_field
+        super().__init__(
+            path,
+            seq_len=seq_len,
+            vocab_size=vocab_size,
+            seed=seed,
+            prompt_field=prompt_field,
+            completion_field=completion_field,
+            pad_token_id=pad_token_id,
+        )
+        self.category_offsets = self._build_category_offsets()
+        self.categories = sorted(self.category_offsets)
+        self.category_to_id = {
+            category: index for index, category in enumerate(self.categories)
+        }
+        self.category_sample_weights = _category_sample_weights(
+            self.categories,
+            category_weights,
+        )
+        self.offsets = [
+            offset
+            for category in self.categories
+            for offset in self.category_offsets[category]
+        ]
+
+    def next_batch(
+        self,
+        batch_size: int,
+        device: str | torch.device = "cpu",
+    ) -> tuple[Tensor, Tensor, Tensor]:
+        inputs = []
+        labels = []
+        category_ids = []
+        for _ in range(batch_size):
+            category = _choose_category(
+                self.rng,
+                self.categories,
+                self.category_sample_weights,
+            )
+            offset = self.rng.choice(self.category_offsets[category])
+            input_row, label_row = self._read_completion_tokens(offset)
+            inputs.append(input_row)
+            labels.append(label_row)
+            category_ids.append(self.category_to_id[category])
+        input_tensor = torch.tensor(inputs, dtype=torch.long, device=device)
+        label_tensor = torch.tensor(labels, dtype=torch.long, device=device)
+        category_tensor = torch.tensor(category_ids, dtype=torch.long, device=device)
+        return input_tensor, label_tensor, category_tensor
+
+    def _build_category_offsets(self) -> dict[str, list[int]]:
+        offsets: dict[str, list[int]] = {}
+        with self.path.open("rb") as handle:
+            while True:
+                offset = handle.tell()
+                line = handle.readline()
+                if not line:
+                    break
+                if not line.strip():
+                    continue
+                row = json.loads(line.decode("utf-8"))
+                category = str(row.get(self.label_field, ""))
+                prompt = str(row.get(self.prompt_field, ""))
+                completion = str(row.get(self.completion_field, ""))
+                if category and prompt and completion:
+                    offsets.setdefault(category, []).append(offset)
+        if not offsets:
+            raise ValueError(
+                f"no JSONL records with {self.label_field!r}, "
+                f"{self.prompt_field!r}, and {self.completion_field!r} "
+                f"found in {self.path}"
+            )
+        return offsets
+
+
+class JsonlWeightedCompletionBatcher(JsonlLabeledCompletionBatcher):
+    """Weighted labeled JSONL sampler that returns prompt-masked batches."""
+
+    def next_batch(
+        self,
+        batch_size: int,
+        device: str | torch.device = "cpu",
+    ) -> tuple[Tensor, Tensor]:
+        input_ids, labels, _categories = super().next_batch(batch_size, device=device)
+        return input_ids, labels
+
+
 def build_tokenized_memmap_from_jsonl(
     input_path: str | Path,
     output_dir: str | Path,
     *,
     vocab_size: int,
     text_field: str = "text",
+    tokens_field: str | None = None,
     label_field: str = "domain",
     dtype: str | None = None,
     eos_token_id: int = 3,
+    append_eos: bool = True,
 ) -> dict[str, object]:
     """Persist prepared JSONL text as token arrays plus record metadata.
 
-    This is intentionally tokenizer-agnostic. Today it stores the existing
-    byte-level IDs, but the file contract also works for future BPE/subword IDs.
+    This is intentionally tokenizer-agnostic. By default it stores the existing
+    byte-level IDs. When ``tokens_field`` is provided, rows are expected to carry
+    pretokenized integer IDs, which can come from a BPE/subword tokenizer.
     """
 
     if np is None:
@@ -640,15 +1002,30 @@ def build_tokenized_memmap_from_jsonl(
     category_to_id: dict[str, int] = {}
     records = 0
 
-    with input_path.open("r", encoding="utf-8") as handle:
+    with input_path.open("r", encoding="utf-8-sig") as handle:
         for line in handle:
             if not line.strip():
                 continue
             row = json.loads(line)
-            text = str(row.get(text_field, ""))
-            if not text:
-                continue
-            record_tokens = _byte_tokens(text) + [eos_token_id]
+            if tokens_field is None:
+                text = str(row.get(text_field, ""))
+                if not text:
+                    continue
+                record_tokens = _byte_tokens(text)
+            else:
+                raw_tokens = row.get(tokens_field)
+                if not isinstance(raw_tokens, list) or not raw_tokens:
+                    continue
+                try:
+                    record_tokens = [int(token) for token in raw_tokens]
+                except (TypeError, ValueError) as exc:
+                    raise ValueError(
+                        f"{tokens_field!r} must contain integer token IDs"
+                    ) from exc
+                if min(record_tokens, default=0) < 0:
+                    raise ValueError("token IDs must be non-negative")
+            if append_eos:
+                record_tokens = record_tokens + [eos_token_id]
             if max(record_tokens, default=0) >= vocab_size:
                 raise ValueError("vocab_size is too small for encoded token IDs")
             offsets.append(len(tokens))
@@ -688,8 +1065,12 @@ def build_tokenized_memmap_from_jsonl(
         "tokens": len(tokens),
         "vocab_size": vocab_size,
         "dtype": token_dtype,
+        "tokenizer": "pretokenized" if tokens_field is not None else "tac_byte",
         "text_field": text_field,
+        "tokens_field": tokens_field,
         "label_field": label_field,
+        "eos_token_id": eos_token_id,
+        "append_eos": append_eos,
         "tokens_path": str(tokens_path),
         "record_offsets_path": str(offsets_path),
         "record_lengths_path": str(lengths_path),
@@ -1215,28 +1596,7 @@ def train_synthetic(
         model,
         optimizer_config or TACOptimizerConfig(learning_rate=learning_rate),
     )
-    aux_weights = aux_weights or {
-        "coherence": 0.05,
-        "program_reuse": 0.05,
-        "energy": 0.01,
-        "multi_token": getattr(model.config, "multi_token_loss_weight", 0.0),
-        "separation": getattr(model.config, "memory_separation_weight", 0.0),
-        "content_cue_separation": getattr(
-            model.config,
-            "content_cue_separation_weight",
-            0.0,
-        ),
-        "content_gate_entropy": getattr(
-            model.config,
-            "content_gate_entropy_weight",
-            0.0,
-        ),
-        "routing_load_balance": getattr(
-            model.config,
-            "routing_load_balance_weight",
-            0.0,
-        ),
-    }
+    aux_weights = aux_weights or _default_aux_weights(model.config)
     started = time.perf_counter()
     identity_states = None
     latest_metrics = {
@@ -1385,8 +1745,9 @@ def evaluate_language_model(
             )
             losses.append(float(loss.detach()))
             predictions = logits.argmax(dim=-1)
-            correct += float((predictions == labels).sum().detach())
-            total += labels.numel()
+            valid_labels = labels.ne(-100)
+            correct += float(((predictions == labels) & valid_labels).sum().detach())
+            total += int(valid_labels.sum().detach().item())
             used_energy.append(float(output.aux.used_energy.mean().detach()))
             _accumulate_prefixed_scalars(
                 aux_loss_components,
@@ -1489,6 +1850,7 @@ def forward_language_model_window(
     collect_auxiliary: bool = True,
     collect_metrics: bool = True,
 ) -> tuple[TACOutput, Tensor, Tensor]:
+    vocab_size = _model_vocab_size(model)
     if not chunked_state_within_batch or input_ids.shape[1] < 2:
         output = model(
             input_ids,
@@ -1497,12 +1859,11 @@ def forward_language_model_window(
             collect_auxiliary=collect_auxiliary,
             collect_metrics=collect_metrics,
         )
-        loss = output.loss
-        if loss is None:
-            loss = F.cross_entropy(
-                output.logits.reshape(-1, model.config.vocab_size),
-                labels.reshape(-1),
-            )
+        loss, _ = _masked_language_model_loss(
+            output.logits,
+            labels,
+            vocab_size=vocab_size,
+        )
         loss = loss + _zero_auxiliary_gradient_safety(output)
         return output, loss, output.logits
 
@@ -1521,22 +1882,20 @@ def forward_language_model_window(
         collect_auxiliary=collect_auxiliary,
         collect_metrics=collect_metrics,
     )
-    context_loss = context.loss
-    if context_loss is None:
-        context_loss = F.cross_entropy(
-            context.logits.reshape(-1, model.config.vocab_size),
-            labels[:, :split].reshape(-1),
-        )
-    query_loss = query.loss
-    if query_loss is None:
-        query_loss = F.cross_entropy(
-            query.logits.reshape(-1, model.config.vocab_size),
-            labels[:, split:].reshape(-1),
-        )
-    total_tokens = labels.numel()
+    context_loss, context_tokens = _masked_language_model_loss(
+        context.logits,
+        labels[:, :split],
+        vocab_size=vocab_size,
+    )
+    query_loss, query_tokens = _masked_language_model_loss(
+        query.logits,
+        labels[:, split:],
+        vocab_size=vocab_size,
+    )
+    total_tokens = context_tokens + query_tokens
     loss = (
-        context_loss * labels[:, :split].numel()
-        + query_loss * labels[:, split:].numel()
+        context_loss * context_tokens
+        + query_loss * query_tokens
     ) / max(total_tokens, 1)
     loss = (
         loss
@@ -1545,6 +1904,29 @@ def forward_language_model_window(
     )
     logits = torch.cat([context.logits, query.logits], dim=1)
     return query, loss, logits
+
+
+def _model_vocab_size(model: nn.Module) -> int:
+    module = getattr(model, "module", model)
+    return int(module.config.vocab_size)
+
+
+def _masked_language_model_loss(
+    logits: Tensor,
+    labels: Tensor,
+    *,
+    vocab_size: int,
+) -> tuple[Tensor, int]:
+    valid_tokens = int(labels.ne(-100).sum().detach().item())
+    if valid_tokens == 0:
+        return logits.sum() * 0.0, 0
+    return (
+        F.cross_entropy(
+            logits.reshape(-1, vocab_size),
+            labels.reshape(-1),
+        ),
+        valid_tokens,
+    )
 
 
 def _zero_auxiliary_gradient_safety(output: TACOutput) -> Tensor:
@@ -1568,28 +1950,7 @@ def train_language_model(
         model,
         optimizer_config or TACOptimizerConfig(learning_rate=learning_rate),
     )
-    aux_weights = aux_weights or {
-        "coherence": 0.05,
-        "program_reuse": 0.05,
-        "energy": 0.01,
-        "multi_token": getattr(model.config, "multi_token_loss_weight", 0.0),
-        "separation": getattr(model.config, "memory_separation_weight", 0.0),
-        "content_cue_separation": getattr(
-            model.config,
-            "content_cue_separation_weight",
-            0.0,
-        ),
-        "content_gate_entropy": getattr(
-            model.config,
-            "content_gate_entropy_weight",
-            0.0,
-        ),
-        "routing_load_balance": getattr(
-            model.config,
-            "routing_load_balance_weight",
-            0.0,
-        ),
-    }
+    aux_weights = aux_weights or _default_aux_weights(model.config)
     identity_states = None
     latest_loss = 0.0
     latest_next_token_loss = 0.0
@@ -1648,28 +2009,7 @@ def train_chunked_memory(
         model,
         optimizer_config or TACOptimizerConfig(learning_rate=learning_rate),
     )
-    aux_weights = aux_weights or {
-        "coherence": 0.05,
-        "program_reuse": 0.05,
-        "energy": 0.01,
-        "multi_token": getattr(model.config, "multi_token_loss_weight", 0.0),
-        "separation": getattr(model.config, "memory_separation_weight", 0.0),
-        "content_cue_separation": getattr(
-            model.config,
-            "content_cue_separation_weight",
-            0.0,
-        ),
-        "content_gate_entropy": getattr(
-            model.config,
-            "content_gate_entropy_weight",
-            0.0,
-        ),
-        "routing_load_balance": getattr(
-            model.config,
-            "routing_load_balance_weight",
-            0.0,
-        ),
-    }
+    aux_weights = aux_weights or _default_aux_weights(model.config)
     latest_loss = 0.0
     latest_value_loss = 0.0
     latest_memory_read_loss = 0.0
@@ -2487,6 +2827,11 @@ def _shuffle_identity_states(states: list[IdentityState]) -> list[IdentityState]
             IdentityState(
                 stability=state.stability.roll(shifts=1, dims=0),
                 program_memory=state.program_memory.roll(shifts=1, dims=0),
+                decision_memory=(
+                    state.decision_memory.roll(shifts=1, dims=0)
+                    if state.decision_memory is not None
+                    else None
+                ),
                 stable_program_memory=(
                     state.stable_program_memory.roll(shifts=1, dims=0)
                     if state.stable_program_memory is not None
@@ -2580,3 +2925,34 @@ def default_kaggle_output_path() -> Path:
 
 def _byte_tokens(text: str) -> list[int]:
     return [byte + 4 for byte in text.encode("utf-8", errors="replace")]
+
+
+def _completion_input_and_labels(
+    prompt: str,
+    completion: str,
+    *,
+    seq_len: int,
+    pad_token_id: int = 3,
+) -> tuple[list[int], list[int]]:
+    prompt_ids = _byte_tokens(prompt)
+    completion_ids = _byte_tokens(completion)
+    input_ids = prompt_ids + completion_ids
+    if not prompt_ids:
+        raise ValueError("completion rows require a non-empty prompt")
+    if not completion_ids:
+        raise ValueError("completion rows require a non-empty completion")
+    if len(input_ids) > seq_len:
+        raise ValueError(
+            "completion row exceeds seq_len: "
+            f"{len(input_ids)} > {seq_len}"
+        )
+    labels = [-100 for _ in input_ids]
+    for offset, token_id in enumerate(completion_ids + [pad_token_id]):
+        label_position = len(prompt_ids) - 1 + offset
+        if label_position < len(labels):
+            labels[label_position] = token_id
+    padding = seq_len - len(input_ids)
+    return (
+        input_ids + [pad_token_id] * padding,
+        labels + [-100] * padding,
+    )
