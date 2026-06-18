@@ -6,7 +6,7 @@ from typing import Any
 from .model import TACConfig
 
 
-BEST_TAC_ARCHITECTURE: dict[str, Any] = {
+BEST_TAC_ARCHITECTURE: dict[str, Any] = {  # legacy chunked-recall preset — NOT the TAC-SCM architecture
     "norm_type": "rmsnorm",
     "mlp_type": "swiglu",
     "position_type": "rope",
@@ -152,6 +152,22 @@ def best_tac_config(*, vocab_size: int, **overrides: Any) -> TACConfig:
     if values["n_kv_heads"] is None:
         values["n_kv_heads"] = max(1, values["n_heads"] // 2)
     return TACConfig(**values)
+
+
+def best_chunked_recall_tac_config(*, vocab_size: int, **overrides: Any) -> TACConfig:
+    """Legacy chunked-recall baseline preset — identical to best_tac_config.
+
+    This alias exists to make the role of the preset explicit: it represents the
+    validated chunked-recall architecture (carry > reset/shuffled/vanilla on chunked
+    recall tasks, 2026-05-31 matrix) and is the "before" state relative to the
+    forthcoming TAC-SCM architecture.  It is NOT the TAC-SCM design and does not
+    include concept volumes, two-level structure routing, slot-conditioned program
+    bottlenecks, or structure-to-behavior bridges.
+
+    Use this name in any code that needs to distinguish the legacy baseline from
+    future TAC-SCM presets.  Behaviour is identical to best_tac_config.
+    """
+    return best_tac_config(vocab_size=vocab_size, **overrides)
 
 
 def run5_capability_config(*, vocab_size: int, **overrides: Any) -> TACConfig:
