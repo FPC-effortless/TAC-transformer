@@ -35,15 +35,15 @@ and bridge classes, and does not add new base-model architecture.
 - `correct_slot_knockout`
 - `wrong_slot_knockout`
 
-## Sweep Support
+## Full Sweep
 
-The CLI exposes the requested full sweep:
+The requested full sweep was run locally on 2026-06-19:
 
 ```powershell
-python kaggle\benchmark_tac_scm_real005.py --full-sweep --output-json runs\benchmarks\tac_scm_real005_full_sweep\real005_full_sweep.json
+python kaggle\benchmark_tac_scm_real005.py --full-sweep --output-json runs\benchmarks\tac_scm_real005_full_sweep_2026_06_19\real005_full_sweep.json
 ```
 
-`--full-sweep` expands to:
+`--full-sweep` expanded to:
 
 - seeds `0..9`
 - `d_model`: `16, 32, 48`
@@ -51,9 +51,29 @@ python kaggle\benchmark_tac_scm_real005.py --full-sweep --output-json runs\bench
 - train samples: `48, 96`
 - bridge types: `linear`, `mlp`, `gated_residual`
 
-The full sweep is intentionally available but was not run locally because it is
-large for the current interactive CPU session.  The local validation below used
-the full harder-mode list and all 10 seeds at one model size.
+Result: passed.
+
+Key full-sweep metrics:
+
+- best learned behavior accuracy: `0.8241030092592593`
+- vanilla gap: `+0.462890625`
+- legacy TAC gap: `+0.44719328703703703`
+- bridge gain: `+0.4593894675925926`
+- oracle gap: `+0.17589699074074072`
+- carry/reset delta: `+0.5076967592592593`
+- carry/shuffled delta: `+0.5311197916666667`
+- slot knockout drop: `+0.5076967592592593`
+- wrong-slot knockout drop: `0.0`
+- structure read hit rate: `0.8190104166045785`
+- transfer gain: `+0.5004629629629629`
+- multi-hop retention: `0.8056712962962963`
+- noisy/partial cue retention: `0.8216435185185185`
+
+Full-sweep bridge ranking:
+
+- `linear`: mean accuracy `0.8241030092592593`, seed variance `0.0008932767221793558`
+- `mlp`: mean accuracy `0.8193287037037037`, seed variance `0.0009671552158350492`
+- `gated_residual`: mean accuracy `0.8156539351851851`, seed variance `0.0009696543919860261`
 
 ## Local Smoke
 
@@ -115,8 +135,9 @@ Per-mode learned bridge winners:
 Promote `linear` as the TAC-SCM v0.2 default bridge candidate for the next
 experimental lane.
 
-Reason: in the 10-seed harder-mode validation slice, `linear` had the highest
-mean accuracy and the lowest measured seed variance among learned bridges.
+Reason: both the 10-seed validation slice and the full requested sweep selected
+`linear`.  In the full sweep, `linear` had the highest mean accuracy and the
+lowest measured seed variance among learned bridges.
 
 This is a benchmark-level recommendation, not a base-model architecture change.
 The next implementation should keep bridge choice configurable and use `linear`
@@ -134,6 +155,6 @@ REAL005 did not identify a blocking bottleneck in the 10-seed validation slice:
   knockout drop
 - multi-hop composition: acceptable; retention is `0.790625`
 
-Remaining risk: the full `d_model x steps x train_samples` sweep has not been
-run locally.  The promotion should be treated as the current default candidate,
-not a final architecture lock.
+Remaining risk: this is still a synthetic benchmark harness.  The promotion
+should be treated as the current default bridge candidate, not a final
+architecture lock.
