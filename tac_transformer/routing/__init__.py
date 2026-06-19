@@ -1,24 +1,42 @@
-"""Stable routing facade for TAC-Transformer.
+"""Stable routing and structure-bridge facade for TAC-Transformer.
 
-This package provides a reviewer-facing boundary for promoted routing modules.
-It does not move or delete existing research files.
+This package provides a reviewer-facing boundary for promoted routing and
+structure-conditioning modules. It does not move or delete existing research
+files.
 """
 
-try:
-    from tac_transformer.structure_slots import StructureSlotPool
-except Exception:  # pragma: no cover - optional research module compatibility
-    StructureSlotPool = None
-
-try:
-    from tac_transformer.structure_bridge import LinearStructureBridge, MLPStructureBridge, GatedResidualStructureBridge
-except Exception:  # pragma: no cover
-    LinearStructureBridge = None
-    MLPStructureBridge = None
-    GatedResidualStructureBridge = None
+from tac_transformer.structure_routing import (
+    SpecialistRouter,
+    StructureFamilyRouter,
+    TwoLevelStructureRoute,
+    TwoLevelStructureRouter,
+)
+from tac_transformer.structure_slots import (
+    SlotConditionedProgramBottleneck,
+    SlotExecutionOutput,
+    StructureSlotState,
+)
+from tac_transformer.structure_bridge import (
+    GatedResidualStructureBridge,
+    LinearStructureBridge,
+    MLPStructureBridge,
+    OracleStructureBridge,
+    StructureBridgeOutput,
+    build_structure_bridge,
+)
 
 __all__ = [
-    "StructureSlotPool",
+    "SpecialistRouter",
+    "StructureFamilyRouter",
+    "TwoLevelStructureRoute",
+    "TwoLevelStructureRouter",
+    "SlotConditionedProgramBottleneck",
+    "SlotExecutionOutput",
+    "StructureSlotState",
+    "GatedResidualStructureBridge",
     "LinearStructureBridge",
     "MLPStructureBridge",
-    "GatedResidualStructureBridge",
+    "OracleStructureBridge",
+    "StructureBridgeOutput",
+    "build_structure_bridge",
 ]
