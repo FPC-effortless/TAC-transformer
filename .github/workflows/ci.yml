@@ -27,12 +27,15 @@ jobs:
         run: |
           python - <<'PY'
           import tac_transformer
-          print('tac_transformer import ok')
+          import tac_transformer.core
+          import tac_transformer.memory
+          import tac_transformer.routing
+          print('tac_transformer imports ok')
           PY
 
       - name: Core architecture smoke tests
         run: |
-          python -m unittest tests_py.test_tac_transformer tests_py.test_tac_serving
+          python -m unittest tests_py.test_tac_transformer tests_py.test_tac_serving tests_py.test_facades
 
   node-smoke:
     runs-on: ubuntu-latest
