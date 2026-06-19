@@ -6,19 +6,25 @@ so older research scripts keep working.
 """
 
 from tac_transformer.model import (
-    TACConfig,
     IdentityState,
     IdentityFieldOutput,
+    TACAuxiliaryOutput,
+    TACConfig,
     TACOutput,
-    TACTransformer,
     TACTransformerBlock,
+    TACTransformerLM,
+    VanillaTransformerBlock,
+    VanillaTransformerLM,
 )
 
 __all__ = [
-    "TACConfig",
     "IdentityState",
     "IdentityFieldOutput",
+    "TACAuxiliaryOutput",
+    "TACConfig",
     "TACOutput",
-    "TACTransformer",
     "TACTransformerBlock",
+    "TACTransformerLM",
+    "VanillaTransformerBlock",
+    "VanillaTransformerLM",
 ]
