@@ -1,0 +1,60 @@
+{
+  "lane": "tac_scm_executable_structure",
+  "repository": "TAC-transformer",
+  "branch": "feature/tac-scm-real003",
+  "root": "C:/Users/warit/OneDrive/Documents/My Programs/identity transformer",
+  "purpose": "Separate research lane for TAC-SCM executable-structure validation artifacts.",
+  "canonical_files": {
+    "benchmarks": [
+      "kaggle/benchmark_tac_scm_real011.py",
+      "kaggle/benchmark_tac_scm_real012a.py",
+      "kaggle/benchmark_tac_scm_real012b.py",
+      "kaggle/benchmark_tac_scm_real013.py",
+      "kaggle/benchmark_tac_scm_real014.py",
+      "kaggle/benchmark_tac_scm_real015.py"
+    ],
+    "tests": [
+      "tests_py/test_tac_scm_real011.py",
+      "tests_py/test_tac_scm_real012a.py",
+      "tests_py/test_tac_scm_real012b.py",
+      "tests_py/test_tac_scm_real013.py",
+      "tests_py/test_tac_scm_real014.py",
+      "tests_py/test_tac_scm_real015.py"
+    ],
+    "outputs": [
+      "outputs/real011_full/",
+      "outputs/real012a_full/",
+      "outputs/real012b_full/",
+      "outputs/real013_full/",
+      "outputs/real014_full/",
+      "outputs/real015_full/"
+    ]
+  },
+  "milestones": [
+    {
+      "id": "REAL011",
+      "claim": "Validated executable-structure benchmark."
+    },
+    {
+      "id": "REAL012A",
+      "claim": "Current representation recovers family but not executable parameter."
+    },
+    {
+      "id": "REAL012B",
+      "claim": "Factorized probing alone does not recover parameter binding."
+    },
+    {
+      "id": "REAL013",
+      "claim": "Explicit parameter-slot binding recovers executable structure."
+    },
+    {
+      "id": "REAL014",
+      "claim": "Bound-slot compiler/executor recovers executable behavior."
+    },
+    {
+      "id": "REAL015",
+      "claim": "Bound-slot executor generalizes to held-out family-parameter compositions."
+    }
+  ],
+  "next_step": "REAL016 robustness under noise, ambiguity, adversarial corruptions, and stricter causal controls."
+}
