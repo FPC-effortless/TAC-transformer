@@ -4,9 +4,21 @@ This file is the reviewer-facing summary of what the repository currently suppor
 
 ## Current claim
 
-TAC is an experimental persistent-state and structure-centric transformer research architecture. The current evidence supports bounded mechanisms for memory, compression, repair control, causal fix selection, and structure-to-behavior use.
+TAC is an experimental persistent-state and structure-centric transformer research architecture. The current evidence supports bounded mechanisms for memory, compression, repair control, causal fix selection, structure routing, and structure-to-behavior use.
 
 It does not prove that TAC beats transformers or replaces LLMs.
+
+## Program map
+
+```text
+Theory: Structure-Centric Intelligence
+  ↓
+Model science: TAC-SCM
+  ↓
+Engine decomposition: TAC-SIE
+  ↓
+Validation: REAL / EXP benchmarks
+```
 
 ## Evidence map
 
@@ -18,8 +30,12 @@ It does not prove that TAC beats transformers or replaces LLMs.
 | Repair control | Validated in bounded repair harnesses | TAC-267 through TAC-272 |
 | Interaction-aware repair planning | Partially validated | TAC-273 exposed frontier; TAC-274 improved bounded chain planning |
 | Structure routing | Validated in controlled TAC-SCM lanes | structure slots, router, bridge, lifecycle tests |
+| Structure memory | Validated in controlled TAC-SCM lanes | structure-memory tests and REAL harnesses |
 | Causal structure-to-behavior use | Validated in controlled TAC-SCM benchmarks | REAL004/REAL005/REAL006 |
 | Benchmark validity for executable structure tests | Improved / validated | REAL011 benchmark redesign |
+| Minimal preserve-retrieve-execute substrate | Preserved but not promoted | TAC-SIE PR #4 |
+| Robust arbitrary binding | Current frontier | EXP009C needed |
+| Faithful executable recovery | Current frontier | REAL012-A needed |
 | Open-ended structure discovery | Not yet validated | future REAL012+ work |
 | General LM superiority | Not validated | needs larger pretraining and strong baselines |
 | Coding/math superiority | Not validated | requires external benchmarks and stronger controls |
@@ -57,6 +73,11 @@ The next scientific milestone should be a larger reproduction suite:
 - runtime and memory profiling;
 - one clean result table in this file;
 - clear pass/fail gates before architecture changes.
+
+The next mechanism milestone should be:
+
+- `TAC-SIE EXP009C`: robust arbitrary-symbol binding;
+- `TAC-SCM REAL012-A`: faithful family/parameter recovery and execution.
 
 ## Investor-safe interpretation
 
