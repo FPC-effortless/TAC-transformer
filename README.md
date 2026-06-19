@@ -1,34 +1,68 @@
 # TAC-Transformer
 
-TAC-Transformer is an experimental structure/memory-augmented transformer architecture for testing whether persistent identity state, routed computational programs, and reusable structure memory improve controlled long-horizon recall, state-dependent behavior, and bounded agentic workflows.
+TAC-Transformer is an experimental persistent-state and structure-centric transformer research program. It tests whether reusable computational structures can be preserved, routed, compressed, transferred, bridged into behavior, and eventually recovered as executable objects.
 
 The repository contains a real trainable PyTorch implementation in `tac_transformer/`, benchmark harnesses in `kaggle/` and `experiments/`, tests in `tests_py/`, and a browser visualization prototype in `src/`. The browser prototype is secondary; the core research artifact is the PyTorch architecture and its validation suite.
 
-## Core hypothesis
+## Research thesis
 
-TAC tests the idea that a model can benefit from an explicit persistent state and structure pathway alongside normal token processing:
+The working thesis is:
+
+> Intelligence is structure acquisition and structure use.
+
+More specifically:
 
 ```text
-Tokens
-  -> Transformer / TAC backbone
-  -> identity state + routed programs + structure memory
-  -> language, memory, repair, or structure-conditioned outputs
+Intelligence = discover reusable computational structure
+             + compress it
+             + preserve it
+             + retrieve it
+             + bind it
+             + execute it
+             + compose it
+             + refine it
+             + evolve it
 ```
+
+The repo is organized as:
+
+```text
+Theory: Structure-Centric Intelligence
+  ↓
+Model science: TAC-SCM
+  ↓
+Engine decomposition: TAC-SIE
+  ↓
+Validation: REAL / EXP benchmarks
+```
+
+See `docs/structure_centric_intelligence_research_program.md` for the full research map.
+
+## Current claim
 
 The narrow claim is not that TAC beats large language models today. The current claim is:
 
 > TAC provides a controlled research platform for testing whether persistent state and routed reusable computational structures can causally improve memory, compression, repair control, and structure-to-behavior transfer in bounded benchmarks.
 
-## What is implemented
+## What is implemented on `main`
 
 - Trainable PyTorch TAC model and configuration surface.
 - Persistent `IdentityState` and identity-field routing.
 - Program routing, memory read/write options, and state carry/reset/shuffle probes.
-- TAC-SCM structure-centric components: structure slots, structure bridge, structure lifecycle, procedural memory, and repair controller.
+- TAC-SCM structure-centric components: concept volumes, structure memory, structure slots, structure bridge, structure lifecycle, procedural memory, and repair controller.
 - Benchmark suites for TAC memory, compression, repair control, and TAC-SCM REAL004/005/006/011.
+- Stable import facades under `tac_transformer/core`, `tac_transformer/memory`, and `tac_transformer/routing`.
 - Kaggle-oriented training and validation scripts.
 - Optional serving and Gradio generation utilities.
 - Browser visualization prototype for identity-field intuition.
+
+## TAC-SCM and TAC-SIE lanes
+
+TAC-SCM is the model-science lane. It tests whether structure-centric models can preserve, route, reuse, transfer, compress, bridge, and recover structures. The clean TAC-SCM branch has been merged into `main`.
+
+TAC-SIE is the engine-decomposition lane. It tests whether the same thesis can be decomposed into clean modules for preservation, retrieval, binding, execution, refinement, and evolution. TAC-SIE is preserved as PR #4 and is not merged into `main` yet because it needs its own validation gate.
+
+See `docs/tac_sie_research_lane.md` for the TAC-SIE status and merge criteria.
 
 ## What has been validated so far
 
@@ -51,6 +85,8 @@ TAC does not yet prove:
 - general language-modeling superiority;
 - coding, math, or planning superiority over strong baselines;
 - reliable open-ended autonomous agents;
+- robust arbitrary binding;
+- faithful executable recovery;
 - autonomous open-ended structure discovery at scale;
 - wall-clock efficiency over transformers;
 - large-scale pretraining survival;
@@ -113,7 +149,7 @@ See `REPRODUCIBILITY.md` for additional commands and interpretation.
 tac_transformer/       Core TAC implementation and research modules
 tac_transformer/core/  Stable public import facade for the core model
 tac_transformer/memory/ Stable memory import facade
-tac_transformer/routing/ Stable routing import facade
+tac_transformer/routing/ Stable routing and structure-bridge import facade
 kaggle/                Kaggle-ready benchmark and training scripts
 experiments/           Research benchmark scripts and roadmap experiments
 tests_py/              Python test suite
@@ -133,7 +169,7 @@ npm run lint
 npm run build
 ```
 
-GitHub Actions now runs basic Python and frontend smoke checks on pushes and PRs to `main`.
+GitHub Actions runs basic Python and frontend smoke checks on pushes and PRs to `main`.
 
 ## License
 
