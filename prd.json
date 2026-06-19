@@ -2291,6 +2291,21 @@
         "After the Kaggle version 1 run failed under DDP, identifies the unused aux-cadence parameter as blocks.7.identity_field.raw_energy_costs and adds a zero-weight energy safety path so non-cadence steps preserve the gradient graph without changing the objective.",
         "Rebuilds and versions the private Kaggle code dataset, pushes jeffkolo/tac-run5b-best-capability-fast-20k-2026-06-06 as kernel version 2, and records that source pull confirms kernel_run_version=2 while completed output artifacts are still pending."
       ]
+    },
+    {
+      "id": "TAC-SCM-REAL008",
+      "title": "Repository repair generalization stress benchmark",
+      "status": "completed",
+      "acceptance": [
+        "Adds kaggle/benchmark_tac_scm_real008.py with deterministic temporary Python repository generation across ten harder repair modes: single-file direct, multi-file dependency, distractor file, ambiguous localization, hidden regression, unseen repo template, noisy retrieval, longer chain, API contract change, and minimal patch required.",
+        "Executes subprocess unittest verification for visible and hidden tests, confirms pre-patch failures, verifies correct repair passes, and includes wrong patches that can pass visible tests while failing hidden regression safety.",
+        "Compares vanilla repair, retrieval-only, procedural-memory-only, TAC-SCM carry, reset, shuffled-state, and oracle controls without weakening REAL007.",
+        "Reports repair success, visible and hidden pass rates, regression safety, localization, minimal patch rate, retrieval/procedural/vanilla/oracle gaps, carry reset/shuffle deltas, wrong-file and overfit patch rates, per-mode success, per-seed results, and seed variance.",
+        "Writes real008_metrics.json, real008_per_seed.json, real008_per_mode.json, and real008_summary.md under runs/benchmarks/tac_scm_real008_* artifact directories.",
+        "Adds tests_py/test_tac_scm_real008.py and docs/tac_scm_real008_repo_repair_generalization.md.",
+        "Records the full sweep result: status passed, repair_success 1.0, pre_test_failure_confirmation 1.0, post_test_pass_rate 1.0, regression_safety 1.0, retrieval_only_gap 0.55, procedural_memory_only_gap 0.41000000000000003, oracle_gap 0.0, carry_reset_delta 0.5, carry_shuffled_delta 0.71, and all 10 modes above the 0.65 per-mode success floor.",
+        "Records the boundary that REAL008 is controlled generalized repository-style repair under executable tests, not SWE-bench validation or open-ended software engineering proof."
+      ]
     }
   ]
 }
