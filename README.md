@@ -1,162 +1,129 @@
-# TAC-Transformer Identity Field Lab
+# TAC-Transformer
 
-Interactive Vite/React prototype for testing an Identity Field Layer beside attention.
+TAC-Transformer is an experimental structure/memory-augmented transformer architecture for testing whether persistent identity state, routed computational programs, and reusable structure memory improve controlled long-horizon recall, state-dependent behavior, and bounded agentic workflows.
 
-The current prototype is deterministic and inspectable rather than trained. It demonstrates:
+The repository contains a real trainable PyTorch implementation in `tac_transformer/`, benchmark harnesses in `kaggle/` and `experiments/`, tests in `tests_py/`, and a browser visualization prototype in `src/`. The browser prototype is secondary; the core research artifact is the PyTorch architecture and its validation suite.
 
-- scaled dot-product baseline attention
-- coherence-modulated attention: `softmax(QK^T / sqrt(d) + beta * C)`
-- executable program embeddings with stability and energy cost
-- sparse program routing under an energy budget
-- compressed identity memory traces
-- sleep-phase consolidation that merges stable repeated traces and prunes unstable ones
+## Core hypothesis
 
-The repository also includes a real trainable PyTorch implementation in `tac_transformer/`. See `docs/tac_transformer_architecture.md` for the module layout and loss wiring.
+TAC tests the idea that a model can benefit from an explicit persistent state and structure pathway alongside normal token processing:
 
-## Parameter Counts
-
-The default Kaggle training config in `kaggle/train_tac_synthetic.py` has:
-
-- total parameters: `150,002,688`
-- trainable parameters: `150,002,688`
-- identity-field parameters: `10,630,656`
-
-The default config is `vocab_size=10624`, `d_model=768`, `n_heads=12`, `n_layers=16`, `n_programs=96`, and `max_seq_len=256`.
-
-A smaller local smoke config can be passed explicitly:
-
-```bash
-python kaggle/train_tac_synthetic.py --steps 2 --batch-size 4 --d-model 32 --n-layers 1 --n-heads 4 --n-programs 8 --vocab-size 64 --seq-len 17
+```text
+Tokens
+  -> Transformer / TAC backbone
+  -> identity state + routed programs + structure memory
+  -> language, memory, repair, or structure-conditioned outputs
 ```
 
-To compare TAC against a vanilla transformer with the same backbone dimensions:
+The narrow claim is not that TAC beats large language models today. The current claim is:
+
+> TAC provides a controlled research platform for testing whether persistent state and routed reusable computational structures can causally improve memory, compression, repair control, and structure-to-behavior transfer in bounded benchmarks.
+
+## What is implemented
+
+- Trainable PyTorch TAC model and configuration surface.
+- Persistent `IdentityState` and identity-field routing.
+- Program routing, memory read/write options, and state carry/reset/shuffle probes.
+- TAC-SCM structure-centric components: structure slots, structure bridge, structure lifecycle, procedural memory, and repair controller.
+- Benchmark suites for TAC memory, compression, repair control, and TAC-SCM REAL004/005/006/011.
+- Kaggle-oriented training and validation scripts.
+- Optional serving and Gradio generation utilities.
+- Browser visualization prototype for identity-field intuition.
+
+## What has been validated so far
+
+The strongest current evidence is bounded and controlled:
+
+- persistent identity state can be carried across segments;
+- carry/reset/shuffle probes can detect whether state is causally useful;
+- content-addressed and program-conditioned memory can improve controlled recall tasks;
+- context-compression benchmarks show useful behavior around the 10x-20x regime;
+- repair-control benchmarks validate bounded localization, targeted repair, and causal fix disambiguation;
+- TAC-SCM REAL004/005/006 validate controlled structure-to-behavior use, bridge stability, and realistic structure-transfer slices;
+- TAC-SCM REAL011 improves the executable-structure benchmark so future failures are more attributable to model limitations than benchmark flaws.
+
+See `TECHNICAL_REPORT.md` and `RESULTS_SUMMARY.md` for the compact evidence map.
+
+## What is not yet validated
+
+TAC does not yet prove:
+
+- general language-modeling superiority;
+- coding, math, or planning superiority over strong baselines;
+- reliable open-ended autonomous agents;
+- autonomous open-ended structure discovery at scale;
+- wall-clock efficiency over transformers;
+- large-scale pretraining survival;
+- replacement of current LLM architectures.
+
+See `LIMITATIONS.md` for the full claim boundary.
+
+## Quickstart
+
+Install Python dependencies:
 
 ```bash
-python kaggle/benchmark_tac_vs_baseline.py --steps 120
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
-Add `--match-baseline-parameters` to widen the vanilla baseline to the nearest
-parameter count found by the local estimator.
-
-To run the causal effectiveness scorecard with carry/reset and shuffled-state probes:
+Install frontend dependencies only if you want the browser prototype:
 
 ```bash
-python kaggle/benchmark_effectiveness.py --steps 1 --batch-size 2 --eval-batches 1 --eval-batch-size 2 --probe-batches 2
+npm install
 ```
 
-See `docs/effectiveness_benchmark_runbook.md` for the full protocol.
-
-Backbone modernization is opt-in so legacy results stay comparable:
+Run Python smoke tests:
 
 ```bash
-python kaggle/benchmark_effectiveness.py --norm-type rmsnorm --mlp-type swiglu --position-type rope --n-kv-heads 2 --program-compute-type linear_expert --state-update-type gated --steps 120
+python -m unittest tests_py.test_tac_transformer tests_py.test_tac_serving
 ```
 
-To test explicit cross-chunk memory instead of only short next-token behavior:
-
-```bash
-python kaggle/benchmark_chunked_memory.py --norm-type rmsnorm --mlp-type swiglu --position-type rope --n-kv-heads 2 --program-compute-type linear_expert --state-update-type gated --memory-write-type novelty_gated --identity-attention-type compressed_memory --value-loss-weight 3.0 --memory-read-type program_memory --memory-read-loss-weight 3.0 --memory-injection-weight 1.0 --steps 120
-```
-
-The current best clean architecture from the 2026-05-28 research matrix is available as a preset and one-command benchmark:
+Run the current best TAC benchmark smoke command:
 
 ```bash
 python kaggle/benchmark_best_tac.py --steps 120
 ```
 
-In code:
-
-```python
-from tac_transformer import best_tac_config
-
-config = best_tac_config(vocab_size=64, d_model=64, n_heads=4, n_layers=2)
-```
-
-That preset uses RMSNorm, SwiGLU, RoPE, grouped-query attention, linear program experts, BASE-style balanced routing, gated state updates, novelty-gated memory writes, program-memory readout, and the gated residual memory adapter. It intentionally leaves hierarchical memory, product-key memory, sink programs, compressed identity attention, dual streams, CREB allocation, and multi-token prediction as ablations because the harder matrix showed the all-features stack and CREB variants underperformed the simpler BASE-routed TAC.
-
-See `docs/best_tac_architecture.md` for task context, metric definitions, seed statistics, routing justification, and current limitations.
-
-Agentic action/world/reward/reflection experiments are tracked in `docs/agentic_objective_experiments.md`. Current result: direct memory-conditioned action policy is the best tested agentic adapter, but it is not reliable enough to promote into the default architecture yet.
-
-For model-native memory integration, use the residual adapter instead of direct logit injection:
+Run TAC-SCM structure-centric tests:
 
 ```bash
-python kaggle/benchmark_chunked_memory.py --norm-type rmsnorm --mlp-type swiglu --position-type rope --n-kv-heads 2 --program-compute-type linear_expert --state-update-type gated --memory-write-type novelty_gated --identity-attention-type compressed_memory --value-loss-weight 3.0 --memory-read-type program_memory --memory-read-loss-weight 3.0 --memory-adapter-type residual --memory-adapter-weight 1.0 --steps 120
+python -m unittest tests_py.test_tac_scm_real004 tests_py.test_tac_scm_real005 tests_py.test_tac_scm_real006 tests_py.test_tac_scm_real011
 ```
 
-The higher-capacity gated adapter is the stronger clean path found so far:
+## Main reproducibility commands
+
+Core TAC validation:
 
 ```bash
-python kaggle/benchmark_chunked_memory.py --norm-type rmsnorm --mlp-type swiglu --position-type rope --n-kv-heads 2 --program-compute-type linear_expert --state-update-type gated --memory-write-type novelty_gated --identity-attention-type compressed_memory --value-loss-weight 3.0 --memory-read-type program_memory --memory-read-loss-weight 3.0 --memory-adapter-type gated_residual --memory-adapter-weight 4.0 --steps 120
+python experiments/kaggle_validate_tac_core.py --benchmarks tac251,tac252,tac267,tac270,tac272 --seeds 5 --cases 50 --output runs/kaggle_validation/tac_core_validation.json
 ```
 
-To measure data and compute-proxy efficiency across multiple training budgets:
+TAC-SCM benchmark validity validation:
 
 ```bash
-python kaggle/benchmark_efficiency.py --budgets 20 60 120 --norm-type rmsnorm --mlp-type swiglu --position-type rope --n-kv-heads 2 --program-compute-type linear_expert --state-update-type gated --memory-write-type novelty_gated --value-loss-weight 3.0 --memory-read-type program_memory --memory-read-loss-weight 3.0 --memory-adapter-type gated_residual --memory-adapter-weight 6.0 --match-baseline-parameters
+python kaggle/benchmark_tac_scm_real011.py --output_dir outputs/tac_scm_real011 --seeds 0 1 2 3 4 5 6 7 8 9 --train_samples 256 --eval_samples 256
 ```
 
-Use `--n-sink-programs` as a StreamingLLM-style ablation switch; the first sink sweep kept all runs effective but did not beat the no-sink reference.
+See `REPRODUCIBILITY.md` for additional commands and interpretation.
 
-A larger small-LLM-style config with `vocab_size=32000`, `d_model=512`, `n_heads=8`, `n_layers=8`, `n_programs=64`, and `max_seq_len=512` has:
+## Repository map
 
-- total parameters: `62,715,392`
-- trainable parameters: `62,715,392`
-- identity-field parameters: `2,363,904`
-
-To count any custom config, use:
-
-```bash
-python kaggle/train_tac_synthetic.py --steps 0
+```text
+tac_transformer/       Core TAC implementation and research modules
+tac_transformer/core/  Stable public import facade for the core model
+tac_transformer/memory/ Stable memory import facade
+tac_transformer/routing/ Stable routing import facade
+kaggle/                Kaggle-ready benchmark and training scripts
+experiments/           Research benchmark scripts and roadmap experiments
+tests_py/              Python test suite
+docs/                  Architecture notes, runbooks, and research reports
+src/                   Browser identity-field visualization prototype
 ```
 
-or import `count_parameters` from `tac_transformer.training`.
+The repository still contains active research lanes. Anything outside the stable facades should be treated as experimental unless the relevant doc marks it as promoted.
 
-## Kaggle Training
-
-The Kaggle-ready trainer is:
-
-```bash
-python kaggle/train_tac_synthetic.py --device auto --steps 1000
-```
-
-It writes a checkpoint to `/kaggle/working/tac_transformer.pt` when running on Kaggle, or `runs/tac_transformer.pt` locally.
-
-Dataset preparation notes live in `docs/dataset_preparation.md`. The prep loader drops missing answers, caps duplicates, serializes rows into training text, and supports both JSONL and JSON-array datasets.
-
-## Serving And Tokenized Corpus
-
-TAC checkpoint serving uses the existing byte-token training contract rather than GPT-2 BPE, so current checkpoints remain compatible. The reusable serving API is in `tac_transformer/serving.py`.
-
-Build optimized tokenized train/valid memmaps:
-
-```bash
-python scripts/prepare_tac_tokenized_corpus.py --train-jsonl runs/prepared_corpus/train.prepared.jsonl --valid-jsonl runs/prepared_corpus/eval.prepared.jsonl --output-dir tokenized --vocab-size 512
-```
-
-Generate from a checkpoint:
-
-```bash
-python scripts/tac_generate.py --checkpoint runs/TAC-seed\ 37/best.pt --prompt "The quick brown fox" --max-new-tokens 80 --temperature 0.7 --top-k 50 --top-p 0.9
-```
-
-Launch the optional Gradio GUI:
-
-```bash
-pip install gradio
-python scripts/tac_gradio_gui.py --checkpoint runs/TAC-seed\ 37/best.pt
-```
-
-See `docs/tac_serving_and_architecture.md` for the TAC layer arrangement and the GPT-style backbone comparison.
-
-## Development
-
-```bash
-npm install
-npm run dev
-```
-
-## Checks
+## Development checks
 
 ```bash
 npm test
@@ -166,4 +133,12 @@ npm run lint
 npm run build
 ```
 
-The browser prototype core lives in `src/lib/identityField.js`; the trainable PyTorch implementation lives in `tac_transformer/model.py`.
+GitHub Actions now runs basic Python and frontend smoke checks on pushes and PRs to `main`.
+
+## License
+
+This repository is licensed under Apache-2.0. See `LICENSE`.
+
+## Historical README
+
+The previous command-heavy README is preserved in `docs/legacy_readme_reference.md` so older notes are not lost.
