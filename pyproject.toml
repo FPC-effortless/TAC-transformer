@@ -11,7 +11,7 @@ requires-python = ">=3.10"
 authors = [
   { name = "FPC-effortless" }
 ]
-license = { text = "Research use; see LICENSE when added." }
+license = { text = "Apache-2.0" }
 dependencies = [
   "torch>=2.0",
   "numpy>=1.24"
@@ -26,7 +26,7 @@ serving = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["tac_transformer*", "tac_sie*"]
+include = ["tac_transformer*"]
 exclude = ["runs*", "outputs*", "Training data*"]
 
 [tool.pytest.ini_options]
