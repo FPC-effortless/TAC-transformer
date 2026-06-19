@@ -142,6 +142,18 @@ RUN5B_BEST_CAPABILITY_FAST_TRAINING: dict[str, float | str | int] = {
     "aux_loss_cadence": 4,
 }
 
+TAC_SCM_V02_ARCHITECTURE: dict[str, Any] = {
+    **BEST_TAC_ARCHITECTURE,
+    "structure_routing_type": "two_level",
+    "n_structure_families": 8,
+    "n_structure_slots": 16,
+    "family_route_loss_weight": 0.01,
+    "specialist_route_loss_weight": 0.01,
+    "routing_type": "base",
+    "routing_top_k": 2,
+    "memory_adapter_type": "gated_residual",
+}
+
 
 def best_tac_config(*, vocab_size: int, **overrides: Any) -> TACConfig:
     """Build the strongest TAC config found by the harder 2026-05-31 matrix."""
@@ -168,6 +180,23 @@ def best_chunked_recall_tac_config(*, vocab_size: int, **overrides: Any) -> TACC
     future TAC-SCM presets.  Behaviour is identical to best_tac_config.
     """
     return best_tac_config(vocab_size=vocab_size, **overrides)
+
+
+def tac_scm_v02_config(*, vocab_size: int, **overrides: Any) -> TACConfig:
+    """Build the TAC-PSM/TAC-SCM v0.2 research-lane config.
+
+    This is not a replacement for best_tac_config.  It opts into the validated
+    structure lane by enabling concept-family routing and explicit structure
+    slots while keeping language output in the standard hidden-state-to-LM-head
+    shell.
+    """
+
+    values = _default_config_values(vocab_size)
+    values.update(TAC_SCM_V02_ARCHITECTURE)
+    values.update(overrides)
+    if values["n_kv_heads"] is None:
+        values["n_kv_heads"] = max(1, values["n_heads"] // 2)
+    return TACConfig(**values)
 
 
 def run5_capability_config(*, vocab_size: int, **overrides: Any) -> TACConfig:

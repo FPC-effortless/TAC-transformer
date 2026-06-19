@@ -40,6 +40,7 @@ from .presets import (
     MEMORY_ADVANTAGE_TRAINING,
     RUN5B_BEST_CAPABILITY_FAST_ARCHITECTURE,
     RUN5B_BEST_CAPABILITY_FAST_TRAINING,
+    TAC_SCM_V02_ARCHITECTURE,
     best_chunked_memory_training_kwargs,
     best_chunked_recall_tac_config,
     best_tac_config,
@@ -55,6 +56,7 @@ from .presets import (
     run5_capability_training_kwargs,
     run5b_capability_config,
     run5b_capability_training_kwargs,
+    tac_scm_v02_config,
 )
 from .optimization import (
     TACOptimizerConfig,
@@ -228,6 +230,36 @@ from .structure_routing import (
     TwoLevelStructureRoute,
     TwoLevelStructureRouter,
 )
+from .structure_slots import (
+    SlotConditionedProgramBottleneck,
+    SlotExecutionOutput,
+    StructureSlotState,
+)
+from .structure_bridge import (
+    GatedResidualStructureBridge,
+    LinearStructureBridge,
+    MLPStructureBridge,
+    OracleStructureBridge,
+    StructureBridgeOutput,
+    build_structure_bridge,
+)
+from .structure_lifecycle import (
+    StructureLifecycleDecision,
+    StructureLifecycleScorer,
+)
+from .procedural_memory import (
+    ProceduralMemoryRead,
+    ProceduralMemoryRecord,
+    ProceduralMemoryStore,
+    ProceduralStep,
+)
+from .repair_controller import (
+    RepairAttempt,
+    RepairControllerDecision,
+    RepairControllerResult,
+    VerificationResult,
+    VerifierGuidedRepairController,
+)
 
 __all__ = [
     "AUTHORITY_CALIBRATED_FAST_PATH_INDEX",
@@ -268,6 +300,7 @@ __all__ = [
     "MEMORY_ADVANTAGE_TRAINING",
     "RUN5B_BEST_CAPABILITY_FAST_ARCHITECTURE",
     "RUN5B_BEST_CAPABILITY_FAST_TRAINING",
+    "TAC_SCM_V02_ARCHITECTURE",
     "best_chunked_memory_training_kwargs",
     "best_chunked_recall_tac_config",
     "best_tac_config",
@@ -283,6 +316,7 @@ __all__ = [
     "run5_capability_training_kwargs",
     "run5b_capability_config",
     "run5b_capability_training_kwargs",
+    "tac_scm_v02_config",
     "TACOptimizerConfig",
     "build_tac_optimizer",
     "classify_tac_parameter",
@@ -429,4 +463,24 @@ __all__ = [
     "StructureFamilyRouter",
     "TwoLevelStructureRoute",
     "TwoLevelStructureRouter",
+    "SlotConditionedProgramBottleneck",
+    "SlotExecutionOutput",
+    "StructureSlotState",
+    "GatedResidualStructureBridge",
+    "LinearStructureBridge",
+    "MLPStructureBridge",
+    "OracleStructureBridge",
+    "StructureBridgeOutput",
+    "build_structure_bridge",
+    "StructureLifecycleDecision",
+    "StructureLifecycleScorer",
+    "ProceduralMemoryRead",
+    "ProceduralMemoryRecord",
+    "ProceduralMemoryStore",
+    "ProceduralStep",
+    "RepairAttempt",
+    "RepairControllerDecision",
+    "RepairControllerResult",
+    "VerificationResult",
+    "VerifierGuidedRepairController",
 ]
