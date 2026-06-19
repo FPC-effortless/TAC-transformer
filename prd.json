@@ -2322,6 +2322,22 @@
         "Records the full sweep result: status passed, repair_success 0.96, regression_safety 0.96, metadata_leak_score 0.0, hidden_test_independence_score 1.0, retrieval_only_gap 0.49, procedural_memory_only_gap 0.37, oracle_gap 0.040000000000000036, carry_reset_delta 0.48, carry_shuffled_delta 0.6399999999999999, carry_wrong_state_delta 0.58, and carry_no_store_delta 0.51.",
         "Records the boundary that REAL008B is leak-audited controlled executable repository-style repair, not SWE-bench validation or proof of open-ended software engineering."
       ]
+    },
+    {
+      "id": "TAC-SCM-REAL009",
+      "title": "Larger naturalistic repository repair transfer benchmark",
+      "status": "completed",
+      "acceptance": [
+        "Adds kaggle/benchmark_tac_scm_real009.py as a separate benchmark without modifying REAL007, REAL008, or REAL008B.",
+        "Generates temporary executable Python repositories with 6+ source files, multiple visible and hidden tests, package/module structure, cross-file imports, distractor modules, hidden regression tests, multi-file patch manifests, and sanitized model-facing context.",
+        "Covers ten naturalistic repo families and twelve benchmark modes including larger single bug, multi-file contract, two-file patch, three-file patch, hidden regression overfit, ambiguous helpers, unseen repo family, naturalistic noise, same-failure different fix, patch minimality, dependency chain depth, and multiple valid patches.",
+        "Compares vanilla repair, retrieval-only, procedural-memory-only, TAC-SCM carry, reset, shuffled-state, wrong-state, no-store, stronger agent-style baseline, oracle localization, and oracle repair controls.",
+        "Reports repair, pre/post/visible/hidden pass, regression safety, localization, multi-file/two-file/three-file success, minimality, patch size, wrong-file and overfit rates, multiple-valid acceptance, counterfactual and dependency-chain success, unseen-family success, baseline gaps, carried-state deltas, cost/latency, per-mode, per-family, per-seed, seed variance, metadata leak score, and hidden-test independence.",
+        "Writes real009_metrics.json, real009_per_seed.json, real009_per_mode.json, real009_per_family.json, real009_leak_checks.json, real009_cost_metrics.json, and real009_summary.md under runs/benchmarks/tac_scm_real009_* artifact directories.",
+        "Adds tests_py/test_tac_scm_real009.py and docs/tac_scm_real009_larger_repo_transfer.md.",
+        "Records the full sweep result: status passed, repair_success 0.9166666666666666, regression_safety 0.9166666666666666, multi_file_patch_success 1.0, two_file_patch_success 1.0, three_file_patch_success 1.0, unseen_family_success 1.0, retrieval_only_gap 0.4333333333333333, procedural_memory_only_gap 0.35, strong_agent_gap 0.3583333333333333, oracle_repair_gap 0.08333333333333337, carry_reset_delta 0.4583333333333333, carry_shuffled_delta 0.5583333333333333, carry_wrong_state_delta 0.5416666666666666, carry_no_store_delta 0.49999999999999994, metadata_leak_score 0.0, and hidden_test_independence 1.0.",
+        "Records the boundary that REAL009 is controlled larger/naturalistic executable repository-style repair, not SWE-bench validation or proof of arbitrary real-world repository repair."
+      ]
     }
   ]
 }
