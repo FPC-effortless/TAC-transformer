@@ -4,6 +4,35 @@
 
 TAC is an experimental persistent-state and structure-centric architecture for long-horizon AI agents. The validated evidence currently supports bounded mechanisms for memory, compression, control, repair, causal fix selection, structure routing, and causal structure-to-behavior use.
 
+The repo does not claim that TAC beats transformers or replaces LLMs.
+
+## Research Program Map
+
+```text
+Theory: Structure-Centric Intelligence
+  ↓
+Model science: TAC-SCM
+  ↓
+Engine decomposition: TAC-SIE
+  ↓
+Validation: REAL / EXP benchmarks
+```
+
+The central research thesis is:
+
+> Intelligence is structure acquisition and structure use.
+
+See `docs/structure_centric_intelligence_research_program.md` for the full program hierarchy and capability status.
+
+## Lane Summary
+
+| Lane | Role | Repo status |
+|---|---|---|
+| TAC core | Persistent identity state, program routing, memory, compression, repair-control substrate | Implemented on `main` |
+| TAC-SCM | Structure-centric model-science validation: structure slots, routing, bridge, lifecycle, memory, REAL benchmarks | Implemented on `main` |
+| TAC-SIE | Engine-level decomposition: preserve, retrieve, bind, execute, refine, evolve | Preserved as PR #4; not merged yet |
+| REAL / EXP | Controlled benchmark validation layer | Active |
+
 ## Evidence Summary
 
 TAC-235 and TAC-236 establish causal program dependence and reproduction across the core benchmark matrix.
@@ -32,6 +61,24 @@ TAC-SCM REAL006 tests real or realistic structure transfer workloads: coding rep
 
 TAC-SCM REAL011 redesigns the executable-structure benchmark to reduce benchmark flaws and make future hidden-structure recovery tests more scientifically meaningful.
 
+## Main Research Insight
+
+The key current insight is:
+
+> Structure representation and structure use are different capabilities.
+
+Therefore the architecture should be evaluated as a pipeline:
+
+```text
+discover → compile → preserve → retrieve → bind → execute → refine
+```
+
+not as a direct shortcut:
+
+```text
+encode → answer
+```
+
 ## Current Frontier
 
 The active frontier is whether TAC can handle:
@@ -40,9 +87,17 @@ The active frontier is whether TAC can handle:
 - longer live-repository repair chains;
 - incomplete and deceptive tests outside bounded injected patterns;
 - ambiguous root causes in real project environments;
+- robust arbitrary binding;
 - autonomous open-ended structure discovery;
-- executable structure recovery on valid benchmarks;
+- faithful executable recovery on valid benchmarks;
 - scale with a genuinely capable pretrained model.
+
+## Next Decisive Tests
+
+The next decisive tests should target the shared TAC-SCM/TAC-SIE frontier:
+
+- `TAC-SIE EXP009C`: robust arbitrary-symbol binding to retrieved parameters.
+- `TAC-SCM REAL012-A`: faithful family/parameter recovery and execution on the redesigned executable-structure benchmark.
 
 ## Non-Claims
 
