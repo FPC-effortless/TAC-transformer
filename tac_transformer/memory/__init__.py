@@ -4,17 +4,26 @@ This package re-exports promoted memory-related modules without moving the
 underlying research files.
 """
 
-try:
-    from tac_transformer.structure_memory import StructureMemoryModule
-except Exception:  # pragma: no cover - optional research module compatibility
-    StructureMemoryModule = None
-
-try:
-    from tac_transformer.procedural_memory import ProceduralMemory
-except Exception:  # pragma: no cover
-    ProceduralMemory = None
+from tac_transformer.structure_memory import (
+    StructureMemoryModule,
+    StructureMemoryRead,
+    StructureMemoryState,
+    StructureMemoryWrite,
+)
+from tac_transformer.procedural_memory import (
+    ProceduralMemoryRead,
+    ProceduralMemoryRecord,
+    ProceduralMemoryStore,
+    ProceduralStep,
+)
 
 __all__ = [
     "StructureMemoryModule",
-    "ProceduralMemory",
+    "StructureMemoryRead",
+    "StructureMemoryState",
+    "StructureMemoryWrite",
+    "ProceduralMemoryRead",
+    "ProceduralMemoryRecord",
+    "ProceduralMemoryStore",
+    "ProceduralStep",
 ]
