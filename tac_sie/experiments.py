@@ -125,6 +125,10 @@ def run_exp009(cfg: TACSIEConfig | None = None, train_steps: int = 800, executor
     metrics = dict(known)
     metrics["known_rule_accuracy"] = known["carry_accuracy"]
     metrics["new_rule_accuracy"] = new["carry_accuracy"]
+    metrics["known_rule_shuffle_accuracy"] = known["shuffle_accuracy"]
+    metrics["new_rule_shuffle_accuracy"] = new["shuffle_accuracy"]
+    metrics["known_rule_reset_accuracy"] = known["reset_accuracy"]
+    metrics["new_rule_reset_accuracy"] = new["reset_accuracy"]
     metrics["same_query_counterfactual_accuracy"] = new["same_query_counterfactual_accuracy"]
     metrics["known_rule_counterfactual_drop"] = known["counterfactual_drop"]
     metrics["new_rule_counterfactual_drop"] = new["counterfactual_drop"]
@@ -154,10 +158,10 @@ def run_exp009b(
                     "n_memory_slots": n_slots,
                     "n_offsets": n_offsets,
                     "rule_condition": "smoke_transfer",
-                    "wrong_offset_accuracy": metrics["shuffle_accuracy"],
-                    "wrong_rule_state_accuracy": metrics["reset_accuracy"],
-                    "swapped_state_accuracy": metrics["shuffle_accuracy"],
-                    "random_query_rule_accuracy": metrics["reset_accuracy"],
+                    "wrong_offset_accuracy": metrics["new_rule_shuffle_accuracy"],
+                    "wrong_rule_state_accuracy": metrics["new_rule_reset_accuracy"],
+                    "swapped_state_accuracy": metrics["new_rule_shuffle_accuracy"],
+                    "random_query_rule_accuracy": metrics["new_rule_reset_accuracy"],
                     **metrics,
                 })
 
@@ -171,13 +175,17 @@ def run_exp009b(
         "carry_accuracy": row_mean("carry_accuracy"),
         "known_rule_accuracy": row_mean("known_rule_accuracy"),
         "new_rule_accuracy": row_mean("new_rule_accuracy"),
+        "known_rule_shuffle_accuracy": row_mean("known_rule_shuffle_accuracy"),
+        "new_rule_shuffle_accuracy": row_mean("new_rule_shuffle_accuracy"),
+        "known_rule_reset_accuracy": row_mean("known_rule_reset_accuracy"),
+        "new_rule_reset_accuracy": row_mean("new_rule_reset_accuracy"),
         "same_query_counterfactual_accuracy": row_mean("same_query_counterfactual_accuracy"),
         "counterfactual_drop": row_mean("new_rule_counterfactual_drop"),
         "known_rule_counterfactual_drop": row_mean("known_rule_counterfactual_drop"),
         "new_rule_counterfactual_drop": row_mean("new_rule_counterfactual_drop"),
         "reset_accuracy": row_mean("reset_accuracy"),
         "shuffle_accuracy": row_mean("shuffle_accuracy"),
-        "no_store_accuracy": row_mean("reset_accuracy"),
+        "no_store_accuracy": row_mean("new_rule_reset_accuracy"),
         "wrong_offset_accuracy": row_mean("wrong_offset_accuracy"),
         "wrong_rule_state_accuracy": row_mean("wrong_rule_state_accuracy"),
         "swapped_state_accuracy": row_mean("swapped_state_accuracy"),
@@ -192,6 +200,6 @@ def run_exp009b(
         and summary["new_rule_accuracy"] > 0.90
         and summary["offset_retrieval_accuracy"] > 0.95
         and summary["same_query_counterfactual_accuracy"] <= max_chance + 0.10
-        and summary["reset_accuracy"] <= max_chance + 0.10
+        and summary["new_rule_reset_accuracy"] <= max_chance + 0.10
     )
     return {"summary": summary, "rows": rows}
