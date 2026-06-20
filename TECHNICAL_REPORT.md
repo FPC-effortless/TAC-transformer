@@ -2,9 +2,11 @@
 
 ## Claim
 
-TAC is an experimental persistent-state and structure-centric architecture for long-horizon AI agents. The validated evidence currently supports bounded mechanisms for memory, compression, control, repair, causal fix selection, structure routing, and causal structure-to-behavior use.
+TAC is an experimental persistent-state and structure-centric architecture for long-horizon AI agents. The strongest current evidence supports bounded mechanisms for memory, compression, control, repair, causal fix selection, structure routing, and causal structure-to-behavior use.
 
 The repo does not claim that TAC beats transformers or replaces LLMs.
+
+All benchmark claims should be interpreted through `EVIDENCE_AUDIT.md`. Local pass/fail gates are useful, but they are not equivalent to external validation.
 
 ## Research Program Map
 
@@ -30,8 +32,8 @@ See `docs/structure_centric_intelligence_research_program.md` for the full progr
 |---|---|---|
 | TAC core | Persistent identity state, program routing, memory, compression, repair-control substrate | Implemented on `main` |
 | TAC-SCM | Structure-centric model-science validation: structure slots, routing, bridge, lifecycle, memory, REAL benchmarks | Implemented on `main` |
-| TAC-SIE | Engine-level decomposition: preserve, retrieve, bind, execute, refine, evolve | Preserved as PR #4; not merged yet |
-| REAL / EXP | Controlled benchmark validation layer | Active |
+| TAC-SIE | Engine-level decomposition: preserve, retrieve, bind, execute, refine, evolve | Minimal preserve/retrieve/execute substrate implemented on `main`; still provisional |
+| REAL / EXP | Controlled benchmark validation layer | Active, tiered by `EVIDENCE_AUDIT.md` |
 
 ## Evidence Summary
 
@@ -53,13 +55,29 @@ TAC-273 exposes the next frontier: interacting multi-bug repair-chain completion
 
 TAC-274 targets the TAC-273 failure with dependency-graph planning, patch-order prediction, and interaction tracking. It validates interaction-aware repair planning by improving chain completion while maintaining regression avoidance.
 
-TAC-SCM REAL004 validates causal structure-to-behavior use in a controlled benchmark: carried structure improves behavior, reset/shuffle interventions hurt, and correct-slot knockout matters more than wrong-slot knockout.
+TAC-SCM REAL004 supports causal structure-to-behavior use in a controlled synthetic benchmark: carried structure improves behavior, reset/shuffle interventions hurt, and correct-slot knockout matters more than wrong-slot knockout.
 
-TAC-SCM REAL005 validates bridge stability and harder structure generalization, promoting a linear structure bridge as the default candidate in the TAC-SCM v0.2 lane.
+TAC-SCM REAL005 supports bridge stability and harder structure generalization, promoting a linear structure bridge as the current default candidate in the TAC-SCM v0.2 lane.
 
-TAC-SCM REAL006 tests real or realistic structure transfer workloads: coding repair, long-document compression/recall, multi-session assistant memory, and research-workflow transfer.
+TAC-SCM REAL006 tests controlled-realistic structure transfer workloads: coding repair, long-document compression/recall, multi-session assistant memory, and research-workflow transfer. It should not yet be described as fully real-world validation.
 
-TAC-SCM REAL011 redesigns the executable-structure benchmark to reduce benchmark flaws and make future hidden-structure recovery tests more scientifically meaningful.
+TAC-SCM REAL011 redesigns the executable-structure benchmark to reduce benchmark flaws and make future hidden-structure recovery tests more scientifically meaningful. It is benchmark-validity evidence, not proof that TAC has solved executable recovery.
+
+TAC-SIE EXP009/EXP009B provide a minimal preserve/retrieve/execute substrate and smoke-level robustness wrapper. They are scaffolds for EXP009C, not robust arbitrary-binding proof.
+
+The original REAL017 branch artifact is downgraded to audit-candidate status. The committed branch artifact gives verifier/repair paths access to benchmark metadata/gold slots, so it must not be cited as verifier-guided repair validation. A replacement audit scaffold, `kaggle/benchmark_tac_scm_real017_audit.py`, adds blind verifier and blind consistency repair APIs to test the same area without corruption-label or gold-slot access. See `docs/REAL017_AUDIT.md`.
+
+## Evidence Tiers
+
+| Tier | Definition |
+|---|---|
+| Defensible controlled evidence | Causal controls, meaningful baselines, and no obvious label/gold leakage. |
+| Benchmark-validity evidence | Validates that a benchmark is balanced and nontrivial, not that TAC solves it. |
+| Provisional / scaffold | Useful harness or substrate, but not enough to support the headline claim. |
+| Smoke-only | Confirms imports, output schema, or CLI behavior. |
+| Do-not-cite until audited | Known leakage/oracle/metadata path or insufficient controls. |
+
+See `EVIDENCE_AUDIT.md` for the current classification.
 
 ## Main Research Insight
 
@@ -98,7 +116,8 @@ The next decisive tests should target the shared TAC-SCM/TAC-SIE frontier:
 
 - `TAC-SIE EXP009C`: robust arbitrary-symbol binding to retrieved parameters.
 - `TAC-SCM REAL012-A`: faithful family/parameter recovery and execution on the redesigned executable-structure benchmark.
+- `REAL017-AUDIT`: verifier-guided repair without corruption labels or gold-slot access.
 
 ## Non-Claims
 
-This report does not claim TAC beats transformers. It does not claim open-ended autonomous software engineering. It does not claim large-scale foundation-model validation.
+This report does not claim TAC beats transformers. It does not claim open-ended autonomous software engineering. It does not claim large-scale foundation-model validation. It does not use REAL017 as validated evidence.
