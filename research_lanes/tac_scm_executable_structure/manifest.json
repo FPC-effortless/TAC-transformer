@@ -11,7 +11,10 @@
       "kaggle/benchmark_tac_scm_real012b.py",
       "kaggle/benchmark_tac_scm_real013.py",
       "kaggle/benchmark_tac_scm_real014.py",
-      "kaggle/benchmark_tac_scm_real015.py"
+      "kaggle/benchmark_tac_scm_real015.py",
+      "kaggle/benchmark_tac_scm_real016.py",
+      "kaggle/benchmark_tac_scm_real017.py",
+      "kaggle/benchmark_tac_scm_real018_claim_audit.py"
     ],
     "tests": [
       "tests_py/test_tac_scm_real011.py",
@@ -19,7 +22,10 @@
       "tests_py/test_tac_scm_real012b.py",
       "tests_py/test_tac_scm_real013.py",
       "tests_py/test_tac_scm_real014.py",
-      "tests_py/test_tac_scm_real015.py"
+      "tests_py/test_tac_scm_real015.py",
+      "tests_py/test_tac_scm_real016.py",
+      "tests_py/test_tac_scm_real017.py",
+      "tests_py/test_tac_scm_real018_claim_audit.py"
     ],
     "outputs": [
       "outputs/real011_full/",
@@ -27,7 +33,10 @@
       "outputs/real012b_full/",
       "outputs/real013_full/",
       "outputs/real014_full/",
-      "outputs/real015_full/"
+      "outputs/real015_full/",
+      "outputs/real016_full/",
+      "outputs/real017_full/",
+      "outputs/real018_claim_audit/"
     ]
   },
   "milestones": [
@@ -54,7 +63,11 @@
     {
       "id": "REAL015",
       "claim": "Bound-slot executor generalizes to held-out family-parameter compositions."
+    },
+    {
+      "id": "REAL018",
+      "claim": "Corrected claim audit: partial support for explicit-slot symbolic substrate only; latent executable recovery and non-oracle repair are not validated."
     }
   ],
-  "next_step": "REAL016 robustness under noise, ambiguity, adversarial corruptions, and stricter causal controls."
+  "next_step": "Develop a leakage-free latent parameter preservation benchmark and non-oracle repair method before making lifecycle or self-improvement claims."
 }
