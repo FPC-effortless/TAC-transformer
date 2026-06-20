@@ -2354,6 +2354,20 @@
         "Records the full sweep result: status passed, repair_success 0.9333333333333333, hidden_test_pass_rate 0.9333333333333333, regression_safety 0.9333333333333333, multiple_valid_patch_success 0.9333333333333333, equivalent_patch_acceptance 0.9333333333333333, unsafe_patch_rejection_rate 1.0, visible_overfit_rejection_rate 1.0, test_modification_rejection_rate 1.0, constant_return_rejection_rate 1.0, wrong_layer_rejection_rate 1.0, retrieval_only_gap 0.43333333333333335, procedural_memory_only_gap 0.3666666666666667, strong_agent_gap 0.33333333333333337, oracle_repair_gap 0.06666666666666665, carry_reset_delta 0.4666666666666667, carry_shuffled_delta 0.5666666666666667, carry_wrong_state_delta 0.5333333333333333, carry_no_store_delta 0.5, metadata_leak_score 0.0, hidden_test_independence 0.875, and 13 of 15 modes above the 0.60 per-mode success floor.",
         "Records the boundary that REAL010 is controlled generated repository repair with benchmark-defined patch equivalence, not SWE-bench validation or proof of arbitrary real-world software repair."
       ]
+    },
+    {
+      "id": "TAC-SCM-REAL010-CORRECTION",
+      "title": "Research integrity correction for scripted repository repair benchmarks",
+      "status": "completed",
+      "acceptance": [
+        "Adds kaggle/audit_tac_scm_benchmark_integrity.py to flag benchmark files with scripted variant selectors, hard-coded TAC rates, or TAC config construction without model inference.",
+        "Adds kaggle/benchmark_tac_scm_real010_real.py as a corrected executable repair benchmark where each condition generates candidate patches and is judged by visible, hidden, and regression tests.",
+        "Adds tests_py/test_tac_scm_benchmark_integrity_audit.py and tests_py/test_tac_scm_real010_real_research.py.",
+        "Adds docs/tac_scm_real010_research_correction.md documenting that the original REAL010 result is invalid evidence for a TAC-SCM carried-structure advantage.",
+        "Runs the integrity audit and records that REAL006, REAL008, REAL008B, REAL009, and REAL010 are invalid for TAC model-advantage claims because their treatment/control scores are scripted or do not run model inference.",
+        "Runs the corrected REAL010 real full sweep and records repair_success 1.0, retrieval_success 1.0, procedural_success 1.0, tac_retrieval_delta 0.0, tac_procedural_delta 0.0, carry_reset_delta 1.0, carry_shuffled_delta 1.0, carry_no_store_delta 0.0, metadata_leak_score 0.0, and hidden_test_independence 0.875.",
+        "Records the corrected interpretation: the generated patch-equivalence tasks are solvable by source-scan retrieval and procedural repair, so the corrected benchmark does not support a TAC-SCM-specific causal advantage."
+      ]
     }
   ]
 }
