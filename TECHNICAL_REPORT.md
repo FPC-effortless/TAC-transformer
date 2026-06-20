@@ -65,7 +65,7 @@ TAC-SCM REAL011 redesigns the executable-structure benchmark to reduce benchmark
 
 TAC-SIE EXP009/EXP009B provide a minimal preserve/retrieve/execute substrate and smoke-level robustness wrapper. They are scaffolds for EXP009C, not robust arbitrary-binding proof.
 
-REAL017 is downgraded to audit-candidate status. The committed branch artifact gives verifier/repair paths access to benchmark metadata/gold slots, so it must not be cited as verifier-guided repair validation. See `docs/REAL017_AUDIT.md`.
+The original REAL017 branch artifact is downgraded to audit-candidate status. The committed branch artifact gives verifier/repair paths access to benchmark metadata/gold slots, so it must not be cited as verifier-guided repair validation. A replacement audit scaffold, `kaggle/benchmark_tac_scm_real017_audit.py`, adds blind verifier and blind consistency repair APIs to test the same area without corruption-label or gold-slot access. See `docs/REAL017_AUDIT.md`.
 
 ## Evidence Tiers
 
