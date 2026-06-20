@@ -1,0 +1,93 @@
+name: EXP009 TAC-SIE
+
+on:
+  workflow_dispatch:
+    inputs:
+      train_steps:
+        description: EXP009 train steps
+        required: false
+        default: '800'
+      executor_epochs:
+        description: Executor pretrain epochs
+        required: false
+        default: '500'
+      seed:
+        description: Random seed
+        required: false
+        default: '9'
+      run_matrix:
+        description: Also run EXP009B robustness matrix
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: exp009-${{ github.ref }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  exp009:
+    name: Run EXP009
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run EXP009 tests
+        run: |
+          python -m pytest tests/test_exp009_smoke.py tests/test_exp009b_smoke.py
+
+      - name: Run EXP009 benchmark
+        env:
+          TRAIN_STEPS: ${{ github.event.inputs.train_steps }}
+          EXECUTOR_EPOCHS: ${{ github.event.inputs.executor_epochs }}
+          SEED: ${{ github.event.inputs.seed }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from tac_sie.experiments import run_exp009
+
+          metrics = run_exp009(
+              train_steps=int(os.environ['TRAIN_STEPS']),
+              executor_epochs=int(os.environ['EXECUTOR_EPOCHS']),
+              seed=int(os.environ['SEED']),
+          )
+          output = Path('outputs/exp009/metrics.json')
+          output.parent.mkdir(parents=True, exist_ok=True)
+          output.write_text(json.dumps(metrics, indent=2, sort_keys=True), encoding='utf-8')
+          print(json.dumps(metrics, indent=2, sort_keys=True))
+          PY
+
+      - name: Run EXP009B matrix
+        if: ${{ github.event.inputs.run_matrix == 'true' }}
+        run: |
+          python experiments/exp009b_retrieved_rule_transfer_robustness.py \
+            --seeds 0,1,2 \
+            --n-memory-slots 2,4 \
+            --n-offsets 2,5 \
+            --train-steps 120 \
+            --executor-epochs 200 \
+            --batch-size 128 \
+            --device cpu \
+            --output outputs/exp009/exp009b_robustness.json
+
+      - name: Upload EXP009 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: exp009-results
+          path: outputs/exp009/
+          if-no-files-found: error
