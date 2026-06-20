@@ -14,7 +14,8 @@
       "kaggle/benchmark_tac_scm_real015.py",
       "kaggle/benchmark_tac_scm_real016.py",
       "kaggle/benchmark_tac_scm_real017.py",
-      "kaggle/benchmark_tac_scm_real018_claim_audit.py"
+      "kaggle/benchmark_tac_scm_real018_claim_audit.py",
+      "kaggle/benchmark_tac_scm_real019_latent_parameter_repair.py"
     ],
     "tests": [
       "tests_py/test_tac_scm_real011.py",
@@ -25,7 +26,8 @@
       "tests_py/test_tac_scm_real015.py",
       "tests_py/test_tac_scm_real016.py",
       "tests_py/test_tac_scm_real017.py",
-      "tests_py/test_tac_scm_real018_claim_audit.py"
+      "tests_py/test_tac_scm_real018_claim_audit.py",
+      "tests_py/test_tac_scm_real019_latent_parameter_repair.py"
     ],
     "outputs": [
       "outputs/real011_full/",
@@ -36,7 +38,8 @@
       "outputs/real015_full/",
       "outputs/real016_full/",
       "outputs/real017_full/",
-      "outputs/real018_claim_audit/"
+      "outputs/real018_claim_audit/",
+      "outputs/real019_latent_parameter_repair/"
     ]
   },
   "milestones": [
@@ -67,7 +70,11 @@
     {
       "id": "REAL018",
       "claim": "Corrected claim audit: partial support for explicit-slot symbolic substrate only; latent executable recovery and non-oracle repair are not validated."
+    },
+    {
+      "id": "REAL019",
+      "claim": "Context-inferred latent parameter slots enable non-oracle repair without gold_slot or corruption_type in the synthetic executable benchmark."
     }
   ],
-  "next_step": "Develop a leakage-free latent parameter preservation benchmark and non-oracle repair method before making lifecycle or self-improvement claims."
+  "next_step": "Stress REAL019 with fewer/noisy context examples, ambiguous candidates, and non-unique rule evidence before lifecycle or self-improvement claims."
 }
