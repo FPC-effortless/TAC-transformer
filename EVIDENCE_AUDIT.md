@@ -22,7 +22,8 @@ This file separates runnable benchmark scaffolds from evidence that can be cited
 | TAC-SCM REAL006 | Moderate controlled-realistic evidence | Includes more realistic task families and strong ablations; still internally generated | TAC-SCM should be treated as promising on controlled realistic transfer tasks |
 | TAC-SCM REAL011 | Strong benchmark-validity evidence | Audits balance, surface/query shortcuts, memorization, family/parameter factors, and counterfactual sensitivity | The redesigned executable-structure benchmark is more valid than prior versions |
 | TAC-SIE EXP009 / EXP009B | Provisional / scaffold | Minimal preserve-retrieve-execute lane; counterfactual metric is now explicit but still a smoke-level substrate | TAC-SIE has a minimal substrate for future binding tests, not robust arbitrary binding |
-| REAL017 on `feature/tac-scm-real003` | Do-not-cite until audited | Verifier receives corruption type and repair receives gold slot in the committed branch artifact | Harness scaffold only; not verifier-guided repair validation |
+| Original REAL017 on `feature/tac-scm-real003` | Do-not-cite until audited | Verifier receives corruption type and repair receives gold slot in the committed branch artifact | Harness scaffold only; not verifier-guided repair validation |
+| `kaggle/benchmark_tac_scm_real017_audit.py` | Provisional audit scaffold | Adds blind verifier and blind consistency repair APIs that cannot receive corruption type or gold slot | Can be used to audit REAL017-style repair assumptions, not as a final repair milestone |
 | Interface/key/CLI tests | Smoke-only | Confirm output shape and sections, not scientific validity | Engineering sanity only |
 
 ## Non-promotion rule
@@ -59,7 +60,7 @@ A benchmark should include, where applicable:
 
 1. REAL012-A: use REAL011's balanced executable benchmark to test faithful family/parameter recovery and execution.
 2. EXP009C: robust arbitrary-symbol binding with real counterfactual controls.
-3. REAL017-AUDIT: redesign REAL017 so verifier cannot see corruption labels and repair cannot see gold slots.
+3. REAL017-AUDIT: harden `kaggle/benchmark_tac_scm_real017_audit.py` with adversarial corruptions, decoys, and external reproduction.
 4. Canonical reproduction table: one result table with exact commands, seeds, baselines, mean/std, and artifact paths.
 
 ## Investor-safe statement
