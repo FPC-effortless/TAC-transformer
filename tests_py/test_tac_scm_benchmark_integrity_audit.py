@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kaggle.audit_tac_scm_benchmark_integrity import audit_file, run_integrity_audit
+from kaggle.audit_tac_scm_benchmark_integrity import audit_file, discover_default_targets, run_integrity_audit
 
 
 class TACSCMBenchmarkIntegrityAuditTests(unittest.TestCase):
@@ -21,6 +21,13 @@ class TACSCMBenchmarkIntegrityAuditTests(unittest.TestCase):
         self.assertFalse(report["scripted_decision_function"])
         self.assertFalse(report["hard_coded_tac_rates"])
         self.assertTrue(report["executable_patch_verification"])
+        self.assertEqual(report["support_level"], "valid_harness_no_tac_advantage")
+
+    def test_default_discovery_covers_conversation_research_files(self):
+        targets = {str(path).replace("\\", "/") for path in discover_default_targets()}
+        self.assertIn("kaggle/benchmark_tac_scm_real010.py", targets)
+        self.assertIn("kaggle/benchmark_tac_scm_real010_real.py", targets)
+        self.assertTrue(any(path.endswith("benchmark_tac_scm_ssa008.py") for path in targets))
 
     def test_cli_writes_audit_json(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -41,6 +48,7 @@ class TACSCMBenchmarkIntegrityAuditTests(unittest.TestCase):
             self.assertTrue(out.exists())
             result = run_integrity_audit([Path("kaggle/benchmark_tac_scm_real010.py")])
             self.assertIn("kaggle\\benchmark_tac_scm_real010.py".replace("\\", "/"), [p.replace("\\", "/") for p in result["invalid_for_tac_model_advantage_claim"]])
+            self.assertIn("support_level_counts", result)
 
 
 if __name__ == "__main__":
