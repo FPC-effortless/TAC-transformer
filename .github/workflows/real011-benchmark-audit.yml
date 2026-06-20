@@ -1,0 +1,86 @@
+name: REAL011 Benchmark Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      seeds:
+        description: Space-separated seeds
+        required: false
+        default: '0 1 2 3 4 5 6 7 8 9'
+      train_samples:
+        description: Training samples
+        required: false
+        default: '256'
+      eval_samples:
+        description: Evaluation samples
+        required: false
+        default: '256'
+  schedule:
+    - cron: '17 3 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: real011-${{ github.ref }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  real011:
+    name: Run REAL011 benchmark-validity audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest torch
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run REAL011 tests
+        run: python -m unittest tests_py.test_tac_scm_real011
+
+      - name: Run REAL011 benchmark
+        env:
+          SEEDS: ${{ github.event.inputs.seeds || '0 1 2 3 4 5 6 7 8 9' }}
+          TRAIN_SAMPLES: ${{ github.event.inputs.train_samples || '256' }}
+          EVAL_SAMPLES: ${{ github.event.inputs.eval_samples || '256' }}
+        run: |
+          mkdir -p outputs/tac_scm_real011
+          if [ -f kaggle/benchmark_tac_scm_real011.py ]; then
+            python kaggle/benchmark_tac_scm_real011.py \
+              --output_dir outputs/tac_scm_real011 \
+              --seeds $SEEDS \
+              --train_samples "$TRAIN_SAMPLES" \
+              --eval_samples "$EVAL_SAMPLES"
+          elif [ -f tacm/experiments/benchmark_tac_scm_real011.py ]; then
+            python tacm/experiments/benchmark_tac_scm_real011.py \
+              --output_dir outputs/tac_scm_real011 \
+              --seeds $SEEDS \
+              --train_samples "$TRAIN_SAMPLES" \
+              --eval_samples "$EVAL_SAMPLES"
+          else
+            echo 'REAL011 benchmark script not found.' >&2
+            exit 1
+          fi
+
+      - name: Summarize REAL011 artifacts
+        if: always()
+        run: find outputs/tac_scm_real011 -maxdepth 2 -type f -print || true
+
+      - name: Upload REAL011 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: real011-benchmark-audit
+          path: outputs/tac_scm_real011/
+          if-no-files-found: warn
