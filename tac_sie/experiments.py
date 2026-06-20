@@ -77,6 +77,9 @@ def _evaluate_single_binding(model: TACSIEModel, cfg: TACSIEConfig, rule_pool: l
     reset_logits, _reset_vec, _reset_attn, _reset_query, _ = model.retrieve_offset(reset_state, rule)
     reset_output = model.executor(digit, offset_id=reset_logits.argmax(-1))
 
+    # Same-query counterfactual: keep the rule/query surface but bind a wrong offset.
+    # This is a control accuracy, not a success metric. Lower is better, and the
+    # causal signal is the drop from carry_accuracy to this counterfactual value.
     shuffled_offset = offset.roll(1)
     shuffled_state = model.init_state(rule.size(0))
     shuffled_state = model.store_rule(shuffled_state, rule, shuffled_offset, slot)
@@ -84,12 +87,18 @@ def _evaluate_single_binding(model: TACSIEModel, cfg: TACSIEConfig, rule_pool: l
     shuffled_output = model.executor(digit, offset_id=shuf_logits.argmax(-1))
 
     oracle_logits = model.executor(digit, offset_id=offset)
+    carry_accuracy = accuracy(output_logits, target)
+    reset_accuracy = accuracy(reset_output, target)
+    shuffle_accuracy = accuracy(shuffled_output, target)
     metrics = {
-        "carry_accuracy": accuracy(output_logits, target),
-        "reset_accuracy": accuracy(reset_output, target),
-        "shuffle_accuracy": accuracy(shuffled_output, target),
+        "carry_accuracy": carry_accuracy,
+        "reset_accuracy": reset_accuracy,
+        "shuffle_accuracy": shuffle_accuracy,
+        "same_query_counterfactual_accuracy": shuffle_accuracy,
+        "counterfactual_drop": carry_accuracy - shuffle_accuracy,
+        "reset_drop": carry_accuracy - reset_accuracy,
         "oracle_k_accuracy": accuracy(oracle_logits, target),
-        "retrieved_k_accuracy": accuracy(output_logits, target),
+        "retrieved_k_accuracy": carry_accuracy,
         "offset_retrieval_accuracy": accuracy(offset_logits, offset),
         "avg_key_cosine": avg_key_cosine(state.memory_keys, state.slot_used),
     }
@@ -116,7 +125,9 @@ def run_exp009(cfg: TACSIEConfig | None = None, train_steps: int = 800, executor
     metrics = dict(known)
     metrics["known_rule_accuracy"] = known["carry_accuracy"]
     metrics["new_rule_accuracy"] = new["carry_accuracy"]
-    metrics["same_query_counterfactual_accuracy"] = new["carry_accuracy"]
+    metrics["same_query_counterfactual_accuracy"] = new["same_query_counterfactual_accuracy"]
+    metrics["known_rule_counterfactual_drop"] = known["counterfactual_drop"]
+    metrics["new_rule_counterfactual_drop"] = new["counterfactual_drop"]
     return metrics
 
 
@@ -161,6 +172,9 @@ def run_exp009b(
         "known_rule_accuracy": row_mean("known_rule_accuracy"),
         "new_rule_accuracy": row_mean("new_rule_accuracy"),
         "same_query_counterfactual_accuracy": row_mean("same_query_counterfactual_accuracy"),
+        "counterfactual_drop": row_mean("new_rule_counterfactual_drop"),
+        "known_rule_counterfactual_drop": row_mean("known_rule_counterfactual_drop"),
+        "new_rule_counterfactual_drop": row_mean("new_rule_counterfactual_drop"),
         "reset_accuracy": row_mean("reset_accuracy"),
         "shuffle_accuracy": row_mean("shuffle_accuracy"),
         "no_store_accuracy": row_mean("reset_accuracy"),
@@ -177,6 +191,7 @@ def run_exp009b(
         summary["carry_accuracy"] > 0.95
         and summary["new_rule_accuracy"] > 0.90
         and summary["offset_retrieval_accuracy"] > 0.95
+        and summary["same_query_counterfactual_accuracy"] <= max_chance + 0.10
         and summary["reset_accuracy"] <= max_chance + 0.10
     )
     return {"summary": summary, "rows": rows}
