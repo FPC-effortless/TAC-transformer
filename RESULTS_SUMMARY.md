@@ -34,7 +34,8 @@ Validation: REAL / EXP benchmarks
 | Causal structure-to-behavior use | Controlled evidence, synthetic/internal | REAL004/REAL005/REAL006 |
 | Benchmark validity for executable structure tests | Strong benchmark-validity evidence | REAL011 benchmark redesign |
 | Minimal preserve-retrieve-execute substrate | Provisional scaffold | TAC-SIE EXP009/EXP009B |
-| REAL017 verifier-guided repair | Do-not-cite until audited | verifier receives corruption labels and repair receives gold slots in branch artifact |
+| Original REAL017 verifier-guided repair | Do-not-cite until audited | verifier receives corruption labels and repair receives gold slots in branch artifact |
+| REAL017 audit scaffold | Provisional audit scaffold | blind verifier and blind consistency repair added in `kaggle/benchmark_tac_scm_real017_audit.py` |
 | Robust arbitrary binding | Current frontier | EXP009C needed |
 | Faithful executable recovery | Current frontier | REAL012-A needed |
 | Open-ended structure discovery | Not yet validated | future REAL012+ work |
@@ -77,6 +78,13 @@ TAC-SIE scaffold tests:
 
 ```bash
 python -m pytest tests/test_memory_shapes.py tests/test_key_separation_loss.py tests/test_query_key_alignment.py tests/test_executor_pretrain.py tests/test_exp009_smoke.py tests/test_exp009b_smoke.py
+```
+
+REAL017 audit scaffold:
+
+```bash
+python -m unittest tests_py.test_tac_scm_real017_audit
+python kaggle/benchmark_tac_scm_real017_audit.py --seeds 0 1 2 3 4 5 6 7 8 9 --eval-samples 256 --output-json outputs/real017_audit/metrics.json
 ```
 
 ## Next credibility jump
