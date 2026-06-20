@@ -14,6 +14,10 @@ def test_exp009_smoke_reports_transfer_metrics():
         "retrieved_k_accuracy",
         "known_rule_accuracy",
         "new_rule_accuracy",
+        "known_rule_shuffle_accuracy",
+        "new_rule_shuffle_accuracy",
+        "known_rule_reset_accuracy",
+        "new_rule_reset_accuracy",
         "same_query_counterfactual_accuracy",
         "counterfactual_drop",
         "known_rule_counterfactual_drop",
@@ -33,10 +37,13 @@ def test_exp009_counterfactual_metric_is_not_alias_of_new_rule_success():
     cfg = TACSIEConfig(device="cpu", d_hidden=64, n_memory_slots=4)
     metrics = run_exp009(cfg=cfg, train_steps=80, executor_epochs=250, seed=12)
 
-    # same_query_counterfactual_accuracy is the wrong-binding control accuracy.
-    # It must not be copied from new_rule_accuracy, because that would overstate
-    # counterfactual evidence in the evidence audit.
-    assert metrics["same_query_counterfactual_accuracy"] == metrics["shuffle_accuracy"]
+    # same_query_counterfactual_accuracy is the new-rule wrong-binding control.
+    # It must not be copied from new_rule_accuracy or from the known-rule shuffle
+    # metric, because that would overstate counterfactual evidence in the audit.
+    assert metrics["same_query_counterfactual_accuracy"] == metrics["new_rule_shuffle_accuracy"]
     assert metrics["new_rule_counterfactual_drop"] == (
         metrics["new_rule_accuracy"] - metrics["same_query_counterfactual_accuracy"]
+    )
+    assert metrics["known_rule_counterfactual_drop"] == (
+        metrics["known_rule_accuracy"] - metrics["known_rule_shuffle_accuracy"]
     )
