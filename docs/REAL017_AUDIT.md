@@ -4,16 +4,33 @@ REAL017 should currently be treated as an audit candidate, not a validated miles
 
 ## Current status
 
-- Branch artifact: `feature/tac-scm-real003`
-- File: `kaggle/benchmark_tac_scm_real017.py`
-- Classification: do-not-cite until audited
+- Original branch artifact: `feature/tac-scm-real003`
+- Original file: `kaggle/benchmark_tac_scm_real017.py`
+- Original classification: do-not-cite until audited
 - Reason: the committed implementation gives the verifier access to `corruption_type` and gives the repair path access to `gold_slot`.
 
 This does not invalidate the TAC-SCM/TAC-SIE program. It means REAL017's perfect metrics are explained by benchmark design and should not be used as evidence for verifier-guided repair until redesigned.
 
-## Known leakage paths
+## Code-level audit scaffold
 
-The current committed branch artifact constructs cases with:
+This branch adds a replacement scaffold:
+
+- `kaggle/benchmark_tac_scm_real017_audit.py`
+- `tests_py/test_tac_scm_real017_audit.py`
+
+The audit scaffold is intentionally stricter than the original REAL017 path:
+
+- `verify_slot(slot)` receives only the candidate slot.
+- `repair_slot_blind(slot)` receives only the candidate slot.
+- Oracle repair is separated into an explicit `oracle_repair` variant.
+- The benchmark reports leakage guardrails in its JSON output.
+- Tests inspect the public verifier/repair signatures and fail if `corruption_type`, `gold`, `gold_slot`, or `example` are accepted by blind APIs.
+
+This scaffold is still provisional. It is an audit harness, not a final repair milestone.
+
+## Known leakage paths in original REAL017
+
+The original committed branch artifact constructs cases with:
 
 ```python
 {
@@ -26,7 +43,7 @@ The current committed branch artifact constructs cases with:
 
 The verifier path receives `corruption_type` directly. The repair path receives `gold_slot` directly. Therefore perfect detection, corruption-type accuracy, repair accuracy, and zero oracle gap are expected and are not evidence of learned or inferred repair.
 
-## Required redesign
+## Required redesign before promotion
 
 Before REAL017 can be cited as evidence, the implementation must satisfy these constraints:
 
@@ -58,7 +75,7 @@ Before REAL017 can be cited as evidence, the implementation must satisfy these c
 
 Use:
 
-> REAL017 is a scaffold for verifier-guided bound-structure refinement, currently downgraded to audit-candidate status because its perfect internal metrics are explained by verifier/repair access to benchmark metadata and gold slots.
+> REAL017 is a scaffold for verifier-guided bound-structure refinement, currently downgraded to audit-candidate status because its perfect internal metrics are explained by verifier/repair access to benchmark metadata and gold slots. A replacement blind audit scaffold has been added, but it remains provisional.
 
 Do not use:
 
