@@ -1,0 +1,91 @@
+name: Research Dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Research target to run
+        required: true
+        type: choice
+        options:
+          - exp009
+          - exp009b
+          - real011
+          - real017_audit
+          - tac_core_validation
+      quick:
+        description: Use reduced quick settings
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: research-dispatch-${{ github.event.inputs.target }}-${{ github.ref }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Run selected research target
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run selected target
+        env:
+          TARGET: ${{ github.event.inputs.target }}
+          QUICK: ${{ github.event.inputs.quick }}
+        run: |
+          set -euo pipefail
+          mkdir -p outputs/dispatch runs/kaggle_validation
+          if [ "$TARGET" = "exp009" ]; then
+            if [ "$QUICK" = "true" ]; then STEPS=120; EPOCHS=250; else STEPS=800; EPOCHS=500; fi
+            python - <<PY
+          import json
+          from pathlib import Path
+          from tac_sie.experiments import run_exp009
+          metrics = run_exp009(train_steps=$STEPS, executor_epochs=$EPOCHS, seed=9)
+          path = Path('outputs/dispatch/exp009_metrics.json')
+          path.write_text(json.dumps(metrics, indent=2, sort_keys=True), encoding='utf-8')
+          print(json.dumps(metrics, indent=2, sort_keys=True))
+          PY
+          elif [ "$TARGET" = "exp009b" ]; then
+            if [ "$QUICK" = "true" ]; then
+              python experiments/exp009b_retrieved_rule_transfer_robustness.py --seeds 0,1 --n-memory-slots 2,4 --n-offsets 2,5 --train-steps 80 --executor-epochs 150 --batch-size 64 --device cpu --output outputs/dispatch/exp009b_robustness.json
+            else
+              python experiments/exp009b_retrieved_rule_transfer_robustness.py --seeds 0,1,2,3,4,5,6,7,8,9 --n-memory-slots 2,4,8 --n-offsets 2,5 --train-steps 160 --executor-epochs 250 --batch-size 256 --device cpu --output outputs/dispatch/exp009b_robustness.json
+            fi
+          elif [ "$TARGET" = "real011" ]; then
+            if [ "$QUICK" = "true" ]; then SEEDS="0 1"; SAMPLES=64; else SEEDS="0 1 2 3 4 5 6 7 8 9"; SAMPLES=256; fi
+            python kaggle/benchmark_tac_scm_real011.py --output_dir outputs/dispatch/tac_scm_real011 --seeds $SEEDS --train_samples $SAMPLES --eval_samples $SAMPLES
+          elif [ "$TARGET" = "real017_audit" ]; then
+            if [ "$QUICK" = "true" ]; then SEEDS="0 1"; SAMPLES=64; else SEEDS="0 1 2 3 4 5 6 7 8 9"; SAMPLES=256; fi
+            python kaggle/benchmark_tac_scm_real017_audit.py --seeds $SEEDS --eval-samples $SAMPLES --output-json outputs/dispatch/real017_audit_metrics.json
+          elif [ "$TARGET" = "tac_core_validation" ]; then
+            if [ "$QUICK" = "true" ]; then CASES=10; else CASES=50; fi
+            python experiments/kaggle_validate_tac_core.py --benchmarks tac251,tac252,tac267,tac270,tac272 --seeds 5 --cases $CASES --output outputs/dispatch/tac_core_validation.json
+          else
+            echo "Unknown target: $TARGET"
+            exit 1
+          fi
+
+      - name: Upload dispatch artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-dispatch-${{ github.event.inputs.target }}
+          path: |
+            outputs/dispatch/
+            runs/kaggle_validation/
+          if-no-files-found: error
