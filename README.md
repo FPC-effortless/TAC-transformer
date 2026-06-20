@@ -109,7 +109,7 @@ TAC does not yet prove:
 - large-scale pretraining survival;
 - replacement of current LLM architectures.
 
-REAL017 specifically is not promoted as evidence: the committed branch artifact is documented as an audit candidate in `docs/REAL017_AUDIT.md`.
+REAL017 specifically is not promoted as evidence: the committed branch artifact is documented as an audit candidate in `docs/REAL017_AUDIT.md`. A non-leaky audit scaffold is available at `kaggle/benchmark_tac_scm_real017_audit.py`.
 
 See `LIMITATIONS.md` for the full claim boundary.
 
@@ -150,6 +150,13 @@ Run TAC-SIE scaffold tests:
 
 ```bash
 python -m pytest tests/test_memory_shapes.py tests/test_key_separation_loss.py tests/test_query_key_alignment.py tests/test_executor_pretrain.py tests/test_exp009_smoke.py tests/test_exp009b_smoke.py
+```
+
+Run the REAL017 audit scaffold:
+
+```bash
+python -m unittest tests_py.test_tac_scm_real017_audit
+python kaggle/benchmark_tac_scm_real017_audit.py --seeds 0 1 2 3 4 5 6 7 8 9 --eval-samples 256 --output-json outputs/real017_audit/metrics.json
 ```
 
 ## Main reproducibility commands
