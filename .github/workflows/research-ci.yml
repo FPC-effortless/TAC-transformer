@@ -1,0 +1,151 @@
+name: Research CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tac_transformer/**'
+      - 'tac_sie/**'
+      - 'kaggle/**'
+      - 'experiments/**'
+      - 'tests/**'
+      - 'tests_py/**'
+      - 'requirements.txt'
+      - 'pyproject.toml'
+      - '.github/workflows/**'
+  push:
+    branches: [main]
+    paths:
+      - 'tac_transformer/**'
+      - 'tac_sie/**'
+      - 'kaggle/**'
+      - 'experiments/**'
+      - 'tests/**'
+      - 'tests_py/**'
+      - 'requirements.txt'
+      - 'pyproject.toml'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+concurrency:
+  group: research-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-core:
+    name: Python core smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Import smoke
+        run: |
+          python - <<'PY'
+          import tac_transformer
+          import tac_transformer.core
+          import tac_transformer.memory
+          import tac_transformer.routing
+          import tac_sie
+          print('imports ok')
+          PY
+
+      - name: Core tests
+        run: |
+          python -m unittest \
+            tests_py.test_tac_transformer \
+            tests_py.test_tac_serving \
+            tests_py.test_facades
+
+  tac-scm:
+    name: TAC-SCM benchmark tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: TAC-SCM unit benchmark tests
+        run: |
+          python -m unittest \
+            tests_py.test_tac_scm_real004 \
+            tests_py.test_tac_scm_real005 \
+            tests_py.test_tac_scm_real006 \
+            tests_py.test_tac_scm_real011 \
+            tests_py.test_tac_scm_real017_audit
+
+  tac-sie:
+    name: TAC-SIE scaffold tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: TAC-SIE pytest suite
+        run: |
+          python -m pytest \
+            tests/test_memory_shapes.py \
+            tests/test_key_separation_loss.py \
+            tests/test_query_key_alignment.py \
+            tests/test_executor_pretrain.py \
+            tests/test_exp009_smoke.py \
+            tests/test_exp009b_smoke.py
+
+  docs-guardrails:
+    name: Evidence docs guardrails
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Required research docs exist
+        run: |
+          test -f EVIDENCE_AUDIT.md
+          test -f LIMITATIONS.md
+          test -f REPRODUCIBILITY.md
+          test -f TECHNICAL_REPORT.md
+          test -f RESULTS_SUMMARY.md
+          test -f docs/REAL017_AUDIT.md
+
+      - name: Guard against promoting REAL017 as validated
+        run: |
+          if grep -R "REAL017 validates verifier-guided structure repair" -n . --exclude-dir=.git; then
+            echo "REAL017 must not be promoted without audit"
+            exit 1
+          fi
