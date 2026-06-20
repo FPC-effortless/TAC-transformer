@@ -1,0 +1,57 @@
+name: Best TAC Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: Training/eval steps for benchmark_best_tac.py
+        required: false
+        default: '120'
+      extra_args:
+        description: Optional extra CLI args
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: best-tac-${{ github.ref }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  best-tac:
+    name: Run best TAC benchmark smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest torch
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run benchmark_best_tac.py
+        env:
+          STEPS: ${{ github.event.inputs.steps }}
+          EXTRA_ARGS: ${{ github.event.inputs.extra_args }}
+        run: |
+          mkdir -p outputs/best_tac
+          python kaggle/benchmark_best_tac.py --steps "$STEPS" $EXTRA_ARGS | tee outputs/best_tac/run.log
+
+      - name: Upload best TAC benchmark log
+        uses: actions/upload-artifact@v4
+        with:
+          name: best-tac-benchmark-log
+          path: outputs/best_tac/
+          if-no-files-found: warn
