@@ -6,13 +6,18 @@ Its purpose is not to replace TAC-SCM. Its purpose is to test whether the struct
 
 ## Current status
 
-TAC-SIE currently exists as a preserved research branch and draft PR:
+A clean TAC-SIE preserve/retrieve/execute substrate has been merged into `main` through PR #6:
 
-- Branch: `research/tac-sie-mvp002-exp009`
-- PR: #4, `Preserve TAC-SIE MVP002 EXP009 research lane`
-- Status: preserved for auditability; not merged into `main`
+- Branch used for clean integration: `integration/tac-sie-clean`
+- PR: #6, `Add clean TAC-SIE preserve-retrieve-execute lane`
+- Status: merged as a minimal scaffold, not promoted as robust binding evidence
 
-This is intentional. TAC-SIE is less mature than TAC-SCM and should not be merged into `main` until it passes a focused validation gate.
+The original historical branch remains preserved for auditability:
+
+- Historical branch: `research/tac-sie-mvp002-exp009`
+- Historical PR: #4, closed as preservation-only
+
+This distinction matters. TAC-SIE is now present on `main`, but its current EXP009/EXP009B evidence is still provisional. It should not be described as a complete structure-intelligence engine until EXP009C-style binding controls pass.
 
 ## Why TAC-SIE matters
 
@@ -40,7 +45,7 @@ TAC-SIE makes the architecture more scientific by forcing explicit module bounda
 
 ## Current MVP shape
 
-The preserved TAC-SIE branch contains a minimal preserve-retrieve-execute engine:
+The merged TAC-SIE substrate contains a minimal preserve-retrieve-execute engine:
 
 ```text
 rule id + offset id
@@ -51,7 +56,7 @@ rule id + offset id
   -> execute with a separate executor
 ```
 
-The branch also contains EXP009 retrieved-rule-transfer experiments.
+EXP009 and EXP009B are scaffold tests for this substrate. They are not final arbitrary-binding validation.
 
 ## Relationship to TAC-SCM
 
@@ -69,15 +74,19 @@ The shared frontier is:
 binding + recovery + execution
 ```
 
-## Merge gate for TAC-SIE
+## Promotion gate for TAC-SIE claims
 
-TAC-SIE should move from preserved research lane to `main` only after a focused PR passes:
+TAC-SIE should move from scaffold evidence to promoted evidence only after a focused validation gate passes:
 
-1. a minimal import test for `tac_sie`;
+1. import tests for `tac_sie`;
 2. unit tests for memory write/read correctness;
 3. executor pretraining/reuse tests;
 4. EXP009C arbitrary-symbol binding test;
-5. documentation of what passed, what failed, and what remains unvalidated.
+5. correct vs shuffled binding control;
+6. wrong-slot binding control;
+7. unseen symbol binding control;
+8. corrupted-binding execution break;
+9. documentation of what passed, what failed, and what remains unvalidated.
 
 ## Next experiment: EXP009C
 
@@ -102,6 +111,6 @@ TAC-SIE should recover and execute the correct binding significantly better than
 
 TAC-SIE is currently best described as:
 
-> a preserved experimental engine-decomposition lane for testing the minimal substrate behind structure preservation, retrieval, binding, execution, refinement, and evolution.
+> a minimal merged engine-decomposition scaffold for testing the substrate behind structure preservation, retrieval, binding, execution, refinement, and evolution.
 
-It is not yet a complete structure intelligence engine.
+It is not yet a complete structure intelligence engine, and it should not be cited as robust arbitrary-binding evidence until EXP009C passes.
