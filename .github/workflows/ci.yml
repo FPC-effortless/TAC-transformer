@@ -1,14 +1,25 @@
-name: CI
+name: Fast CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fast-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   python-smoke:
+    name: Python smoke tests
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,11 +28,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: pip
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install pytest torch
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Python import smoke
         run: |
@@ -30,15 +43,40 @@ jobs:
           import tac_transformer.core
           import tac_transformer.memory
           import tac_transformer.routing
-          print('tac_transformer imports ok')
+          import tac_sie
+          print('imports ok')
           PY
+
+      - name: Compile research modules
+        run: |
+          python -m py_compile \
+            tac_sie/*.py \
+            tac_transformer/*.py \
+            kaggle/benchmark_tac_scm_real017_audit.py
 
       - name: Core architecture smoke tests
         run: |
           python -m unittest tests_py.test_tac_transformer tests_py.test_tac_serving tests_py.test_facades
 
-  node-smoke:
+      - name: TAC-SCM benchmark audit smoke tests
+        run: |
+          python -m unittest tests_py.test_tac_scm_real011 tests_py.test_tac_scm_real017_audit
+
+      - name: TAC-SIE scaffold tests
+        run: |
+          python -m pytest \
+            tests/test_memory_shapes.py \
+            tests/test_key_separation_loss.py \
+            tests/test_query_key_alignment.py \
+            tests/test_executor_pretrain.py \
+            tests/test_exp009_smoke.py \
+            tests/test_exp009b_smoke.py
+
+  frontend-smoke:
+    name: Frontend smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
