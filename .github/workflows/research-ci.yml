@@ -49,7 +49,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install pytest torch numpy
+          python -m pip install -r requirements.txt
 
       - name: Import smoke
         run: |
@@ -145,7 +146,7 @@ jobs:
 
       - name: Guard against promoting REAL017 as validated
         run: |
-          if grep -R "REAL017 validates verifier-guided structure repair" -n . --exclude-dir=.git; then
+          if grep -R "REAL017 validates verifier-guided structure repair" -n . --exclude-dir=.git --exclude=docs/REAL017_AUDIT.md --exclude=.github/workflows/research-ci.yml; then
             echo "REAL017 must not be promoted without audit"
             exit 1
           fi
