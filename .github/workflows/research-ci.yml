@@ -196,7 +196,7 @@ jobs:
           mkdir -p artifacts
           python -m tac_osm.experiment_v04 \
             --seeds 0,1,2,3 \
-            --steps 300 \
+            --steps 3000 \
             --batch 128 \
             --device cpu | tee artifacts/tac_osm_v04_full.json
 
