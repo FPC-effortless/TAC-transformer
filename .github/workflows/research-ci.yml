@@ -211,6 +211,29 @@ jobs:
               "results": results,
           }, indent=2))
           PY
+      - name: Run paired 16-seed P0-A1 control
+        run: |
+          python - <<'PY' | tee artifacts/tac_osm_v04_p0a1_p1a1_paired_stability.json
+          import json
+          from tac_osm.experiment_v04 import ExperimentConfig, train_one
+          import torch
+
+          cfg = ExperimentConfig(train_steps=3000, batch_size=128)
+          device = torch.device("cpu")
+          results = []
+          for seed in range(16):
+              p0 = train_one(seed, False, True, cfg, device)
+              p1 = train_one(seed, True, True, cfg, device)
+              results.append({"seed": seed, "p0_a1": p0, "p1_a1": p1})
+          print(json.dumps({
+              "experiment": "TAC-OSM-v0.4-P0-A1-vs-P1-A1-paired-stability",
+              "seeds": list(range(16)),
+              "train_steps": 3000,
+              "batch_size": 128,
+              "device": "cpu",
+              "results": results,
+          }, indent=2))
+          PY
       - name: Upload benchmark records
         uses: actions/upload-artifact@v4
         with:
