@@ -24,11 +24,7 @@ class SyntheticOperationalWorld:
             [0.0, 0.5, 0.0, -0.6],
             [0.0, 0.0, -0.5, 0.8],
         ])
-        if cfg.regime == 0:
-            self.effect[:, :4] = base
-        elif cfg.regime == 1:
-            # Held-out dynamics regime: preserve intervention semantics while
-            # changing the latent persistence coefficient.
+        if cfg.regime in (0, 1):
             self.effect[:, :4] = base
         else:
             raise ValueError("unsupported regime")
@@ -43,12 +39,33 @@ class SyntheticOperationalWorld:
         action = torch.nn.functional.one_hot(
             action_index, num_classes=self.cfg.action_dim
         ).float()
-        effect = action @ self.effect
-        if context is not None:
+        if context is None:
+            context_index = torch.zeros(
+                state.size(0), device=state.device, dtype=torch.long
+            )
+        else:
             if context.shape[-1] != self.cfg.context_dim:
                 raise ValueError("invalid context shape")
-            scale = 1.0 + 0.35 * torch.tanh(context[:, :1])
-            effect = effect * scale
+            if context.shape[1] != self.cfg.action_dim:
+                raise ValueError("context/action dimensions must match")
+            context_index = context.argmax(-1).clamp_max(self.cfg.action_dim - 1)
+
+        # Context is a discrete task mode revealed at t0. Each mode remaps
+        # the action semantics, so the optimal action can change while the
+        # query state is held fixed. This prevents a context-blind policy from
+        # solving the decision merely by learning an average effect magnitude.
+        permutations = torch.tensor(
+            [
+                [0, 1, 2, 3],
+                [1, 0, 3, 2],
+                [2, 3, 0, 1],
+                [3, 2, 1, 0],
+            ], device=state.device, dtype=torch.long
+        )
+        mapped_action = permutations[context_index, action_index]
+        effect = torch.nn.functional.one_hot(
+            mapped_action, num_classes=self.cfg.action_dim
+        ).float() @ self.effect
         noise = torch.randn(
             state.shape, device=state.device, generator=generator
         ) * self.cfg.noise_std
@@ -76,8 +93,11 @@ class SyntheticOperationalWorld:
         state = torch.randn(
             batch_size, self.cfg.state_dim, device=device, generator=generator
         )
-        context = torch.randn(
-            batch_size, self.cfg.context_dim, device=device, generator=generator
+        context_index = torch.randint(
+            0, self.cfg.context_dim, (batch_size,), device=device, generator=generator
         )
+        context = torch.nn.functional.one_hot(
+            context_index, num_classes=self.cfg.context_dim
+        ).float()
         target, scores = self.optimal_action(state, context=context)
         return state, context, target, scores
