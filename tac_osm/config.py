@@ -9,6 +9,8 @@ class TACOSMConfig:
     structure_dim: int = 32
     num_compute_modules: int = 4
     decision_dim: int = 8
+    action_dim: int = 4
+    forecast_horizon: int = 1
     dropout: float = 0.0
 
     def __post_init__(self) -> None:
@@ -18,5 +20,8 @@ class TACOSMConfig:
             raise ValueError("top_k must be in [1, state_slots]")
         if self.num_compute_modules < 1:
             raise ValueError("num_compute_modules must be >= 1")
-        if min(self.input_dim, self.hidden_dim, self.structure_dim, self.decision_dim) < 1:
+        if self.forecast_horizon < 1:
+            raise ValueError("forecast_horizon must be >= 1")
+        if min(self.input_dim, self.hidden_dim, self.structure_dim,
+               self.decision_dim, self.action_dim) < 1:
             raise ValueError("dimensions must be positive")
