@@ -146,9 +146,27 @@ jobs:
 
       - name: Guard against promoting REAL017 as validated
         run: |
-          if git grep -n "REAL017 validates verifier-guided structure repair" -- . \
-  \:(exclude)docs/REAL017_AUDIT.md \
-  \:(exclude).github/workflows/research-ci.yml; then
-            echo "REAL017 must not be promoted without audit"
-            exit 1
-          fi
+          python - <<'PY'
+          from pathlib import Path
+
+          needle = "REAL017 validates verifier-guided structure repair"
+          excluded = {
+              Path("docs/REAL017_AUDIT.md"),
+              Path(".github/workflows/research-ci.yml"),
+          }
+          hits = []
+          for path in Path(".").rglob("*"):
+              if not path.is_file() or ".git" in path.parts or path in excluded:
+                  continue
+              try:
+                  text = path.read_text(encoding="utf-8")
+              except (UnicodeDecodeError, OSError):
+                  continue
+              if needle in text:
+                  hits.append(str(path))
+
+          if hits:
+              print("REAL017 promotion text found in protected files:")
+              print("\n".join(hits))
+              raise SystemExit(1)
+          PY
