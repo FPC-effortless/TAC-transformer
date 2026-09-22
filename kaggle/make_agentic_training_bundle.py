@@ -95,6 +95,7 @@ FILES = [
     "scripts/tac_generate.py",
     "scripts/tac_gradio_gui.py",
     "tac_transformer/__init__.py",
+    "tac_transformer/structure_types.py",
     "tac_transformer/model.py",
     "tac_transformer/training.py",
     "tac_transformer/serving.py",
