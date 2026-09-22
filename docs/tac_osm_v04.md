@@ -26,8 +26,10 @@ The primary mechanism is:
 P1 carries information from t0 to t1. P0 cannot access t0 after the query
 starts.
 
-The context also modulates the action effect in the environment, so a model
-cannot solve the held-out decision by using only the current query state.
+The context is a discrete task mode that remaps action semantics. The same query
+state can therefore require different actions under different hidden contexts.
+A context-blind model can still learn an average transition, but it cannot
+recover the mode-specific action mapping from the query alone.
 
 ## 2x2 factors
 
@@ -48,7 +50,8 @@ used to construct training transition targets and independent evaluation
 metrics. Oracle optimal-action labels and scores are never model inputs.
 
 A second environment regime is held out for evaluation. The held-out regime
-changes the latent state persistence coefficient while preserving action semantics; it is not present during training.
+changes the latent state persistence coefficient while preserving the
+context-conditioned action mapping; it is not present during training.
 
 ## Primary metrics
 
@@ -77,3 +80,11 @@ changes the latent state persistence coefficient while preserving action semanti
 This remains a small synthetic one-step decision benchmark. Passing it does
 not establish general planning, world-model capability, autonomy, continual
 learning, or real-world operational competence.
+
+
+## Context-semantics control
+
+The four context modes are one-hot task identifiers revealed only at t0. Each mode
+applies a fixed permutation to the four action effects. This is intentional: it
+makes hidden context causally necessary for recovering the correct action mapping,
+rather than merely scaling all action effects by a common positive factor.
