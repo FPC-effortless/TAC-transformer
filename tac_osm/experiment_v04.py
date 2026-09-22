@@ -184,9 +184,10 @@ def action_candidates(batch, action_dim, device):
 def mismatched_permutation(context):
     """Return a deterministic permutation whose source context differs per row.
 
-    The permutation is constructed from context-sorted rows. A cyclic offset
-    equal to the largest context-group size guarantees that no row receives a
-    source from its own context group whenever a full mismatch is feasible.
+    Rows are sorted by context label, shifted by the largest context-group
+    size, then mapped back to the original row order. The mapping-back step is
+    essential: the cyclic shift is defined in sorted-row coordinates, not in
+    the original batch order.
     """
     if context.dim() != 2 or context.size(1) < 2:
         raise ValueError("context must be [batch,context_dim] with at least two modes")
@@ -203,10 +204,14 @@ def mismatched_permutation(context):
         )
 
     order = torch.argsort(labels, stable=True)
-    source = torch.roll(order, shifts=-max_count, dims=0)
+    shifted = torch.roll(order, shifts=-max_count, dims=0)
+    source = torch.empty_like(order)
+    source[order] = shifted
     source_labels = labels[source]
     if torch.any(source_labels == labels):
         raise AssertionError("constructed shuffle contains same-context assignments")
+    if torch.unique(source).numel() != n:
+        raise AssertionError("constructed shuffle is not a permutation")
     return source
 
 
