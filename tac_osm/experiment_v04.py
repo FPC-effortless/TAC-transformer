@@ -137,7 +137,11 @@ class ControlledOperationalModel(nn.Module):
         if mode == "carry" and self.persistent:
             _, state = self.encode(t0_obs, state, write=True)
         elif mode == "shuffle":
-            _, state = self.encode(t0_obs.flip(0), state, write=True)
+            shuffled_context, _ = shuffle_context(t0_obs[:, self.cfg.input_dim :])
+            mismatched_t0 = torch.cat(
+                [t0_obs[:, : self.cfg.input_dim], shuffled_context], dim=-1
+            )
+            _, state = self.encode(mismatched_t0, state, write=True)
         elif mode == "corrupt":
             _, state = self.encode(t0_obs, state, write=True)
             state = (state[0] + torch.randn_like(state[0]) * 0.5, state[1])
@@ -175,6 +179,41 @@ def sample_batch(world, batch_size, generator, device):
 def action_candidates(batch, action_dim, device):
     one_hot = torch.eye(action_dim, device=device)
     return one_hot.view(1, action_dim, 1, action_dim).expand(batch, -1, -1, -1)
+
+
+def mismatched_permutation(context):
+    """Return a deterministic permutation whose source context differs per row.
+
+    The permutation is constructed from context-sorted rows. A cyclic offset
+    equal to the largest context-group size guarantees that no row receives a
+    source from its own context group whenever a full mismatch is feasible.
+    """
+    if context.dim() != 2 or context.size(1) < 2:
+        raise ValueError("context must be [batch,context_dim] with at least two modes")
+    labels = context.argmax(-1)
+    n = labels.numel()
+    if n < 2:
+        raise ValueError("shuffle requires at least two examples")
+    _, counts = torch.unique(labels, return_counts=True)
+    max_count = int(counts.max().item())
+    if max_count * 2 > n:
+        raise ValueError(
+            "full context-mismatched permutation is impossible when one "
+            "context group exceeds half the batch"
+        )
+
+    order = torch.argsort(labels, stable=True)
+    source = torch.roll(order, shifts=-max_count, dims=0)
+    source_labels = labels[source]
+    if torch.any(source_labels == labels):
+        raise AssertionError("constructed shuffle contains same-context assignments")
+    return source
+
+
+def shuffle_context(context):
+    """Return context from a different example and the source permutation."""
+    source = mismatched_permutation(context)
+    return context[source], source
 
 
 def train_one(seed, persistent, action_conditioned, cfg, device):
@@ -257,6 +296,10 @@ def evaluate(model, cfg, seed, device):
     state_reset_delta = torch.mean(torch.abs(pred - reset_pred)).item()
     state_shuffle_delta = torch.mean(torch.abs(pred - shuffle_pred)).item()
     state_corrupt_delta = torch.mean(torch.abs(pred - corrupt_pred)).item()
+    shuffle_source = mismatched_permutation(context)
+    shuffle_mismatch_fraction = (
+        context.argmax(-1) != context[shuffle_source].argmax(-1)
+    ).float().mean().item()
 
     return {
         "forecast_mse_held_out_all_actions": forecast_mse,
@@ -268,6 +311,7 @@ def evaluate(model, cfg, seed, device):
         "state_reset_delta": state_reset_delta,
         "state_shuffle_delta": state_shuffle_delta,
         "state_corrupt_delta": state_corrupt_delta,
+        "shuffle_mismatch_fraction": shuffle_mismatch_fraction,
         "oracle_label_source": "evaluation_only",
         "train_world_regime": 0,
         "eval_world_regime": cfg.held_out_regime,
