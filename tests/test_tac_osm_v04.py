@@ -44,7 +44,9 @@ def test_v04_oracle_is_deterministic():
     cfg = ExperimentConfig()
     world = SyntheticOperationalWorld(WorldConfig(cfg.input_dim, cfg.action_dim, 0.0))
     state = torch.randn(32, cfg.input_dim)
-    context = torch.randn(32, cfg.context_dim)
+    context = torch.nn.functional.one_hot(
+        torch.arange(32) % cfg.context_dim, num_classes=cfg.context_dim
+    ).float()
     a1, s1 = world.optimal_action(state, context=context)
     a2, s2 = world.optimal_action(state, context=context)
     assert torch.equal(a1, a2)
@@ -84,3 +86,18 @@ def test_v04_held_out_regime_is_distinct():
     held = SyntheticOperationalWorld(WorldConfig(cfg.input_dim, cfg.action_dim, 0.0, regime=1))
     assert torch.equal(train.effect, held.effect)
     assert not torch.equal(train.dynamics, held.dynamics)
+
+
+def test_v04_context_changes_action_semantics():
+    cfg = ExperimentConfig()
+    world = SyntheticOperationalWorld(
+        WorldConfig(cfg.input_dim, cfg.action_dim, 0.0, regime=0)
+    )
+    state = torch.tensor([[0.2, -0.4, 0.3, 0.1, 0, 0, 0, 0]]).repeat(32, 1)
+    contexts = torch.eye(cfg.context_dim)
+    actions = []
+    for i in range(cfg.context_dim):
+        context = contexts[i:i + 1].repeat(32, 1)
+        action, _ = world.optimal_action(state, context=context)
+        actions.append(int(action[0]))
+    assert len(set(actions)) > 1
