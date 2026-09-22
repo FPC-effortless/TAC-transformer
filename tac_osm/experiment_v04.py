@@ -153,7 +153,10 @@ def make_world(cfg, regime):
 
 
 def sample_batch(world, batch_size, generator, device):
-    state0 = torch.randn(batch_size, world.cfg.state_dim, generator=generator, device=device)
+    # t0 intentionally carries only the hidden task mode. The query state is
+    # independent and appears only at t1, so persistence has a single causal
+    # payload to preserve rather than a nuisance random observation.
+    state0 = torch.zeros(batch_size, world.cfg.state_dim, device=device)
     context_index = torch.randint(
         0, world.cfg.context_dim, (batch_size,), generator=generator, device=device
     )
