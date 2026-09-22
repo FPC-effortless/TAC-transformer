@@ -191,6 +191,10 @@ jobs:
           python -m pip install torch numpy
           if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
 
+      - name: TAC-OSM v0.4 harness integrity tests
+        run: |
+          python -m unittest tests_py.test_tac_osm_v04_integrity
+
       - name: Run 4-seed x 4-cell benchmark
         run: |
           mkdir -p artifacts
