@@ -14,7 +14,7 @@ oracle evaluation contaminated labels and regret.
 
 Each episode has two observations:
 
-- **t0:** the observation contains a task context vector.
+- **t0:** the observation contains only the hidden task context; the other state features are zeroed so the temporal payload is unambiguous.
 - **t1:** the query observation contains no context; the same context is hidden.
 - **decision:** candidate actions are forecast and ranked using the fixed objective.
 
