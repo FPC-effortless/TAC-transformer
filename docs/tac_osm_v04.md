@@ -1,73 +1,79 @@
-# TAC-OSM v0.4 controlled experiment
+# TAC-OSM v0.4 falsification benchmark
 
 ## Purpose
 
-v0.4 is the first controlled training experiment for the proposed
-**forecast -> candidate outcomes -> decision** loop.
+v0.4 is a controlled 2x2 experiment for temporal persistent state and
+action-conditioned transition prediction.
 
-It isolates two factors:
+The benchmark was redesigned after a harness audit found four critical
+problems in the earlier runner: P1 was not temporal, the cells were not
+capacity matched, a direct policy head bypassed forecasting, and stochastic
+oracle evaluation contaminated labels and regret.
 
-1. **Persistent state (P):** whether a bounded structural state is carried and
-   retrieved across an observation.
-2. **Action-conditioned transition (A):** whether the transition predictor
-   receives the candidate action.
+## Causal task
 
-This gives a 2x2 matrix:
+Each episode has two observations:
 
-| Condition | Persistent state | Action-conditioned transition |
+- **t0:** the observation contains a task context vector.
+- **t1:** the query observation contains no context; the same context is hidden.
+- **decision:** candidate actions are forecast and ranked using the fixed objective.
+
+The primary mechanism is:
+
+`t0 context -> persistent state -> t1 representation -> candidate transition
+-> predicted outcome -> fixed objective -> selected action`
+
+P1 carries information from t0 to t1. P0 cannot access t0 after the query
+starts.
+
+The context also modulates the action effect in the environment, so a model
+cannot solve the held-out decision by using only the current query state.
+
+## 2x2 factors
+
+| Cell | Temporal state | Action-conditioned transition |
 |---|---:|---:|
-| P0-A0 | no | no |
-| P0-A1 | no | yes |
-| P1-A0 | yes | no |
-| P1-A1 | yes | yes |
+| P0-A0 | off | off |
+| P0-A1 | off | on |
+| P1-A0 | on | off |
+| P1-A1 | on | on |
 
-The P1-A1 cell is the minimal TAC-OSM hypothesis under test; it is not
-treated as evidence of planning or counterfactual reasoning by construction.
+All cells instantiate the same parameterized network. Factor-off conditions
+mask the corresponding information path. Parameter counts must therefore match.
 
-## Training
+## Oracle protocol
 
-Each training sample contains:
+The environment is deterministic for the mechanism benchmark. The oracle is
+used to construct training transition targets and independent evaluation
+metrics. Oracle optimal-action labels and scores are never model inputs.
 
-- current state S_t
-- sampled intervention A_t
-- oracle next state S_(t+1) from the synthetic operational world
-- oracle optimal action label, computed independently from the transition oracle
+A second environment regime is held out for evaluation. The held-out regime
+changes the action-effect mapping; it is not present during training.
 
-The model is trained only on S_t, A_t, and the resulting next-state/action
-targets. Oracle action scores are not model inputs.
+## Primary metrics
 
-The objective is:
-
-L = MSE(predicted_next_state, observed_next_state) + CE(predicted_action, optimal_action)
-
-No reinforcement learning is used.
-
-## Evaluation
-
-The runner reports:
-
-- all-action transition forecast MSE
-- direct action decision accuracy
-- achieved one-step operational objective
+- held-out all-action forecast MSE
+- held-out planning accuracy
+- achieved objective
 - oracle objective
 - objective regret
 - parameter count
-- training wall-clock
-- final and midpoint training loss
+- action forecast sensitivity
+- reset/shuffle/corruption state sensitivity
 
-For action-conditioned cells, candidate actions are scored using the model's
-predicted next state and the same fixed operational objective. For
-non-action-conditioned cells, the direct action head supplies the decision.
+## Required falsification probes
 
-## Controls and limitations
+1. **Action probe:** same state/context, vary only candidate action. A1 must
+   change forecasts; A0 should be approximately invariant.
+2. **Reset probe:** remove t0 state before t1. P1 performance should degrade.
+3. **Shuffle probe:** carry another example's t0 state. P1 performance should
+   degrade.
+4. **Corruption probe:** perturb carried state. P1 predictions should change.
+5. **Held-out regime:** evaluate under a regime not used for training.
+6. **Parameter equality:** all four cells must have identical trainable counts.
 
-- independent deterministic seeds are used for train/evaluation generation
-- all four cells use the same hidden/input dimensions and optimizer settings
-- this is a synthetic linear world with four discrete interventions
-- the current benchmark tests one-step intervention outcomes
-- persistent state is reset at the start of each independent evaluation batch
-- it does not yet test long-horizon state accumulation, held-out dynamics,
-  constraints, uncertainty calibration, repair, or continual acquisition
+## What this does not establish
 
-A result should therefore be reported as evidence about the tested
-factorization, not as evidence for a general world model or autonomous agent.
+This remains a small synthetic one-step decision benchmark. Passing it does
+not establish general planning, world-model capability, autonomy, continual
+learning, or real-world operational competence.
