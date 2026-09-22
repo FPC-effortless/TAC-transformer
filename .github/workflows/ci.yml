@@ -77,7 +77,8 @@ jobs:
           python -m pytest \
             tests/test_tac_osm_v02.py \
             tests/test_tac_osm_v03.py \
-            tests/test_tac_osm_v04.py
+            tests/test_tac_osm_v04.py \\
+            tests/test_tac_osm_v04_falsification.py
 
   frontend-smoke:
     name: Frontend smoke
