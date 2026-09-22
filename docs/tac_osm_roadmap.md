@@ -9,8 +9,8 @@
 - [x] carry/reset/shuffle test surface
 
 ## Phase 1 — decisive experiment
-- [ ] matched conventional baseline
-- [ ] 2x2x2 ablation runner
+- [x] matched controlled baseline substrate
+- [x] 2x2 factor runner (persistent state × action-conditioned transition)
 - [ ] future-utility compression objective
 - [ ] synthetic persistent-structure task generator
 - [ ] exact structured-execution benchmark
