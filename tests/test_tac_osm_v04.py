@@ -82,4 +82,5 @@ def test_v04_held_out_regime_is_distinct():
     cfg = ExperimentConfig()
     train = SyntheticOperationalWorld(WorldConfig(cfg.input_dim, cfg.action_dim, 0.0, regime=0))
     held = SyntheticOperationalWorld(WorldConfig(cfg.input_dim, cfg.action_dim, 0.0, regime=1))
-    assert not torch.equal(train.effect, held.effect)
+    assert torch.equal(train.effect, held.effect)
+    assert not torch.equal(train.dynamics, held.dynamics)
