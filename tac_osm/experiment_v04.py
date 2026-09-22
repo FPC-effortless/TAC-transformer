@@ -154,7 +154,12 @@ def make_world(cfg, regime):
 
 def sample_batch(world, batch_size, generator, device):
     state0 = torch.randn(batch_size, world.cfg.state_dim, generator=generator, device=device)
-    context = torch.randn(batch_size, world.cfg.context_dim, generator=generator, device=device)
+    context_index = torch.randint(
+        0, world.cfg.context_dim, (batch_size,), generator=generator, device=device
+    )
+    context = torch.nn.functional.one_hot(
+        context_index, num_classes=world.cfg.context_dim
+    ).float()
     query_state = torch.randn(batch_size, world.cfg.state_dim, generator=generator, device=device)
     t0 = torch.cat([state0, context], -1)
     t1 = torch.cat([query_state, torch.zeros_like(context)], -1)
