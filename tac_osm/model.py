@@ -78,12 +78,16 @@ class ActionConditionedForecaster(nn.Module):
             nn.Linear(cfg.hidden_dim, cfg.hidden_dim)
         )
         self.transition = nn.Sequential(
-            nn.Linear(cfg.hidden_dim * 2 + cfg.input_dim, cfg.hidden_dim),
-            nn.GELU(), nn.Linear(cfg.hidden_dim, cfg.input_dim)
+            nn.Linear(cfg.hidden_dim * 2 + cfg.structure_dim, cfg.hidden_dim),
+            nn.GELU(), nn.Linear(cfg.hidden_dim, cfg.hidden_dim)
         )
+        self.state_head = nn.Linear(cfg.hidden_dim, cfg.input_dim)
+
     def step(self, state, structure, action):
         action_h = self.action_encoder(action)
-        return self.transition(torch.cat([state, structure, action_h], dim=-1))
+        transition_h = self.transition(torch.cat([state, structure, action_h], dim=-1))
+        return self.state_head(transition_h)
+
     def forward(self, state, structure, actions):
         if actions.dim() != 3:
             raise ValueError("actions must have shape [batch, horizon, action_dim]")
@@ -105,11 +109,7 @@ class ActionDecisionHead(nn.Module):
         return self.score(forecast[:, :, -1]).squeeze(-1)
 
 class TACOSM(nn.Module):
-    """Persistent Operational Structure Model v0.2.
-
-    v0.2 adds optional action-conditioned forecasting and finite candidate
-    action scoring while preserving the v0.1 forward/state interface.
-    """
+    """Persistent Operational Structure Model v0.2."""
     def __init__(self, cfg: Optional[TACOSMConfig] = None):
         super().__init__()
         self.cfg = cfg or TACOSMConfig()
