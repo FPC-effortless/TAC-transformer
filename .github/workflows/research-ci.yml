@@ -194,10 +194,10 @@ jobs:
       - name: Run 4-seed x 4-cell benchmark
         run: |
           mkdir -p artifacts
-          python -m tac_osm.experiment_v04 \\
-            --seeds 0,1,2,3 \\
-            --steps 300 \\
-            --batch 128 \\
+          python -m tac_osm.experiment_v04 \
+            --seeds 0,1,2,3 \
+            --steps 300 \
+            --batch 128 \
             --device cpu | tee artifacts/tac_osm_v04_full.json
 
       - name: Upload benchmark record
