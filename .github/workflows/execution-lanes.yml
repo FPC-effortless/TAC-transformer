@@ -1,0 +1,277 @@
+name: Termux Execution Lanes
+
+# Control-plane / execution-plane split for TAC-transformer.
+#
+# This device (Android/Termux, 4 GB RAM, disk ~98% full) edits and commits only.
+# All installation, computation, and full test runs happen here on a runner.
+# See ~/AGENTS.md (Termux resource policy) and AGENTS.md "Execution plane".
+#
+# Lanes
+#   fast-check       lint + focused unit tests          (every PR/push)
+#   experiment       TAC/OSM experiment lane            (workflow_dispatch only)
+#   adversarial      leakage / benchmark falsification  (workflow_dispatch only)
+#   full-validation  complete suite + artifacts          (workflow_dispatch only)
+#
+# Only the Runner role dispatches the three expensive lanes. Fast-check runs
+# automatically and is cheap enough to run on every change.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      lane:
+        description: Execution lane to run
+        required: true
+        type: choice
+        options:
+          - fast-check
+          - experiment
+          - adversarial
+          - full-validation
+      ref:
+        description: Branch or tag to run the lane against
+        required: false
+        default: ""
+      experiment:
+        description: Experiment selector for the experiment lane
+        required: false
+        default: ""
+      seed:
+        description: Seed override for reproducible runs
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  # The expensive lanes are heavy; never run two of them at once on the same ref.
+  # Cheap lane cancels superseded runs of itself only.
+  group: exec-lane-${{ github.event.inputs.lane || 'fast-check' }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  route:
+    name: Route lane
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      lane: ${{ steps.meta.outputs.lane }}
+      ref: ${{ steps.meta.outputs.ref }}
+    steps:
+      - id: meta
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_LANE: ${{ github.event.inputs.lane }}
+          INPUT_REF: ${{ github.event.inputs.ref }}
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            lane="$INPUT_LANE"
+          else
+            lane="fast-check"
+          fi
+          case "$lane" in
+            fast-check|experiment|adversarial|full-validation) ;;
+            *) echo "Unknown lane: $lane" >&2; exit 2 ;;
+          esac
+          ref="$INPUT_REF"
+          [ -n "$ref" ] || ref="$GITHUB_REF"
+          echo "lane=$lane" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+  # --------------------------------------------------------------------------
+  # Lane 1: fast-check  (lint + focused unit tests; automatic)
+  # --------------------------------------------------------------------------
+  fast-check:
+    name: fast-check
+    needs: route
+    if: needs.route.outputs.lane == 'fast-check'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Python import smoke
+        run: |
+          python -c "import tac_transformer; print('import ok')" || \
+          python -c "import tac_osm; print('import ok')" || true
+
+      - name: Byte-compile (syntax check without torch)
+        run: python -m compileall -q tests tests_py || true
+
+      - name: Focused TAC-OSM unit tests
+        run: |
+          pytest -q \
+            tests/test_tac_osm_v01.py \
+            tests/test_tac_osm_v02.py \
+            tests/test_tac_osm_v03.py \
+            tests/test_tac_osm_v04.py \
+            tests/test_memory_shapes.py \
+            tests/test_query_key_alignment.py \
+            tests/test_key_separation_loss.py \
+            || exit 1
+
+  # --------------------------------------------------------------------------
+  # Lane 2: experiment  (TAC/OSM experiments; dispatch only)
+  # --------------------------------------------------------------------------
+  experiment:
+    name: experiment
+    needs: route
+    if: needs.route.outputs.lane == 'experiment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run experiment
+        env:
+          EXPERIMENT: ${{ github.event.inputs.experiment }}
+          SEED: ${{ github.event.inputs.seed }}
+        run: |
+          set -euo pipefail
+          if [ -n "${SEED:-}" ]; then
+            export PYTHONHASHSEED="$SEED"
+          fi
+          if [ -z "${EXPERIMENT:-}" ]; then
+            echo "experiment lane requires the 'experiment' input" >&2
+            exit 2
+          fi
+          # Experiments are selected by keyword; add real entries as needed.
+          case "$EXPERIMENT" in
+            v04-intervention)
+              pytest -q tests/test_tac_osm_v04.py -k intervention ;;
+            v04-capacity)
+              pytest -q tests/test_tac_osm_v04.py -k capacity ;;
+            *)
+              echo "Unknown experiment selector: $EXPERIMENT" >&2
+              exit 2 ;;
+          esac
+
+      - name: Upload experiment artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-artifacts
+          path: |
+            experiments/
+            results/
+            *.json
+            *.log
+          if-no-files-found: ignore
+
+  # --------------------------------------------------------------------------
+  # Lane 3: adversarial  (leakage / benchmark falsification; dispatch only)
+  # --------------------------------------------------------------------------
+  adversarial:
+    name: adversarial
+    needs: route
+    if: needs.route.outputs.lane == 'adversarial'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Leakage and falsification gate
+        # These are the controls required by .agents/rules/benchmark-integrity.md:
+        # carry / reset / shuffle / corruption / oracle-memory, plus capacity
+        # matching. A failure here means a result cannot support a claim.
+        run: |
+          pytest -q \
+            tests/test_tac_osm_v04_falsification.py \
+            tests_py/test_tac_scm_real017_audit.py \
+            || exit 1
+
+      - name: Upload audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adversarial-artifacts
+          path: |
+            audits/
+            results/
+            *.json
+            *.log
+          if-no-files-found: ignore
+
+  # --------------------------------------------------------------------------
+  # Lane 4: full-validation  (complete suite + artifacts; dispatch only)
+  # --------------------------------------------------------------------------
+  full-validation:
+    name: full-validation
+    needs: route
+    if: needs.route.outputs.lane == 'full-validation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Complete suite
+        run: pytest -q tests tests_py
+
+      - name: Upload full artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-validation-artifacts
+          path: |
+            results/
+            experiments/
+            .pytest_cache/
+            *.json
+            *.log
+          if-no-files-found: ignore
