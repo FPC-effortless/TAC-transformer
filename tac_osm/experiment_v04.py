@@ -54,7 +54,7 @@ class ControlledOperationalModel(nn.Module):
         self.cfg = cfg
 
         self.encoder = nn.Sequential(
-            nn.Linear(cfg.input_dim, cfg.hidden_dim),
+            nn.Linear(cfg.input_dim + cfg.context_dim, cfg.hidden_dim),
             nn.GELU(),
             nn.LayerNorm(cfg.hidden_dim),
         )
