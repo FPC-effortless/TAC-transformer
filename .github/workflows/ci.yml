@@ -72,6 +72,13 @@ jobs:
             tests/test_exp009_smoke.py \
             tests/test_exp009b_smoke.py
 
+      - name: TAC-OSM tests
+        run: |
+          python -m pytest \
+            tests/test_tac_osm_v02.py \
+            tests/test_tac_osm_v03.py \
+            tests/test_tac_osm_v04.py
+
   frontend-smoke:
     name: Frontend smoke
     runs-on: ubuntu-latest
