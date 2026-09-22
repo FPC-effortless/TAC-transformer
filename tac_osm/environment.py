@@ -27,12 +27,14 @@ class SyntheticOperationalWorld:
         if cfg.regime == 0:
             self.effect[:, :4] = base
         elif cfg.regime == 1:
-            self.effect[:, :4] = base.roll(1, dims=0)
-            self.effect[:, 0] *= -1
+            # Held-out dynamics regime: preserve intervention semantics while
+            # changing the latent persistence coefficient.
+            self.effect[:, :4] = base
         else:
             raise ValueError("unsupported regime")
 
-        self.dynamics = torch.eye(cfg.state_dim) * 0.88
+        dynamics_scale = 0.88 if cfg.regime == 0 else 0.82
+        self.dynamics = torch.eye(cfg.state_dim) * dynamics_scale
         self.bias = torch.zeros(cfg.state_dim)
 
     def transition(self, state, action_index, context=None, generator=None):
