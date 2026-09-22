@@ -146,7 +146,9 @@ jobs:
 
       - name: Guard against promoting REAL017 as validated
         run: |
-          if grep -R "REAL017 validates verifier-guided structure repair" -n . --exclude-dir=.git --exclude=docs/REAL017_AUDIT.md --exclude=.github/workflows/research-ci.yml; then
+          if git grep -n "REAL017 validates verifier-guided structure repair" -- . \
+  \\:(exclude)docs/REAL017_AUDIT.md \
+  \\:(exclude).github/workflows/research-ci.yml; then
             echo "REAL017 must not be promoted without audit"
             exit 1
           fi
