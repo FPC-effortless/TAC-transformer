@@ -48,7 +48,7 @@ used to construct training transition targets and independent evaluation
 metrics. Oracle optimal-action labels and scores are never model inputs.
 
 A second environment regime is held out for evaluation. The held-out regime
-changes the action-effect mapping; it is not present during training.
+changes the latent state persistence coefficient while preserving action semantics; it is not present during training.
 
 ## Primary metrics
 
