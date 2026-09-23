@@ -160,6 +160,7 @@ jobs:
               raise SystemExit(1)
           PY
 
+  # Trajectory diagnostic is intentionally kept in the existing research job.
   tac-osm-v04-full:
     name: TAC-OSM v0.4 full falsification
     runs-on: ubuntu-latest
