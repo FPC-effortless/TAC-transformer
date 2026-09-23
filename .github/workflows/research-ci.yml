@@ -234,6 +234,13 @@ jobs:
               "results": results,
           }, indent=2))
           PY
+      - name: Run P0-A1 vs P1-A1 training trajectory diagnostic
+        run: |
+          python -m tac_osm.trajectory_v04 \
+            --seeds 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 \
+            --steps 250,500,1000,1500,2000,2500,3000 \
+            --batch 128 \
+            --device cpu | tee artifacts/tac_osm_v04_training_trajectory.json
       - name: Upload benchmark records
         uses: actions/upload-artifact@v4
         with:
