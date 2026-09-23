@@ -1,0 +1,121 @@
+name: Recon-14 Dispatch
+
+# RECON-14 — Persistence/Reuse Pilot reconstruction (see RECON_14.md).
+#
+# This is the dispatch lane for the frozen five-cell protocol. It is
+# workflow_dispatch only and is deliberately NOT wired into the automatic
+# `fast-check` lane: the full protocol is ~2.5 h of CPU
+# (8 seeds x 5 conditions x up to 1500 pretrain + 200 NOT2-phase steps at
+# ~0.13 s/step). Only the Runner role dispatches it; check `gh run list`
+# first so two heavy lanes do not overlap.
+#
+# Why a dedicated lane instead of the shared `experiment` lane:
+#   * `recon14/` is pure Python standard library. It does NOT import torch --
+#     differentiation is the hand-written reverse-mode engine in
+#     `recon14/autodiff.py`. Installing `requirements.txt` (torch>=2.0) for a
+#     torch-free protocol would pull ~2 GB that this run never touches, so this
+#     lane installs only pytest for the pre-flight integrity gate.
+#   * The protocol's falsification verdict is part of the artifact, not just a
+#     pass/fail, so the result bundle is uploaded even on failure.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Protocol run or reduced smoke check
+        required: true
+        type: choice
+        options:
+          - protocol
+          - smoke
+      seeds:
+        description: Comma-separated trial seeds (blank = frozen 0..7)
+        required: false
+        default: ""
+      conditions:
+        description: Comma-separated conditions (blank = all five)
+        required: false
+        default: ""
+      episodes:
+        description: Episodes per trial corpus (blank = 128)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  # One Recon-14 run at a time per ref; a second dispatch waits rather than
+  # racing. This matches the execution-lanes convention that two heavy lanes
+  # must not run simultaneously.
+  group: recon-14-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  recon-14:
+    name: Recon-14 protocol
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        # recon14/ needs no third-party packages. pytest is for the pre-flight
+        # integrity gate only. torch is intentionally NOT installed: it is
+        # never imported by this protocol (see header note).
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Pre-flight integrity gate
+        # The frozen protocol requires the reconstruction tests to pass before
+        # any training is run. This is the harness correctness precondition, so
+        # a failure here must stop the run rather than produce a result built on
+        # an unvalidated reconstruction.
+        run: |
+          pytest -q tests_py/test_recon14_core.py
+
+      - name: Run Recon-14
+        env:
+          MODE: ${{ github.event.inputs.mode }}
+          SEEDS: ${{ github.event.inputs.seeds }}
+          CONDITIONS: ${{ github.event.inputs.conditions }}
+          EPISODES: ${{ github.event.inputs.episodes }}
+        run: |
+          set -euo pipefail
+          mkdir -p outputs/recon14
+          ARGS=(--output outputs/recon14/recon14_results.json)
+          if [ "$MODE" = "smoke" ]; then
+            ARGS+=(--quick)
+          else
+            [ -n "${SEEDS:-}" ] && ARGS+=(--seeds "$SEEDS")
+            [ -n "${CONDITIONS:-}" ] && ARGS+=(--conditions "$CONDITIONS")
+            [ -n "${EPISODES:-}" ] && ARGS+=(--episodes "$EPISODES")
+          fi
+          python -m recon14.run_recon14 "${ARGS[@]}"
+
+      - name: Store result bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recon-14-results
+          path: outputs/recon14/
+          if-no-files-found: error
+
+      - name: Store run log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recon-14-log
+          # The runner's step logs. The glob is best-effort -- the runner layout
+          # is not guaranteed to match this path -- so an empty artifact is
+          # allowed rather than failing an otherwise-successful run.
+          path: ${{ runner.temp }}/_github_workflow_logs/*.log
+          if-no-files-found: ignore
