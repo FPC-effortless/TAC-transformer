@@ -6,6 +6,7 @@ on:
     paths:
       - 'tac_transformer/**'
       - 'tac_sie/**'
+      - 'tac_osm/**'
       - 'kaggle/**'
       - 'experiments/**'
       - 'tests/**'
@@ -39,18 +40,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
+          python -m pip install pytest torch numpy
+          python -m pip install -r requirements.txt
       - name: Import smoke
         run: |
           python - <<'PY'
@@ -61,7 +60,6 @@ jobs:
           import tac_sie
           print('imports ok')
           PY
-
       - name: Core tests
         run: |
           python -m unittest \
@@ -76,18 +74,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
       - name: TAC-SCM unit benchmark tests
         run: |
           python -m unittest \
@@ -104,18 +99,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
       - name: TAC-SIE pytest suite
         run: |
           python -m pytest \
@@ -133,7 +125,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Required research docs exist
         run: |
           test -f EVIDENCE_AUDIT.md
@@ -142,10 +133,125 @@ jobs:
           test -f TECHNICAL_REPORT.md
           test -f RESULTS_SUMMARY.md
           test -f docs/REAL017_AUDIT.md
-
       - name: Guard against promoting REAL017 as validated
         run: |
-          if grep -R "REAL017 validates verifier-guided structure repair" -n . --exclude-dir=.git; then
-            echo "REAL017 must not be promoted without audit"
-            exit 1
-          fi
+          python - <<'PY'
+          from pathlib import Path
+
+          needle = "REAL017 validates verifier-guided structure repair"
+          excluded = {
+              Path("docs/REAL017_AUDIT.md"),
+              Path(".github/workflows/research-ci.yml"),
+          }
+          hits = []
+          for path in Path(".").rglob("*"):
+              if not path.is_file() or ".git" in path.parts or path in excluded:
+                  continue
+              try:
+                  text = path.read_text(encoding="utf-8")
+              except (UnicodeDecodeError, OSError):
+                  continue
+              if needle in text:
+                  hits.append(str(path))
+
+          if hits:
+              print("REAL017 promotion text found in protected files:")
+              print("\n".join(hits))
+              raise SystemExit(1)
+          PY
+
+  # Trajectory diagnostic is intentionally kept in the existing research job.
+  tac-osm-v04-full:
+    name: TAC-OSM v0.4 full falsification
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch numpy
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+      - name: TAC-OSM v0.4 harness integrity tests
+        run: |
+          python -m unittest tests_py.test_tac_osm_v04_integrity
+      - name: Run 4-seed x 4-cell benchmark
+        run: |
+          mkdir -p artifacts
+          python -m tac_osm.experiment_v04 \
+            --seeds 0,1,2,3 \
+            --steps 3000 \
+            --batch 128 \
+            --device cpu | tee artifacts/tac_osm_v04_full.json
+      - name: Run P1-A1 seed stability diagnostic
+        run: |
+          python - <<'PY' | tee artifacts/tac_osm_v04_p1a1_seed_stability.json
+          import json
+          from tac_osm.experiment_v04 import ExperimentConfig, train_one
+          import torch
+
+          cfg = ExperimentConfig(train_steps=3000, batch_size=128)
+          device = torch.device("cpu")
+          results = [
+              train_one(seed, True, True, cfg, device)
+              for seed in range(16)
+          ]
+          print(json.dumps({
+              "experiment": "TAC-OSM-v0.4-P1-A1-seed-stability",
+              "seeds": list(range(16)),
+              "persistent": True,
+              "action_conditioned": True,
+              "train_steps": 3000,
+              "batch_size": 128,
+              "device": "cpu",
+              "results": results,
+          }, indent=2))
+          PY
+      - name: Run paired 16-seed P0-A1 control
+        run: |
+          python - <<'PY' | tee artifacts/tac_osm_v04_p0a1_p1a1_paired_stability.json
+          import json
+          from tac_osm.experiment_v04 import ExperimentConfig, train_one
+          import torch
+
+          cfg = ExperimentConfig(train_steps=3000, batch_size=128)
+          device = torch.device("cpu")
+          results = []
+          for seed in range(16):
+              p0 = train_one(seed, False, True, cfg, device)
+              p1 = train_one(seed, True, True, cfg, device)
+              results.append({"seed": seed, "p0_a1": p0, "p1_a1": p1})
+          print(json.dumps({
+              "experiment": "TAC-OSM-v0.4-P0-A1-vs-P1-A1-paired-stability",
+              "seeds": list(range(16)),
+              "train_steps": 3000,
+              "batch_size": 128,
+              "device": "cpu",
+              "results": results,
+          }, indent=2))
+          PY
+      - name: Run P0-A1 vs P1-A1 training trajectory diagnostic
+        run: |
+          python -m tac_osm.trajectory_v04 \
+            --seeds 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 \
+            --steps 250,500,1000,1500,2000,2500,3000 \
+            --batch 128 \
+            --device cpu | tee artifacts/tac_osm_v04_training_trajectory.json
+      - name: Run P1-A1 optimizer-state reset diagnostic
+        run: |
+          python -m tac_osm.optimizer_reset_v04 \
+            --seeds 0,1,2,3,4,5,9,12 \
+            --resets 1000,1500,2000 \
+            --checkpoints 1000,1500,2000,2500,3000 \
+            --batch 128 \
+            --device cpu | tee artifacts/tac_osm_v04_optimizer_reset.json
+      - name: Upload benchmark records
+        uses: actions/upload-artifact@v4
+        with:
+          name: tac-osm-v04-full
+          path: artifacts/

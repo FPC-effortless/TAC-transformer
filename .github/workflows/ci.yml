@@ -72,6 +72,14 @@ jobs:
             tests/test_exp009_smoke.py \
             tests/test_exp009b_smoke.py
 
+      - name: TAC-OSM tests
+        run: |
+          python -m pytest \
+            tests/test_tac_osm_v02.py \
+            tests/test_tac_osm_v03.py \
+            tests/test_tac_osm_v04.py \
+            tests/test_tac_osm_v04_falsification.py
+
   frontend-smoke:
     name: Frontend smoke
     runs-on: ubuntu-latest
@@ -87,11 +95,26 @@ jobs:
           node-version: '20'
           cache: npm
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest torch
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+
       - name: Install frontend dependencies
         run: npm ci
 
       - name: Frontend tests
-        run: npm test -- --run
+        run: npm run test:js
+
+      - name: Python tests
+        run: npm run test:python
 
       - name: Frontend build
         run: npm run build
