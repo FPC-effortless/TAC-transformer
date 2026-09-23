@@ -29,6 +29,12 @@ from .experiment_v04 import (
     seed_all,
 )
 
+# Steps after reset at which a full evaluation is recorded. This is the
+# preregistered early-transient probe set: 1/5/10/20/50/100. Evaluating on
+# every step of the warmup window (the previous behaviour) made this the
+# dominant cost and blew the CI budget, without adding registered evidence.
+EARLY_PROBES = frozenset({1, 5, 10, 20, 50, 100})
+
 
 def _norm_parameters(model):
     total = torch.zeros((), device=next(model.parameters()).device)
@@ -143,26 +149,12 @@ def continue_from_snapshot(
 
         optimizer.step()
 
-        if step in checkpoints:
+        steps_since_reset = step - reset_step
+        if step in checkpoints or steps_since_reset in EARLY_PROBES:
             metrics = evaluate(model, cfg, seed + 5000, device)
             rows.append({
                 "step": step,
-                "steps_since_reset": step - reset_step,
-                "train_loss": float(loss.item()),
-                "lr": float(optimizer.param_groups[0]["lr"]),
-                "gradient_norm": grad_norm,
-                "parameter_norm": param_norm,
-                "optimizer_exp_avg_norm": opt_first,
-                "optimizer_exp_avg_sq_norm": opt_second,
-                **metrics,
-            })
-        elif step - reset_step <= warmup_steps or step - reset_step in {1, 5, 10, 20, 50, 100}:
-            # Keep the early transient observable even when not a formal
-            # evaluation checkpoint.
-            metrics = evaluate(model, cfg, seed + 5000, device)
-            rows.append({
-                "step": step,
-                "steps_since_reset": step - reset_step,
+                "steps_since_reset": steps_since_reset,
                 "train_loss": float(loss.item()),
                 "lr": float(optimizer.param_groups[0]["lr"]),
                 "gradient_norm": grad_norm,
