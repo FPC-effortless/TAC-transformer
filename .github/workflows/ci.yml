@@ -2,7 +2,7 @@ name: Fast CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feat/tac-osm-v0.1]
   push:
     branches: [main]
   workflow_dispatch:
@@ -118,3 +118,20 @@ jobs:
 
       - name: Frontend build
         run: npm run build
+
+  tac-osm-v05:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - run: python -m pip install pytest
+      - run: python -m pytest -q tests/test_tac_osm_v05.py
+      - run: python -m tac_osm.experiment_v05 --steps 1000 --batch 128 --eval-batch 1024
+      - run: python -m tac_osm.experiment_v05_diagnostic --steps 1000 --batch 128 --eval-batch 1024
+      - run: python -m tac_osm.experiment_v05_diagnostic --steps-sweep 500,1000,2000,4000 --batch 128 --eval-batch 512
+      - run: python -m tac_osm.experiment_v05_diagnostic --checkpoint-trajectory 500,1000,2000,4000 --batch 128 --eval-batch 512
+      - run: python -m tac_osm.experiment_v05_diagnostic --transition-diagnostic 500,1000 --transition-interval 50 --batch 128 --eval-batch 512
+      - run: python -m tac_osm.experiment_v05_freeze --seeds 0,1,2,3,4 --batch 128 --eval-batch 512
