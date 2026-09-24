@@ -72,6 +72,9 @@ jobs:
             tests/test_exp009_smoke.py \
             tests/test_exp009b_smoke.py
 
+      - name: TAC-OSM v0.5 anti-lookup benchmark
+        run: python -m tac_osm.experiment_v05_anti_lookup --seeds 0,1,2,3,4 --steps 1000 --batch 128 --eval-batch 512
+
   frontend-smoke:
     name: Frontend smoke
     runs-on: ubuntu-latest
