@@ -145,6 +145,40 @@ jobs:
               raise SystemExit(1)
           PY
 
+  tac-osm-v04-reset-warmup:
+    name: TAC-OSM v0.4 optimizer reset warmup control
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: research/tac-osm-v04-reset-warmup-control
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch numpy
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+      - name: Run warmup-controlled optimizer reset diagnostic
+        run: |
+          mkdir -p artifacts
+          python -m tac_osm.optimizer_reset_warmup_v04 \
+            --seeds 0,1,2,3,4,5,9,12 \
+            --resets 1000,1500,2000 \
+            --checkpoints 1000,1001,1005,1010,1020,1050,1100,1500,2000,2500,3000 \
+            --warmup-steps 50 \
+            --batch 128 \
+            --device cpu | tee artifacts/tac_osm_v04_optimizer_reset_warmup.json
+      - name: Upload warmup control artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tac-osm-v04-reset-warmup
+          path: artifacts/
+
   tac-osm-v04-full:
     name: TAC-OSM v0.4 full falsification
     runs-on: ubuntu-latest
@@ -198,9 +232,6 @@ jobs:
       - name: Run P1-A1 optimizer-state reset diagnostic
         run: |
           python -m tac_osm.optimizer_reset_v04 --seeds 0,1,2,3,4,5,9,12 --resets 1000,1500,2000 --checkpoints 1000,1500,2000,2500,3000 --batch 128 --device cpu | tee artifacts/tac_osm_v04_optimizer_reset.json
-      - name: Run warmup-controlled optimizer reset diagnostic
-        run: |
-          python -m tac_osm.optimizer_reset_warmup_v04             --seeds 0,1,2,3,4,5,9,12             --resets 1000,1500,2000             --checkpoints 1000,1001,1005,1010,1020,1050,1100,1500,2000,2500,3000             --warmup-steps 50             --batch 128             --device cpu | tee artifacts/tac_osm_v04_optimizer_reset_warmup.json
       - name: Upload benchmark records
         uses: actions/upload-artifact@v4
         with:
