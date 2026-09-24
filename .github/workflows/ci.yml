@@ -2,7 +2,7 @@ name: Fast CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feat/tac-osm-v0.1]
   push:
     branches: [main]
   workflow_dispatch:
