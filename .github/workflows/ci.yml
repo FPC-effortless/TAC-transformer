@@ -131,3 +131,4 @@ jobs:
       - run: python -m pytest -q tests/test_tac_osm_v05.py
       - run: python -m tac_osm.experiment_v05 --steps 1000 --batch 128 --eval-batch 1024
       - run: python -m tac_osm.experiment_v05_diagnostic --steps 1000 --batch 128 --eval-batch 1024
+      - run: python -m tac_osm.experiment_v05_diagnostic --steps-sweep 500,1000,2000,4000 --batch 128 --eval-batch 512
