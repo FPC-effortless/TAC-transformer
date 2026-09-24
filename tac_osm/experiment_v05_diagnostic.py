@@ -3,6 +3,10 @@
 This module does not change the v0.5 promotion gate. It diagnoses where
 successful/failed seeds lose the observational context signal:
 encoding, routed retrieval, executor binding, or forecast binding.
+
+The checkpoint trajectory diagnostic keeps one optimizer trajectory per seed
+and measures the same model at successive training checkpoints. This is
+distinct from the independent-duration sweep.
 """
 from __future__ import annotations
 
@@ -16,10 +20,12 @@ from .experiment_v05 import (
     _context_pair,
     _forecast_with_context,
     action_candidates,
+    evaluate,
     make_world,
+    seed_all,
     train_one,
 )
-from .experiment_v04 import sample_batch
+from .experiment_v04 import ControlledOperationalModel, sample_batch
 
 
 def _route(model, hidden, state):
@@ -32,11 +38,13 @@ def _route(model, hidden, state):
     return (slots * weights.unsqueeze(-1)).sum(1), weights
 
 
-def diagnose_seed(seed: int, cfg: ExperimentConfig, device: torch.device) -> dict:
-    # Training must retain autograd; only post-training measurements are
-    # inference diagnostics.
-    model = train_one(seed, cfg, device)
-
+def diagnose_model(
+    model,
+    seed: int,
+    cfg: ExperimentConfig,
+    device: torch.device,
+) -> dict:
+    """Measure pathway propagation for an already-trained model."""
     with torch.no_grad():
         world = make_world(cfg, 0)
         gen = torch.Generator(device=device).manual_seed(seed + 7000)
@@ -113,11 +121,77 @@ def diagnose_seed(seed: int, cfg: ExperimentConfig, device: torch.device) -> dic
     }
 
 
+def diagnose_seed(seed: int, cfg: ExperimentConfig, device: torch.device) -> dict:
+    # Training must retain autograd; only post-training measurements are
+    # inference diagnostics.
+    model = train_one(seed, cfg, device)
+    return diagnose_model(model, seed, cfg, device)
+
+
+def _train_continuous_checkpoints(
+    seed: int,
+    cfg: ExperimentConfig,
+    checkpoints: list[int],
+    device: torch.device,
+) -> list[dict]:
+    """Train one optimizer trajectory and measure it at each checkpoint."""
+    if not checkpoints:
+        return []
+    if any(step <= 0 for step in checkpoints):
+        raise ValueError("checkpoint steps must be positive")
+    if checkpoints != sorted(set(checkpoints)):
+        raise ValueError("checkpoint steps must be strictly increasing")
+
+    seed_all(seed)
+    world = make_world(cfg, 0)
+    model = ControlledOperationalModel(cfg, True, True).to(device)
+    opt = torch.optim.AdamW(model.parameters(), lr=cfg.lr)
+    gen = torch.Generator(device=device).manual_seed(seed + 1000)
+
+    rows = []
+    completed = 0
+    for target in checkpoints:
+        for _ in range(completed, target):
+            t0, t1, _, action, next_state, _ = sample_batch(
+                world, cfg.batch_size, gen, device
+            )
+            candidates = torch.nn.functional.one_hot(
+                action, cfg.action_dim
+            ).float().view(cfg.batch_size, 1, 1, cfg.action_dim)
+            pred = model.forward_sequence(t0, t1, candidates)[:, 0, 0]
+            loss = torch.mean((pred - next_state) ** 2)
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+        completed = target
+
+        row = diagnose_model(model, seed, cfg, device)
+        intervention = evaluate(model, cfg, seed + 5000, device)
+        row.update({
+            "train_steps": target,
+            "normalized_contrast_mse": intervention["normalized_contrast_mse"],
+            "context_flip_recall": intervention["context_flip_recall"],
+            "state_intervention_delta": intervention["state_intervention_delta"],
+        })
+        rows.append(row)
+
+    return rows
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--seeds", default="0,1,2,3,4")
     p.add_argument("--steps", type=int, default=1000)
-    p.add_argument("--steps-sweep", default=None, help="Comma-separated training durations for optimization-path sweep.")
+    p.add_argument(
+        "--steps-sweep",
+        default=None,
+        help="Independent models at each duration (legacy optimization-path sweep).",
+    )
+    p.add_argument(
+        "--checkpoint-trajectory",
+        default=None,
+        help="Continuous per-seed trajectory, e.g. 500,1000,2000,4000.",
+    )
     p.add_argument("--batch", type=int, default=128)
     p.add_argument("--eval-batch", type=int, default=1024)
     p.add_argument("--device", default="cpu")
@@ -130,11 +204,41 @@ def main() -> None:
     )
     device = torch.device(args.device)
     seeds = [int(seed) for seed in args.seeds.split(",") if seed.strip()]
+
+    if args.checkpoint_trajectory:
+        checkpoints = [
+            int(x) for x in args.checkpoint_trajectory.split(",") if x.strip()
+        ]
+        results = []
+        for seed in seeds:
+            results.extend(
+                _train_continuous_checkpoints(
+                    seed, cfg, checkpoints, device
+                )
+            )
+        print(json.dumps({
+            "experiment": "TAC-OSM-v0.5-continuous-checkpoint-trajectory",
+            "variable": "single_optimizer_trajectory",
+            "checkpoints": checkpoints,
+            "seeds": seeds,
+            "architecture_unchanged": True,
+            "objective_unchanged": True,
+            "promotion_gate": "unchanged",
+            "results": results,
+        }, indent=2))
+        return
+
     if args.steps_sweep:
-        durations = [int(x) for x in args.steps_sweep.split(",") if x.strip()]
+        durations = [
+            int(x) for x in args.steps_sweep.split(",") if x.strip()
+        ]
         sweep = []
         for steps in durations:
-            sweep_cfg = ExperimentConfig(train_steps=steps, batch_size=args.batch, eval_batch=args.eval_batch)
+            sweep_cfg = ExperimentConfig(
+                train_steps=steps,
+                batch_size=args.batch,
+                eval_batch=args.eval_batch,
+            )
             for seed in seeds:
                 row = diagnose_seed(seed, sweep_cfg, device)
                 row["train_steps"] = steps
