@@ -43,3 +43,10 @@ It would not establish general causal reasoning, planning, or real-world
 causal competence.
 
 No persistence expansion, verifier, recurrence, or RL is introduced by v0.5.
+
+
+## Diagnostic interpretation
+
+The initial five-seed CI reproduction is a closed diagnostic rather than a promotion result. Seed 1 reached normalized intervention MSE 0.38614 with 0.9668 context-flip recall; seeds 0, 2, 3, and 4 remained at approximately the context-blind null (normalized MSE ≈ 1 and flip recall ≈ 0). The next experiment therefore diagnoses the learning path without changing the v0.5 gate or adding causal supervision.
+
+The diagnostic reports observational training fit, t0 persistent-state context separation, t1 retrieved-state separation, hidden-state separation, and forecast separation. These measurements distinguish context encoding, retrieval, and forecast-binding failures.
