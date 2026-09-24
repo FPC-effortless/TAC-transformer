@@ -117,6 +117,7 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--seeds", default="0,1,2,3,4")
     p.add_argument("--steps", type=int, default=1000)
+    p.add_argument("--steps-sweep", default=None, help="Comma-separated training durations for optimization-path sweep.")
     p.add_argument("--batch", type=int, default=128)
     p.add_argument("--eval-batch", type=int, default=1024)
     p.add_argument("--device", default="cpu")
@@ -128,11 +129,28 @@ def main() -> None:
         eval_batch=args.eval_batch,
     )
     device = torch.device(args.device)
-    results = [
-        diagnose_seed(int(seed), cfg, device)
-        for seed in args.seeds.split(",")
-        if seed.strip()
-    ]
+    seeds = [int(seed) for seed in args.seeds.split(",") if seed.strip()]
+    if args.steps_sweep:
+        durations = [int(x) for x in args.steps_sweep.split(",") if x.strip()]
+        sweep = []
+        for steps in durations:
+            sweep_cfg = ExperimentConfig(train_steps=steps, batch_size=args.batch, eval_batch=args.eval_batch)
+            for seed in seeds:
+                row = diagnose_seed(seed, sweep_cfg, device)
+                row["train_steps"] = steps
+                sweep.append(row)
+        print(json.dumps({
+            "experiment": "TAC-OSM-v0.5-optimization-path-sweep",
+            "variable": "observational_training_duration",
+            "steps": durations,
+            "seeds": seeds,
+            "architecture_unchanged": True,
+            "promotion_gate": "unchanged",
+            "results": sweep,
+        }, indent=2))
+        return
+
+    results = [diagnose_seed(seed, cfg, device) for seed in seeds]
     print(json.dumps({
         "experiment": "TAC-OSM-v0.5-optimization-diagnostics",
         "promotion_gate": "unchanged",
