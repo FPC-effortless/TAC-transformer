@@ -125,3 +125,29 @@ The unresolved transition is persistent state + relevance routing -> verified de
 ## PNDS-SETUP-001
 - Status: SUPPORTED
 - Purpose: universal protocol installation.
+
+## Mathematical-audit correction — 2026-09-24
+
+The prior ledger over-promoted several entries when read against the new PNDS mathematical specification. The following distinctions are now authoritative:
+
+- REAL005 and REAL006 are valid controlled evidence with explicit baselines and seed configurations in their source reports. Their results remain bounded to those deterministic synthetic/realistic harnesses; they do not constitute a general PNDS scaling result.
+- REAL005's source explicitly documents a 10-seed validation and the full sweep.
+- REAL006's source explicitly documents vanilla, legacy TAC, retrieval-only, no-structure/no-slot/no-bridge, reset, shuffled, knockout, and oracle controls, plus 10-seed and full-sweep configurations.
+- Repair evidence is not yet promoted under fabricated R13/R14 identifiers. A repository-wide search did not locate those identifiers in the current TAC Transformer tree. The existing procedural repair smoke (kaggle/benchmark_procedural_repair_memory.py) is a bounded harness, not longitudinal PNDS evidence.
+- Path verification, registration, adaptation regularization, and context-scaling remain NOT_RUN/UNRESOLVED at the PNDS level.
+
+### PNDS claim-status matrix
+
+| Claim | Current status |
+|---|---|
+| Persistent state is useful on bounded memory tasks | SUPPORTED / bounded |
+| Content-addressed state improves selected TAC memory tasks | SUPPORTED / bounded |
+| Structural state can influence behavior causally in REAL004/005/006 | SUPPORTED / bounded |
+| Cheap learned routing solves held-out structural selection | INCONCLUSIVE |
+| Path-level verification improves over final-only verification | NOT_RUN |
+| Experimental state can be safely registered after repeated validation | NOT_RUN |
+| Regularized adaptation improves held-out utility per persistent change | NOT_RUN |
+| PNDS computation cost scales with relevant subset rather than history | NOT_RUN |
+| PNDS transfers across all four commercial environments | NOT_RUN |
+
+Three seeds are treated as replication evidence, not as a basis for claiming p<0.05 by a sign test. Confirmatory experiments must preregister effect size, sign consistency, seed variance, and episode-level uncertainty separately.
