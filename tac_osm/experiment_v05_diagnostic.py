@@ -2,7 +2,7 @@
 
 This module does not change the v0.5 promotion gate. It diagnoses where
 successful/failed seeds lose the observational context signal:
-training fit, persistent-state encoding, t1 retrieval, or forecast binding.
+encoding, routed retrieval, executor binding, or forecast binding.
 """
 from __future__ import annotations
 
@@ -22,8 +22,18 @@ from .experiment_v05 import (
 from .experiment_v04 import sample_batch
 
 
+def _route(model, hidden, state):
+    slots, validity = state
+    q = model.route_query(hidden).unsqueeze(1)
+    scores = (q * slots).sum(-1) / (model.cfg.structure_dim ** 0.5)
+    weights = torch.softmax(
+        scores.masked_fill(validity <= 1e-6, -1e9), -1
+    )
+    return (slots * weights.unsqueeze(-1)).sum(1), weights
+
+
 def diagnose_seed(seed: int, cfg: ExperimentConfig, device: torch.device) -> dict:
-    # Training must retain autograd; only the post-training measurements are
+    # Training must retain autograd; only post-training measurements are
     # inference diagnostics.
     model = train_one(seed, cfg, device)
 
@@ -45,19 +55,42 @@ def diagnose_seed(seed: int, cfg: ExperimentConfig, device: torch.device) -> dic
         t0_a = torch.cat([zero_state, ca], -1)
         t0_b = torch.cat([zero_state, cb], -1)
         initial = model.initial_state(cfg.eval_batch, device)
+
+        t0_hidden_a = model.encoder(t0_a)
+        t0_hidden_b = model.encoder(t0_b)
+        t0_hidden_delta = torch.mean(
+            torch.abs(t0_hidden_b - t0_hidden_a)
+        ).item()
+
         _, state_a = model.encode(t0_a, initial, write=True)
         _, state_b = model.encode(t0_b, initial, write=True)
 
         slots_a, valid_a = state_a
         slots_b, valid_b = state_b
-        persistent_state_delta = torch.mean(torch.abs(slots_b - slots_a)).item()
+        persistent_state_delta = torch.mean(
+            torch.abs(slots_b - slots_a)
+        ).item()
         validity_delta = torch.mean(torch.abs(valid_b - valid_a)).item()
 
-        hidden_a, read_a = model.encode(t1, state_a, write=False)
-        hidden_b, read_b = model.encode(t1, state_b, write=False)
-        read_slots_a, _ = read_a
-        read_slots_b, _ = read_b
-        retrieval_state_delta = torch.mean(torch.abs(read_slots_b - read_slots_a)).item()
+        hidden_a, _ = model.encode(t1, state_a, write=False)
+        hidden_b, _ = model.encode(t1, state_b, write=False)
+
+        structure_a, route_weights_a = _route(model, hidden_a, state_a)
+        structure_b, route_weights_b = _route(model, hidden_b, state_b)
+        routed_structure_delta = torch.mean(
+            torch.abs(structure_b - structure_a)
+        ).item()
+        route_weight_delta = torch.mean(
+            torch.abs(route_weights_b - route_weights_a)
+        ).item()
+
+        active_a = model.executor(
+            torch.cat([hidden_a, structure_a], -1)
+        )
+        active_b = model.executor(
+            torch.cat([hidden_b, structure_b], -1)
+        )
+        active_delta = torch.mean(torch.abs(active_b - active_a)).item()
         hidden_delta = torch.mean(torch.abs(hidden_b - hidden_a)).item()
 
         candidates = action_candidates(cfg.eval_batch, cfg.action_dim, device)
@@ -68,10 +101,13 @@ def diagnose_seed(seed: int, cfg: ExperimentConfig, device: torch.device) -> dic
     return {
         "seed": seed,
         "train_fit_mse": train_fit_mse,
+        "t0_hidden_delta": t0_hidden_delta,
         "persistent_state_delta": persistent_state_delta,
         "validity_delta": validity_delta,
-        "retrieval_state_delta": retrieval_state_delta,
+        "routed_structure_delta": routed_structure_delta,
+        "route_weight_delta": route_weight_delta,
         "hidden_delta": hidden_delta,
+        "active_delta": active_delta,
         "forecast_delta": forecast_delta,
         "parameters": model.parameter_count(),
     }
