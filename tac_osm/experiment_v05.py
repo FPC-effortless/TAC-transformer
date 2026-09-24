@@ -62,7 +62,7 @@ def evaluate(model, cfg, seed, device):
     candidates = action_candidates(cfg.eval_batch, cfg.action_dim, device)
     pred_a = _forecast_with_context(model, t1, ca, candidates)
     pred_b = _forecast_with_context(model, t1, cb, candidates)
-    predicted_delta = pred_b[:, :, 0] - pred_a[:, :, 0]
+    predicted_delta = pred_b[:, :, 0, :] - pred_a[:, :, 0, :]
     true_a = []; true_b = []
     for a in range(cfg.action_dim):
         actions = torch.full((cfg.eval_batch,), a, device=device, dtype=torch.long)
@@ -87,7 +87,7 @@ def evaluate(model, cfg, seed, device):
         "true_contrast_mse_scale": scale,
         "normalized_contrast_mse": norm_mse,
         "null_normalized_contrast_mse": 1.0,
-        "state_intervention_delta": torch.mean(torch.abs(pred_b - pred_a)).item(),
+        "state_intervention_delta": torch.mean(torch.abs(pred_b[:, :, 0, :] - pred_a[:, :, 0, :])).item(),
         "oracle_context_flip_cases": flip_cases,
         "context_flip_recall": flip_recall,
         "oracle_action_disagreement": float((oracle_a != oracle_b).float().mean().item()),
