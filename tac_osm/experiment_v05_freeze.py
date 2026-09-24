@@ -106,7 +106,8 @@ def run_seed(seed, cfg, device, warmup_steps=550, transition_steps=50):
             _freeze_group(model, frozen)
 
         # Each branch must use an independent generator at the same state.
-        branch_gen = copy.deepcopy(gen)
+        branch_gen = torch.Generator(device=device)
+        branch_gen.set_state(gen.get_state())
         loss = _train_steps(
             model, opt, world, branch_gen, transition_steps, cfg, device
         )
