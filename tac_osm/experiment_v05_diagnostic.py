@@ -121,6 +121,124 @@ def diagnose_model(
     }
 
 
+
+def _parameter_group_snapshot(model):
+    """Return parameter norms grouped by functional module."""
+    groups = {}
+    for name, param in model.named_parameters():
+        if not param.requires_grad:
+            continue
+        group = name.split(".", 1)[0]
+        groups.setdefault(group, {"parameter_norm": 0.0, "parameters": 0})
+        groups[group]["parameter_norm"] += float(torch.sum(param.detach() ** 2).item())
+        groups[group]["parameters"] += param.numel()
+    for group in groups:
+        groups[group]["parameter_norm"] = groups[group]["parameter_norm"] ** 0.5
+    return groups
+
+
+def _gradient_group_snapshot(model):
+    """Return L2 gradient norms grouped by functional module."""
+    groups = {}
+    for name, param in model.named_parameters():
+        if not param.requires_grad or param.grad is None:
+            continue
+        group = name.split(".", 1)[0]
+        groups.setdefault(group, 0.0)
+        groups[group] += float(torch.sum(param.grad.detach() ** 2).item())
+    return {group: value ** 0.5 for group, value in groups.items()}
+
+
+def _parameter_drift(before, model):
+    """Return L2 parameter drift from a saved snapshot, grouped by module."""
+    drift = {}
+    for name, param in model.named_parameters():
+        if not param.requires_grad:
+            continue
+        group = name.split(".", 1)[0]
+        delta = param.detach() - before[name]
+        drift[group] = drift.get(group, 0.0) + float(torch.sum(delta ** 2).item())
+    return {group: value ** 0.5 for group, value in drift.items()}
+
+
+def _train_transition_diagnostic(
+    seed: int,
+    cfg: ExperimentConfig,
+    start_step: int,
+    end_step: int,
+    interval: int,
+    device: torch.device,
+) -> list[dict]:
+    """Track parameter-group gradients/drift through one optimizer trajectory."""
+    if start_step <= 0 or end_step <= start_step:
+        raise ValueError("require 0 < start_step < end_step")
+    if interval <= 0:
+        raise ValueError("interval must be positive")
+
+    seed_all(seed)
+    world = make_world(cfg, 0)
+    model = ControlledOperationalModel(cfg, True, True).to(device)
+    opt = torch.optim.AdamW(model.parameters(), lr=cfg.lr)
+    gen = torch.Generator(device=device).manual_seed(seed + 1000)
+
+    baseline = {
+        name: param.detach().clone()
+        for name, param in model.named_parameters()
+        if param.requires_grad
+    }
+    rows = []
+    grad_accum = {}
+    completed = 0
+
+    for step in range(1, end_step + 1):
+        t0, t1, _, action, next_state, _ = sample_batch(
+            world, cfg.batch_size, gen, device
+        )
+        candidates = torch.nn.functional.one_hot(
+            action, cfg.action_dim
+        ).float().view(cfg.batch_size, 1, 1, cfg.action_dim)
+        pred = model.forward_sequence(t0, t1, candidates)[:, 0, 0]
+        loss = torch.mean((pred - next_state) ** 2)
+        opt.zero_grad()
+        loss.backward()
+
+        for group, value in _gradient_group_snapshot(model).items():
+            grad_accum[group] = grad_accum.get(group, 0.0) + value
+
+        opt.step()
+
+        if step >= start_step and (step == end_step or (step - start_step) % interval == 0):
+            current = _parameter_group_snapshot(model)
+            drift = _parameter_drift(baseline, model)
+            row = {
+                "seed": seed,
+                "train_steps": step,
+                "train_loss": float(loss.detach().item()),
+                "parameter_drift": drift,
+                "parameter_norm": {
+                    group: values["parameter_norm"] for group, values in current.items()
+                },
+                "cumulative_gradient_norm": dict(grad_accum),
+                "gradient_norm_per_step": {
+                    group: value / max(step - completed, 1)
+                    for group, value in grad_accum.items()
+                },
+            }
+            path = diagnose_model(model, seed, cfg, device)
+            intervention = evaluate(model, cfg, seed + 5000, device)
+            row.update({
+                "routed_structure_delta": path["routed_structure_delta"],
+                "persistent_state_delta": path["persistent_state_delta"],
+                "forecast_delta": path["forecast_delta"],
+                "normalized_contrast_mse": intervention["normalized_contrast_mse"],
+                "context_flip_recall": intervention["context_flip_recall"],
+            })
+            rows.append(row)
+            grad_accum = {}
+            completed = step
+
+    return rows
+
 def diagnose_seed(seed: int, cfg: ExperimentConfig, device: torch.device) -> dict:
     # Training must retain autograd; only post-training measurements are
     # inference diagnostics.
@@ -195,6 +313,12 @@ def main() -> None:
     p.add_argument("--batch", type=int, default=128)
     p.add_argument("--eval-batch", type=int, default=1024)
     p.add_argument("--device", default="cpu")
+    p.add_argument(
+        "--transition-diagnostic",
+        default=None,
+        help="Continuous parameter-group diagnostic as start,end, e.g. 500,1000.",
+    )
+    p.add_argument("--transition-interval", type=int, default=50)
     args = p.parse_args()
 
     cfg = ExperimentConfig(
@@ -204,6 +328,29 @@ def main() -> None:
     )
     device = torch.device(args.device)
     seeds = [int(seed) for seed in args.seeds.split(",") if seed.strip()]
+
+    if args.transition_diagnostic:
+        parts = [int(x) for x in args.transition_diagnostic.split(",") if x.strip()]
+        if len(parts) != 2:
+            raise ValueError("--transition-diagnostic requires start,end")
+        results = []
+        for seed in seeds:
+            results.extend(_train_transition_diagnostic(
+                seed, cfg, parts[0], parts[1], args.transition_interval, device
+            ))
+        print(json.dumps({
+            "experiment": "TAC-OSM-v0.5-parameter-transition-diagnostic",
+            "variable": "parameter_group_gradients_and_drift",
+            "transition": parts,
+            "interval": args.transition_interval,
+            "seeds": seeds,
+            "architecture_unchanged": True,
+            "objective_unchanged": True,
+            "evaluation_unchanged": True,
+            "promotion_gate": "unchanged",
+            "results": results,
+        }, indent=2))
+        return
 
     if args.checkpoint_trajectory:
         checkpoints = [
