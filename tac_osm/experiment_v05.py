@@ -86,6 +86,7 @@ def evaluate(model, cfg, seed, device):
         "contrast_mse": contrast_mse,
         "true_contrast_mse_scale": scale,
         "normalized_contrast_mse": norm_mse,
+        "null_normalized_contrast_mse": 1.0,
         "state_intervention_delta": torch.mean(torch.abs(pred_b - pred_a)).item(),
         "oracle_context_flip_cases": flip_cases,
         "context_flip_recall": flip_recall,
