@@ -155,6 +155,15 @@ def continue_from_snapshot(
     generator.set_state(snapshot["generator"])
 
     rows = []
+    if RESET_STEP in checkpoints:
+        rows.append({
+            "step": RESET_STEP,
+            "steps_since_reset": 0,
+            "planning_accuracy_held_out": evaluate_planning_accuracy(
+                model, cfg, seed + 5000, device
+            ),
+        })
+
     for step in range(RESET_STEP + 1, max(checkpoints) + 1):
         t0, t1, _, action, next_state, _ = sample_batch(
             world, cfg.batch_size, generator, device
