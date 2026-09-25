@@ -148,14 +148,14 @@ def evaluate(model, cfg, seed, device):
         num_classes=cfg.context_dim,
     ).float()
     cb = F.one_hot(
-        torch.ones(cfg.eval_batch, dtype=torch.long, device=device),
+        torch.full((cfg.eval_batch,), 2, dtype=torch.long, device=device),
         num_classes=cfg.context_dim,
     ).float()
     pa = forecast_with_context(model, query_state, ca, candidates)[:, :, 0, :]
     pb = forecast_with_context(model, query_state, cb, candidates)[:, :, 0, :]
     common_held = [
         a for a in range(cfg.action_dim)
-        if held_out_pair(0, a) and held_out_pair(1, a)
+        if held_out_pair(0, a) and held_out_pair(2, a)
     ]
     pred_delta = pb[:, common_held] - pa[:, common_held]
     true_a = torch.stack([
