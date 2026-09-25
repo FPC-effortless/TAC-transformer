@@ -157,6 +157,10 @@ def evaluate(model, cfg, seed, device):
         a for a in range(cfg.action_dim)
         if held_out_pair(0, a) and held_out_pair(2, a)
     ]
+    common_seen = [
+        a for a in range(cfg.action_dim)
+        if not held_out_pair(0, a) and not held_out_pair(2, a)
+    ]
     pred_delta = pb[:, common_held] - pa[:, common_held]
     true_a = torch.stack([
         world.transition(
@@ -176,12 +180,33 @@ def evaluate(model, cfg, seed, device):
     contrast_mse = torch.mean((pred_delta - true_delta) ** 2).item()
     scale = torch.mean(true_delta ** 2).item()
 
+    def contrast_for_actions(action_ids):
+        pred = pb[:, action_ids] - pa[:, action_ids]
+        ta = torch.stack([
+            world.transition(query_state, torch.full((cfg.eval_batch,), a, device=device, dtype=torch.long), context=ca)
+            for a in action_ids
+        ], 1)
+        tb = torch.stack([
+            world.transition(query_state, torch.full((cfg.eval_batch,), a, device=device, dtype=torch.long), context=cb)
+            for a in action_ids
+        ], 1)
+        td = tb - ta
+        mse = torch.mean((pred - td) ** 2).item()
+        sc = torch.mean(td ** 2).item()
+        return mse, mse / max(sc, 1e-12)
+
+    seen_contrast_mse, seen_normalized = contrast_for_actions(common_seen)
+
     return {
         "heldout_pair_forecast_mse": heldout_forecast_mse,
         "heldout_intervention_contrast_mse": contrast_mse,
         "heldout_normalized_contrast_mse": contrast_mse / max(scale, 1e-12),
+        "seen_intervention_contrast_mse": seen_contrast_mse,
+        "seen_normalized_contrast_mse": seen_normalized,
+        "heldout_to_seen_normalized_ratio": (contrast_mse / max(scale, 1e-12)) / max(seen_normalized, 1e-12),
         "null_normalized_contrast_mse": 1.0,
         "common_heldout_actions": common_held,
+        "common_seen_actions": common_seen,
         "train_pair_count": 8,
         "heldout_pair_count": 8,
     }
