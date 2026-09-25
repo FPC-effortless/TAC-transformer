@@ -8,6 +8,50 @@ measures intervention contrasts on those unseen combinations.
 The operational rule is compositional: mapped_action = context XOR action
 (using two-bit codes). A successful held-out-pair result is evidence of
 compositional generalization, not by itself proof of causality.
+
+---
+EVIDENCE STATUS NOTE (added 2026-09-25, commit on
+research/tac-osm-v05-anti-lookup-main; see
+docs/tac_osm_v05_anti_lookup_evidence_status.md).
+
+The experiment above is UNCHANGED and its original numbers are NOT
+recomputed or retracted. What changes is the interpretation that the
+result can support.
+
+The checkerboard split is not factor-holding once the XOR action mapping
+is applied. The action effect applied at a cell is effect[c ^ a], not
+effect[a], so the split must be checked on the remapped index, not on
+the raw action index:
+
+  training cells    (c + a) % 2 == 1   ->  effect rows {1, 3}
+  held-out cells    (c + a) % 2 == 0   ->  effect rows {0, 2}
+
+These sets are disjoint. Every individual context and every individual
+action does appear on both sides of the split, so
+test_anti_lookup_split_exposes_all_individual_factors passes and the
+benchmark does withhold unseen combinations at the (c, a) level. But
+those combinations exercise only two of the four physical effect
+directions; the held-out cells require effect[0] and effect[2], which
+appear nowhere in training, in any context.
+
+Consequently the v0.5 result cannot by itself be interpreted as evidence
+of compositional generalization across unseen context-action
+combinations. The held-out evaluation includes effect directions absent
+from training, so success would require extrapolation to unseen physical
+effects rather than recombination of observed ones, and failure is
+consistent with the effect rows simply being unseen. It remains a valid
+historical result for the implemented benchmark.
+
+The stricter statement, for the avoidance of doubt:
+
+    v0.5 demonstrated behavior on its implemented split
+      !=
+    v0.5 demonstrated compositional generalization
+
+PR-B (v0.5.1) is designed to make the distinction measurable, with a
+split that is factor-holding on the remapped index. Nothing here edits
+that preregistration, which stays frozen at its own commit.
+---
 """
 from __future__ import annotations
 
