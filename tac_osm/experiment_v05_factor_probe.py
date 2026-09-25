@@ -44,14 +44,20 @@ def _ridge_fit_predict(x_train, y_train, x_test, ridge=1e-3):
 
 
 def _fit_factor_probe(context_repr, action_repr, effects, seen_mask, ridge):
-    """Probe y(c,a) using [context, action, context*action] features."""
-    c, a = context_repr.shape
+    """Probe y(c,a) using [context, action, context*action] features.
+
+    The grid dimensions come from ``effects`` (n_context, n_action), not from
+    the representation shapes: the representations carry a hidden width that
+    need not equal the action count, so unpacking a representation would
+    misindex the grid.
+    """
+    n_context, n_action = effects.shape[:2]
     rows = []
     targets = []
     test_rows = []
     test_targets = []
-    for ci in range(c):
-        for ai in range(a):
+    for ci in range(n_context):
+        for ai in range(n_action):
             feat = torch.cat(
                 [context_repr[ci], action_repr[ai],
                  context_repr[ci] * action_repr[ai]], -1
