@@ -117,7 +117,7 @@ def evaluate(model, cfg, seed, device):
     )
     candidates = F.one_hot(
         torch.arange(cfg.action_dim, device=device), cfg.action_dim
-    ).view(1, cfg.action_dim, 1, cfg.action_dim).expand(
+    ).float().view(1, cfg.action_dim, 1, cfg.action_dim).expand(
         cfg.eval_batch, -1, -1, -1
     )
 
