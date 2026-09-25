@@ -72,6 +72,35 @@ jobs:
             tests/test_exp009_smoke.py \
             tests/test_exp009b_smoke.py
 
+      - name: TAC-OSM v0.5 anti-lookup benchmark
+        run: python -m tac_osm.experiment_v05_anti_lookup --seeds 0,1,2,3,4 --steps 1000 --batch 128 --eval-batch 512
+
+  anti-lookup:
+    name: TAC-OSM v0.5 anti-lookup
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest torch
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Anti-lookup unit tests
+        run: python -m pytest tests/test_tac_osm_v05_anti_lookup.py
+
+      - name: Anti-lookup five-seed benchmark
+        run: python -m tac_osm.experiment_v05_anti_lookup --seeds 0,1,2,3,4 --steps 1000 --batch 128 --eval-batch 512
+
   frontend-smoke:
     name: Frontend smoke
     runs-on: ubuntu-latest
