@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: [main, research/tac-osm-v05-factor-probe]
   workflow_dispatch:
 
 permissions:
@@ -74,6 +74,32 @@ jobs:
 
       - name: TAC-OSM v0.5 anti-lookup benchmark
         run: python -m tac_osm.experiment_v05_anti_lookup --seeds 0,1,2,3,4 --steps 1000 --batch 128 --eval-batch 512
+
+  factor-probe:
+    name: TAC-OSM v0.5 factor probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest torch
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Factor probe unit tests
+        run: python -m pytest tests/test_tac_osm_v05_factor_probe.py
+
+      - name: Factor probe five-seed diagnostic
+        run: python -m tac_osm.experiment_v05_factor_probe --seeds 0,1,2,3,4 --steps 1000 --batch 128
 
   anti-lookup:
     name: TAC-OSM v0.5 anti-lookup
