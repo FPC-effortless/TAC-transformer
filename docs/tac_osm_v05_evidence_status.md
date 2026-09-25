@@ -30,6 +30,33 @@ separate from any claim about what the results mean.
 - The experiment therefore **crashed before emitting any JSON**. No
   diagnostic metric was produced for any seed.
 
+### After the execution repair (run `36109086971`, commit `83a9468`)
+
+- Status: **executes end to end; registered CI job passes.**
+- Unit tests: 5 passed. The five-seed diagnostic ran 1000 steps x batch 128
+  on seeds 0-4 and emitted the full results JSON.
+- Job conclusion for `TAC-OSM v0.5 factor probe`: `SUCCESS`.
+
+Per-seed result as recorded (raw metric, no interpretation applied):
+
+| seed | train_loss | additive heldout MSE | factor heldout MSE | seen mag | heldout mag |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 0.000532 | 0.074806 | 0.002688 | 0.7737 | 0.7737 |
+| 1 | 0.000791 | 0.077546 | 0.000225 | 0.7878 | 0.7879 |
+| 2 | 0.000445 | 0.076150 | 0.003850 | 0.7806 | 0.7805 |
+| 3 | 0.078742 | 0.000009 | 0.000034 | 0.0215 | 0.0203 |
+| 4 | 0.000448 | 0.076387 | 0.000723 | 0.7819 | 0.7817 |
+
+These values are recorded as **machine output only**. The probe statistic
+is not yet validated (see "Open item" below), so no conclusion about
+representation-vs-composition failure should be drawn from them yet, and
+in particular the near-zero factor-probe MSE in seeds 0-2 and 4 must not
+be read as evidence of compositional structure.
+
+Seed 3 is an outlier: `train_loss` is two orders of magnitude higher and
+both effect magnitudes collapse to roughly 3% of the other seeds. That is
+recorded, not interpreted.
+
 This is materially different from two adjacent statements, both of which
 were wrong:
 
