@@ -26,7 +26,7 @@ serving = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["tac_transformer*"]
+include = ["tac_transformer*", "tac_osm*"]
 exclude = ["runs*", "outputs*", "Training data*"]
 
 [tool.pytest.ini_options]
