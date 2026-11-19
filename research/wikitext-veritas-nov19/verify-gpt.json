@@ -1,0 +1,9 @@
+number of parameters: 0.14M
+{
+  "model": "gpt",
+  "seed": 11,
+  "steps": 2500,
+  "checkpoint_sha256": "f111a6259500d5064695c0d0f6e9f32d116a6bb3f423073b303add90aeb91acf",
+  "validation_nats_per_byte": 1.8724356445580421,
+  "validation_windows": 4485
+}

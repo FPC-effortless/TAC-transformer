@@ -1,0 +1,8 @@
+{
+  "model": "program",
+  "seed": 11,
+  "steps": 2500,
+  "checkpoint_sha256": "778b9683573545f018c776290ece4970ab28313cb0b69c18861100c26fd30715",
+  "validation_nats_per_byte": 1.802639651883273,
+  "validation_windows": 4485
+}

@@ -1,0 +1,42 @@
+{
+  "execution_purpose": "engineering_diagnostic",
+  "schema": "trainlab.experiment.v1",
+  "name": "WikiText-2 byte program model CPU exploratory run",
+  "description": "Local program model, 2500 updates, public train and validation splits.",
+  "command": [
+    "python",
+    "train.py",
+    "--model",
+    "program",
+    "--seed",
+    "11",
+    "--steps",
+    "2500"
+  ],
+  "seed": 11,
+  "timeout_seconds": 3600,
+  "source_kind": "AUTHENTIC_CANDIDATE",
+  "split_identity": "wikitext-2-raw-official-train-validation",
+  "inputs": [
+    "train.py",
+    "program_lm.py",
+    "tac_model.py",
+    "nanogpt_model.py",
+    "train.parquet",
+    "validation.parquet"
+  ],
+  "artifacts": [
+    "checkpoint.pt"
+  ],
+  "metrics": {
+    "validation_nats_per_byte": "min",
+    "training_seconds": "min",
+    "parameters": "min",
+    "train_tokens": "max"
+  },
+  "budget": {
+    "updates": 2500,
+    "training_tokens": 2560000,
+    "learned_parameters": 156064
+  }
+}
