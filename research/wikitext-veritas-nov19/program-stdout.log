@@ -1,0 +1,6 @@
+program seed=11 step=500 loss=1.8607
+program seed=11 step=1000 loss=1.8453
+program seed=11 step=1500 loss=1.7943
+program seed=11 step=2000 loss=1.8460
+program seed=11 step=2500 loss=1.8788
+{"validation_nats_per_byte": 1.802639651883273, "training_seconds": 34.38496712400001, "parameters": 156064, "train_tokens": 2560000}

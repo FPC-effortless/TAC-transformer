@@ -1,0 +1,76 @@
+{
+  "artifacts": {
+    "checkpoint.pt": "778b9683573545f018c776290ece4970ab28313cb0b69c18861100c26fd30715"
+  },
+  "budget": {
+    "learned_parameters": 156064,
+    "training_tokens": 2560000,
+    "updates": 2500
+  },
+  "claim_eligibility": "NOT_ESTABLISHED",
+  "command": [
+    "python",
+    "train.py",
+    "--model",
+    "program",
+    "--seed",
+    "11",
+    "--steps",
+    "2500"
+  ],
+  "description": "Local program model, 2500 updates, public train and validation splits.",
+  "elapsed_seconds": 41.789093,
+  "error": null,
+  "evidence_capture": "UNASSESSED",
+  "execution_limits": {
+    "log_bytes_per_stream": 16777216
+  },
+  "execution_purpose": "engineering_diagnostic",
+  "exit_code": 0,
+  "files": {
+    "experiment.json": "50f917c3c0ff0f76da3ba7967a31f4313e4b2855492dc29072142dcd6246ada2",
+    "output/metrics.json": "0ad46074769a29ceb0219ca428c3cf9841252d24ca6d6e9b57a2095164bedcc9",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "d84e18d9327f4ab34804ef10b9f9befa4f725b5d310a91bf203993fc442b4ca4"
+  },
+  "finished_at": "2026-11-19T08:12:44.400601+00:00",
+  "git": {
+    "commit": null,
+    "dirty": null
+  },
+  "id": "20261119T081202-45374e48b5e4",
+  "inputs": {
+    "nanogpt_model.py": "339b4d06928d781770ad634e1572e285d4a9243f50e6f359263f5e80d0e03f24",
+    "program_lm.py": "9807b41519fc98b641836f8c3f49526ec7a247e8bef72a373255614b65933cbc",
+    "tac_model.py": "abe9e54437392fa4fe8c713b31f225626d5525e20dea0ca734d8d01a155baa8e",
+    "train.parquet": "e83889baabc497075506f91975be5fac0d45c5290b6b20582c8cd1e853d0c9f7",
+    "train.py": "dbb7d5041788b432feafff3a55ceb4e06ba0415f9f9dcd123a5013af587c64eb",
+    "validation.parquet": "204929b7ff9d6184953f867dedb860e40aa69c078fc1e54b3baaa8fb28511c4c"
+  },
+  "metric_directions": {
+    "parameters": "min",
+    "train_tokens": "max",
+    "training_seconds": "min",
+    "validation_nats_per_byte": "min"
+  },
+  "metrics": {
+    "parameters": 156064,
+    "train_tokens": 2560000,
+    "training_seconds": 34.38496712400001,
+    "validation_nats_per_byte": 1.802639651883273
+  },
+  "name": "WikiText-2 byte program model CPU exploratory run",
+  "qualification": "NOT_QUALIFIED",
+  "research_adequacy": "UNASSESSED",
+  "runtime": {
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "python": "3.12.14"
+  },
+  "schema": "trainlab.run.v1",
+  "seed": 11,
+  "source_kind": "AUTHENTIC_CANDIDATE",
+  "source_rights": "NOT_INDEPENDENTLY_VERIFIED",
+  "split_identity": "wikitext-2-raw-official-train-validation",
+  "started_at": "2026-11-19T08:12:02.601086+00:00",
+  "status": "succeeded"
+}

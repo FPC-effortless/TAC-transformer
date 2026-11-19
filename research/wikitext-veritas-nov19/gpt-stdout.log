@@ -1,0 +1,7 @@
+number of parameters: 0.14M
+gpt seed=11 step=500 loss=2.2846
+gpt seed=11 step=1000 loss=2.1157
+gpt seed=11 step=1500 loss=1.9626
+gpt seed=11 step=2000 loss=1.9644
+gpt seed=11 step=2500 loss=1.8963
+{"validation_nats_per_byte": 1.8724356445580421, "training_seconds": 96.77421811700015, "parameters": 149472, "train_tokens": 2560000}
