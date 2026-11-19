@@ -25,11 +25,11 @@ Use Python 3.12, torch 2.15.0+cpu and pyarrow 26.0.1. Install them in an isolate
     python -m trainlab run program-recipe.json --runs runs
     python verify.py runs/RUN_ID/output/checkpoint.pt
 
-The data files are fetched from Salesforce/wikitext revision b08601e04326c79dfdd32d625aee71d232d685c3, and checked by SHA-256. The source metadata lists CC-BY-SA-3.0 and GFDL. Confirm the upstream license and attribution for your use. The trained weights and optimizer state are included as Git blobs. Use trusted checkpoints only.
+The data files are fetched from Salesforce/wikitext revision b08601e04326c79dfdd32d625aee71d232d685c3, and checked by SHA-256. The source metadata lists CC-BY-SA-3.0 and GFDL. Confirm the upstream license and attribution for your use. Trained checkpoints and optimizer states are currently retained in the local workspace only. Recreate them using the recipes until artifact upload is available. Use trusted checkpoints only.
 
 The code under tac_model.py is taken from TAC-transformer main at 76a7900e93dab282c0788f43bc3e89ae486c0360. nanogpt_model.py is from karpathy/nanoGPT, with the upstream license included. The Veritas ecosystem source used was main at eec439492407b0aa26922c23b5ae40d95289f4eb. The copied TAC model file supports program_lm.py's unused state-mixer class and is included so imports reproduce.
 
-The run receipts have no Git commit because the runs were performed outside a Git checkout. Their source/input SHA-256 values identify the files. The lab database and its imported evidence snapshot are included with the receipts. These artifacts do not independently validate data rights, benchmark fairness or scientific claims.
+The run receipts have no Git commit because the runs were performed outside a Git checkout. Their source/input SHA-256 values identify the files. The imported Research Lab evidence snapshot is included with the receipts. The lab database remains in the local workspace. These artifacts do not independently validate data rights, benchmark fairness or scientific claims.
 
 ## Continuation
 
